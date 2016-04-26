@@ -44,7 +44,7 @@ end
 abstract.backend = "love"
 
 -- abstract.event
-do
+if abstract.event then
 local updateDefault = abstract.event.update
 abstract.event.update = function() end
 function love.update(dt)
@@ -83,6 +83,7 @@ end
 end
 
 -- abstract.draw
+if abstract.draw then
 local defaultFont = love.graphics.getFont()
 add(abstract.draw, {
 	init = function(params)
@@ -138,8 +139,10 @@ function love.resize(width, height)
 		abstract.draw.height = height
 	end
 end
+end
 
 -- abstract.audio
+if abstract.audio then
 add(abstract.audio, {
 	-- TODO: doc
 	load = function(filepath)
@@ -151,16 +154,19 @@ add(abstract.audio, {
 		}
 	end
 })
+end
 
 -- abstract.time
+if abstract.time then
 add(abstract.time, {
 	get = function()
 		return love.timer.getTime()
 	end
 })
+end
 
 -- abstract.input
-do
+if abstract.input then
 local buttonsInUse = {}
 local axesInUse = {}
 function love.keypressed(key, scancode, isrepeat)
