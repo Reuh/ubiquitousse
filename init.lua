@@ -6,6 +6,9 @@
 -- It is as the name imply abstract, and must be implemented in a backend, such as abstract.love.
 -- When required, this file will try to autodetect the engine it is running on, and load a correct backend.
 --
+-- abstract may or may not be used as a full game engine. You can delete the modules files you don't need and abstract
+-- should adapt accordingly.
+--
 -- For backend writers:
 -- If a function defined here already contains some code, this means this code is mandatory and you must put/call
 -- it in your implementation.
@@ -53,60 +56,17 @@ abstract = {
 	--- Backend name.
 	-- For consistency, only use lowercase letters [a-z] (no special char)
 	-- @impl backend
-	backend = "unknown",
-
-	--- General game paramters (some defaults).
-	-- @impl abstract
-	params = {
-		title = "Abstract Engine",
-		width = 800,
-		height = 600,
-		resizable = false,
-		resizeType = "auto"
-	},
-
-	--- Setup general game parameters.
-	-- If a parmeter is not set, a default value will be used.
-	-- This function is expected to be only called once, before doing any drawing operation.
-	-- @tparam table params the game parameters
-	-- @usage -- Default values:
-	-- abstract.setup {
-	--   title = "Abstract Engine", -- usually window title
-	--   width = 800, -- in px
-	--   height = 600, -- in px
-	--   resizable = false, -- can the game be resized?
-	--   resizeType = "auto" -- how to act on resize: "none" to do nothing (0,0 will be top-left)
-	--                                                "center" to autocenter (0,0 will be at windowWidth/2-gameWidth/2,windowHeight/2-gameHeight/2)
-	--                                                "auto" to automatically resize to the window size (coordinate system won't change)
-	-- }
-	-- @impl mixed
-	setup = function(params)
-		for k, v in pairs(params) do
-			abstract.params[k] = v
-		end
-		abstract.draw.width = params.width
-		abstract.draw.height = params.height
-	end,
-
-	--- Frames per second (the backend should update this value).
-	-- @impl backend
-	fps = 60,
-
-	--- Time since last frame (seconds)
-	-- @impl backend
-	dt = 0
+	backend = "unknown"
 }
 
 -- We're going to require modules requiring abstract, so to avoid stack overflows we already register the abstract package
 package.loaded[p] = abstract
 
--- External submodules
-abstract.time = require(p..".time")
-abstract.draw = require(p..".draw")
-abstract.audio = require(p..".audio")
-abstract.input = require(p..".input")
-abstract.scene = require(p..".scene")
-abstract.event = require(p..".event")
+-- Require external submodules
+for _, m in ipairs({"time", "draw", "audio", "input", "scene", "event"}) do
+	local s, t = pcall(require, p.."."..m)
+	if s then abstract[m] = t end
+end
 
 -- Backend engine autodetect and load
 if love then

@@ -11,7 +11,45 @@ local abstract = require((...):match("^(.-abstract)%."))
 --
 -- x and y values can be float, so make sure to perform math.floor if your engine only support
 -- integer coordinates.
-return {
+local draw
+draw = {
+	--- Initial game view paramters (some defaults).
+	-- @impl abstract
+	params = {
+		title = "Abstract Engine",
+		width = 800,
+		height = 600,
+		resizable = false,
+		resizeType = "auto"
+	},
+
+	--- Setup the intial game view parameters.
+	-- If a parmeter is not set, a default value will be used.
+	-- This function is expected to be only called once, before doing any drawing operation.
+	-- @tparam table params the game parameters
+	-- @usage -- Default values:
+	-- abstract.setup {
+	--   title = "Abstract Engine", -- usually window title
+	--   width = 800, -- in px
+	--   height = 600, -- in px
+	--   resizable = false, -- can the game be resized?
+	--   resizeType = "auto" -- how to act on resize: "none" to do nothing (0,0 will be top-left)
+	--                                                "center" to autocenter (0,0 will be at windowWidth/2-gameWidth/2,windowHeight/2-gameHeight/2)
+	--                                                "auto" to automatically resize to the window size (coordinate system won't change)
+	-- }
+	-- @impl mixed
+	init = function(params)
+		for k, v in pairs(params) do
+			draw.params[k] = v
+		end
+		draw.width = params.width
+		draw.height = params.height
+	end,
+
+	--- Frames per second (the backend should update this value).
+	-- @impl backend
+	fps = 60,
+
 	--- Sets the drawing color
 	-- @tparam number r the red component (0-255)
 	-- @tparam number g the green component (0-255)
@@ -55,11 +93,11 @@ return {
 
 	--- The drawing area width, in pixels.
 	-- @impl backend
-	width = abstract.params.width,
+	width = 800,
 
 	--- The drawing area height, in pixels.
 	-- @impl backend
-	height = abstract.params.height,
+	height = 600,
 
 	-- TODO: doc & api
 	push = function() end,
@@ -70,3 +108,5 @@ return {
 	font = function(filename) end,
 	image = function(filename) end,
 }
+
+return draw

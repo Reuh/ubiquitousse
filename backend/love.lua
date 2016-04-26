@@ -42,15 +42,6 @@ end
 
 -- abstract
 abstract.backend = "love"
-add(abstract, {
-	setup = function(params)
-		local p = abstract.params
-		love.window.setTitle(p.title)
-		love.window.setMode(p.width, p.height, {
-			resizable = p.resizable
-		})
-	end
-})
 
 -- abstract.event
 do
@@ -58,8 +49,7 @@ local updateDefault = abstract.event.update
 abstract.event.update = function() end
 function love.update(dt)
 	-- Value update
-	abstract.fps = love.timer.getFPS()
-	abstract.dt = love.timer.getDelta()
+	abstract.draw.fps = love.timer.getFPS()
 
 	-- Stuff defined in abstract.lua
 	updateDefault(dt)
@@ -95,6 +85,13 @@ end
 -- abstract.draw
 local defaultFont = love.graphics.getFont()
 add(abstract.draw, {
+	init = function(params)
+		local p = abstract.draw.params
+		love.window.setTitle(p.title)
+		love.window.setMode(p.width, p.height, {
+			resizable = p.resizable
+		})
+	end,
 	color = function(r, g, b, a)
 		love.graphics.setColor(r, g, b, a)
 	end,

@@ -251,11 +251,11 @@ input = {
 					if mode == "relative" then
 						local movX, movY = math.abs(xAxis:value()), math.abs(yAxis:value())
 						if movX > maxMovX then
-							newX = x + (xSpeed and (xAxis:value() * xSpeed * abstract.dt) or xAxis:raw())
+							newX = x + (xSpeed and (xAxis:value() * xSpeed * abstract.time.dt) or xAxis:raw())
 							maxMovX = movX
 						end
 						if movY > maxMovY then
-							newY = y + (ySpeed and (yAxis:value() * ySpeed * abstract.dt) or yAxis:raw())
+							newY = y + (ySpeed and (yAxis:value() * ySpeed * abstract.time.dt) or yAxis:raw())
 							maxMovY = movY
 						end
 					elseif mode == "absolute" then

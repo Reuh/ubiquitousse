@@ -2,20 +2,25 @@
 local ease = require((...):match("^(.-abstract)%.")..".lib.easing")
 
 --- Time related functions
-local time
 local function newTimerRegistry()
 	--- Used to store all the functions delayed with abstract.time.delay
 	-- The default implementation use the structure {<key: function> = <value: data table>, ...}
 	-- This table is for internal use and shouldn't be used from an external script.
 	local delayed = {}
 
-	return {
+	-- Used to calculate the deltatime
+	local lastTime
+
+	local registry
+	registry = {
 		--- Creates and return a new TimerRegistry.
 		-- A TimerRegistry is a separate abstract.time instance: its TimedFunctions will be independant
 		-- from the one registered using abstract.time.run (the global TimerRegistry). If you use the scene
 		-- system, a scene-specific TimerRegistry is available at abstract.scene.current.time.
 		new = function()
-			return newTimerRegistry()
+			local new = newTimerRegistry()
+			new.get = registry.get
+			return new
 		end,
 
 		--- Returns the number of seconds elapsed since some point in time.
@@ -27,9 +32,21 @@ local function newTimerRegistry()
 
 		--- Update all the TimedFunctions calls.
 		-- Supposed to be called in abstract.event.update.
-		-- @tparam numder dt the delta-time
+		-- @tparam[opt=calculate here] numder dt the delta-time (time spent since last time the function was called) (seconds)
 		-- @impl abstract
 		update = function(dt)
+			if dt then
+				registry.dt = dt
+			else
+				if lastTime then
+					local newTime = registry.get()
+					registry.dt = newTime - lastTime
+					lastTime = newTime
+				else
+					lastTime = registry.get()
+				end
+			end
+
 			local d = delayed
 			for func, t in pairs(d) do
 				local co = t.coroutine
@@ -39,7 +56,7 @@ local function newTimerRegistry()
 					if not co then
 						co = coroutine.create(func)
 						t.coroutine = co
-						t.started = time.get()
+						t.started = registry.get()
 						if t.times > 0 then t.times = t.times - 1 end
 						t.onStart()
 					end
@@ -49,7 +66,7 @@ local function newTimerRegistry()
 						coroutine.yield()
 					end, dt))
 					if coroutine.status(co) == "dead" then
-						if (t.during >= 0 and t.started + t.during < time.get())
+						if (t.during >= 0 and t.started + t.during < registry.get())
 							or (t.times == 0)
 							or (t.every == -1 and t.times == -1 and t.during == -1) -- no repeat
 						then
@@ -138,7 +155,7 @@ local function newTimerRegistry()
 			local from = {}
 			for k in pairs(to) do from[k] = tbl[k] end
 
-			return time.run(function(wait, dt)
+			return registry.run(function(wait, dt)
 				time = time + dt
 				for k, v in pairs(to) do
 					tbl[k] = method(time, from[k], to[k] - from[k], duration)
@@ -150,9 +167,14 @@ local function newTimerRegistry()
 		-- @impl abstract
 		clear = function()
 			delayed = {}
-		end
+		end,
+
+		--- Time since last update (seconds).
+		-- @impl abstract
+		dt = 0
 	}
+
+	return registry
 end
 
-time = newTimerRegistry()
-return time
+return newTimerRegistry()
