@@ -65,10 +65,10 @@ function love.draw()
 
 	-- Resize type
 	local winW, winH = love.graphics.getWidth(), love.graphics.getHeight()
-	local gameW, gameH = abstract.params.width, abstract.params.height
-	if abstract.params.resizeType == "auto" then
+	local gameW, gameH = abstract.draw.params.width, abstract.draw.params.height
+	if abstract.draw.params.resizeType == "auto" then
 		love.graphics.scale(winW/gameW, winH/gameH)
-	elseif abstract.params.resizeType == "center" then
+	elseif abstract.draw.params.resizeType == "center" then
 		love.graphics.translate(math.floor(winW/2-gameW/2), math.floor(winH/2-gameH/2))
 	end
 
@@ -133,7 +133,7 @@ add(abstract.draw, {
 	end,
 })
 function love.resize(width, height)
-	if abstract.params.resizeType == "none" then
+	if abstract.draw.params.resizeType == "none" then
 		abstract.draw.width = width
 		abstract.draw.height = height
 	end
