@@ -1,5 +1,4 @@
 -- abstract.time
-local abstract = require((...):match("^(.-abstract)%."))
 local ease = require((...):match("^(.-abstract)%.")..".lib.easing")
 
 --- Time related functions

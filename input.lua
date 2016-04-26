@@ -1,6 +1,6 @@
 -- abstract.input
 local abstract = require((...):match("^(.-abstract)%."))
-local draw = abstract.draw
+local draw = require((...):match("^(.-abstract)%.")..".draw")
 
 --- Used to store inputs which were updated this frame
 -- { Input: true, ... }

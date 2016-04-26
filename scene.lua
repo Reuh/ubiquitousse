@@ -1,6 +1,5 @@
 -- abstract.scene
-local abstract = require((...):match("^(.-abstract)%."))
-local time = abstract.time
+local time = require((...):match("^(.-abstract)%.")..".time")
 
 --- Returns the file path of the given module name.
 local function getPath(modname)

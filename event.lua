@@ -1,8 +1,7 @@
 -- abstract.event
-local abstract = require((...):match("^(.-abstract)%."))
-local input = abstract.input
-local time = abstract.time
-local scene = abstract.scene
+local input = require((...):match("^(.-abstract)%.")..".input")
+local time = require((...):match("^(.-abstract)%.")..".time")
+local scene = require((...):match("^(.-abstract)%.")..".scene")
 
 --- The events: callback functions that will be called when something interesting occurs.
 -- Theses are expected to be redefined in the game.
