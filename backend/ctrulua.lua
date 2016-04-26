@@ -9,7 +9,7 @@ local version = "0.0.1"
 -- Require stuff
 local abstract = require((...):match("^(.-abstract)%."))
 local ctr = require("ctr")
-local gfx = require("gfx")
+local gfx = require("ctr.gfx")
 
 -- Version compatibility warning
 do
