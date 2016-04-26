@@ -37,6 +37,10 @@ scene = {
 	-- @impl abstract
 	stack = {},
 
+	--- A prefix for scene modules names
+	-- @impl abstract
+	prefix = "",
+
 	--- Creates and returns a new Scene object.
 	-- @impl abstract
 	new = function()
@@ -60,7 +64,7 @@ scene = {
 	-- @impl abstract
 	switch = function(scenePath)
 		if scene.current then scene.current.exit() end
-		scene.current = dofile(getPath(scenePath))
+		scene.current = dofile(getPath(scene.prefix..scenePath))
 		local i = #scene.stack
 		scene.stack[math.max(i, 1)] = scene.current
 	end,
@@ -73,7 +77,7 @@ scene = {
 	-- @impl abstract
 	push = function(scenePath)
 		if scene.current then scene.current.suspend() end
-		scene.current = dofile(getPath(scenePath))
+		scene.current = dofile(getPath(scene.prefix..scenePath))
 		table.insert(scene.stack, scene.current)
 	end,
 
