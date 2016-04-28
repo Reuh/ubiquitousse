@@ -30,6 +30,10 @@
 -- Theses formats are respected for the reference implementations, but Abstract may provide a script to
 -- automatically convert data formats from a project at some point.
 --
+-- Units used in the API:
+-- * All distances are expressed in pixels (px)
+-- * All durations are expressed in milliseconds (ms)
+--
 -- Style:
 -- * tabs for indentation, spaces for esthetic whitespace (notably in comments)
 -- * no globals

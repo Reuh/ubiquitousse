@@ -52,7 +52,7 @@ function love.update(dt)
 	abstract.draw.fps = love.timer.getFPS()
 
 	-- Stuff defined in abstract.lua
-	updateDefault(dt)
+	updateDefault(dt*1000)
 
 	-- Callback
 	abstract.event.update(dt)

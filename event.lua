@@ -12,7 +12,7 @@ local scene = require((...):match("^(.-abstract)%.")..".scene")
 -- end
 return {
 	--- Called each time the game loop is ran. Don't draw here.
-	-- @tparam number dt time since last call, in seconds
+	-- @tparam number dt time since last call, in miliseconds
 	-- @impl mixed
 	update = function(dt)
 		input.update(dt)

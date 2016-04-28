@@ -239,7 +239,7 @@ input = {
 		local x, y = 0, 0 -- pointer position
 		local width, height = 1, 1 -- half-dimensions of the movement area
 		local offsetX, offsetY = 0, 0 -- offsets
-		local xSpeed, ySpeed = 1, 1 -- speed (pixels/second); for relative mode
+		local xSpeed, ySpeed = 1, 1 -- speed (pixels/milisecond); for relative mode
 		local r -- object
 		local function update()
 			if not updated[r] then
@@ -325,7 +325,7 @@ input = {
 				offsetX, offsetY = newOffX, newOffY
 				return self
 			end,
-			--- Set maximal speed (pixels-per-second)
+			--- Set maximal speed (pixels-per-milisecond)
 			-- Only used in relative mode.
 			-- Calls without argument to use the raw data and don't apply a speed modifier.
 			-- @impl abstract

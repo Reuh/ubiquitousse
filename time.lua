@@ -17,22 +17,22 @@ local function newTimerRegistry()
 		-- A TimerRegistry is a separate abstract.time instance: its TimedFunctions will be independant
 		-- from the one registered using abstract.time.run (the global TimerRegistry). If you use the scene
 		-- system, a scene-specific TimerRegistry is available at abstract.scene.current.time.
+		-- @impl abstract
 		new = function()
 			local new = newTimerRegistry()
 			new.get = registry.get
 			return new
 		end,
 
-		--- Returns the number of seconds elapsed since some point in time.
+		--- Returns the number of miliseconds elapsed since some point in time.
 		-- This point is fixed but undetermined, so this function should only be used to calculate durations.
-		-- Should at least have millisecond-precision. Should be called using abstract.time.get and not in
-		-- non-global TimerRegistry.
+		-- Should at least have millisecond-precision, but can be more precise if available.
 		-- @impl backend
 		get = function() end,
 
 		--- Update all the TimedFunctions calls.
 		-- Supposed to be called in abstract.event.update.
-		-- @tparam[opt=calculate here] numder dt the delta-time (time spent since last time the function was called) (seconds)
+		-- @tparam[opt=calculate here] numder dt the delta-time (time spent since last time the function was called) (miliseconds)
 		-- @impl abstract
 		update = function(dt)
 			if dt then
@@ -83,9 +83,7 @@ local function newTimerRegistry()
 		end,
 
 		--- Schedule a function to run.
-		-- The function will receive as first parameter the wait(time) function, which will pause the function execution for time seconds.
-		-- The second parameter is the delta-time.
-		-- @tparam[opt=0] number delay delay in seconds before first run
+		-- The function will receive as first parameter the wait(time) function, which will pause the function execution for time miliseconds.
 		-- @tparam[opt] function func the function to schedule
 		-- @treturn TimedFunction the object
 		-- @impl abstract
@@ -111,27 +109,33 @@ local function newTimerRegistry()
 			local t = delayed[func] -- internal data
 			local r -- external interface
 			r = {
+				--- Wait time milliseconds before running the function.
 				after = function(_, time)
 					t.after = time
 					return r
 				end,
+				--- Run the function every time millisecond.
 				every = function(_, time)
 					t.every = time
 					return r
 				end,
+				--- The function will not execute more than count times.
 				times = function(_, count)
 					t.times = count
 					return r
 				end,
+				--- The TimedFunction will be active for a time duration.
 				during = function(_, time)
 					t.during = time
 					return r
 				end,
 
+				--- Will execute func() when the function execution start.
 				onStart = function(_, func)
 					t.onStart = func
 					return r
 				end,
+				--- Will execute func() when the function execution end.
 				onEnd = function(_, func)
 					t.onEnd = func
 					return r
@@ -141,7 +145,7 @@ local function newTimerRegistry()
 		end,
 
 		--- Tween some numeric values.
-		-- @tparam number duration tween duration (seconds)
+		-- @tparam number duration tween duration (miliseconds)
 		-- @tparam table tbl the table containing the values to tween
 		-- @tparam table to the new values
 		-- @tparam[opt="linear"] string/function method tweening method (string name or the actual function(time, start, change, duration))
@@ -169,7 +173,7 @@ local function newTimerRegistry()
 			delayed = {}
 		end,
 
-		--- Time since last update (seconds).
+		--- Time since last update (miliseconds).
 		-- @impl abstract
 		dt = 0
 	}

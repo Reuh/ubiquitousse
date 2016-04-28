@@ -95,7 +95,7 @@ scene = {
 
 	--- Update the current scene.
 	-- Should be called in abstract.event.update.
-	-- @tparam number dt the delta-time
+	-- @tparam number dt the delta-time (milisecond)
 	-- @impl abstract
 	update = function(dt)
 		if scene.current then
