@@ -47,12 +47,15 @@ local function newTimerRegistry()
 				end
 			end
 
+			local done = {} -- functions done running
+
 			local d = delayed
 			for func, t in pairs(d) do
 				local co = t.coroutine
 				t.after = t.after - dt
 				if t.after <= 0 then
-					d[func] = nil
+					d[func] = false -- niling here cause the next pair iteration to error
+					table.insert(done, func)
 					if not co then
 						co = coroutine.create(func)
 						t.coroutine = co
@@ -78,6 +81,12 @@ local function newTimerRegistry()
 							d[func] = t
 						end
 					end
+				end
+			end
+
+			for _, func in ipairs(done) do
+				if not d[func] then
+					d[func] = nil
 				end
 			end
 		end,
