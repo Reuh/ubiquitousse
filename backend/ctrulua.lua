@@ -53,9 +53,7 @@ abstract.backend = "ctrulua"
 -- abstract.time
 if abstract.time then
 add(abstract.time, {
-	get = function()
-		return ctr.time()
-	end
+	get = ctr.time()
 })
 end
 
