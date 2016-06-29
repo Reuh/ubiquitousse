@@ -52,8 +52,8 @@ scene = {
 			suspend = function() end, -- Called when suspending a scene, and expecting to come back (scene won't be unloaded).
 			resume = function() end, -- Called when resuming a suspended scene (after calling suspend).
 
-			update = function(dt) end, -- Called on each abstract.event.update on the current scene.
-			draw = function() end -- Called on each abstract.event.draw on the current scene.
+			update = function(dt, ...) end, -- Called on each abstract.event.update on the current scene.
+			draw = function(...) end -- Called on each abstract.event.draw on the current scene.
 		}
 	end,
 
@@ -96,19 +96,21 @@ scene = {
 	--- Update the current scene.
 	-- Should be called in abstract.event.update.
 	-- @tparam number dt the delta-time (milisecond)
+	-- @param ... arguments to pass to the scene's update function after dt
 	-- @impl abstract
-	update = function(dt)
+	update = function(dt, ...)
 		if scene.current then
 			scene.current.time.update(dt)
-			scene.current.update(dt)
+			scene.current.update(dt, ...)
 		end
 	end,
 
 	--- Draw the current scene.
 	-- Should be called in abstract.event.draw.
+	-- @param ... arguments to pass to the scene's draw function
 	-- @impl abstract
-	draw = function()
-		if scene.current then scene.current.draw() end
+	draw = function(...)
+		if scene.current then scene.current.draw(...) end
 	end
 }
 
