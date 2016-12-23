@@ -98,7 +98,7 @@ local function newTimerRegistry()
 		-- @impl abstract
 		run = function(func)
 			-- Creates empty function (the TimedFunction may be used for time measure or stuff like that which doesn't need a specific function)
-			local func = func or function() end
+			func = func or function() end
 
 			-- Since delayed functions can end in any order, it doesn't really make sense to use a integer-keyed list.
 			-- Using the function as the key works and it's unique.
@@ -161,7 +161,7 @@ local function newTimerRegistry()
 		-- @treturn TimedFunction the object
 		-- @impl abstract
 		tween = function(duration, tbl, to, method)
-			local method = method or "linear"
+			method = method or "linear"
 			method = type(method) == "string" and ease[method] or method
 
 			local time = 0
@@ -170,7 +170,7 @@ local function newTimerRegistry()
 
 			return registry.run(function(wait, dt)
 				time = time + dt
-				for k, v in pairs(to) do
+				for k in pairs(to) do
 					tbl[k] = method(time, from[k], to[k] - from[k], duration)
 				end
 			end):during(duration)

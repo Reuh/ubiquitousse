@@ -5,12 +5,15 @@ local time = require((...):match("^(.-abstract)%.")..".time")
 local function getPath(modname)
 	local filepath = ""
 	for path in package.path:gmatch("[^;]+") do
-		local path = path:gsub("%?", (modname:gsub("%.", "/")))
+		path = path:gsub("%?", (modname:gsub("%.", "/")))
 		local f = io.open(path)
 		if f then f:close() filepath = path break end
 	end
 	return filepath
 end
+
+-- FIXME: http://hump.readthedocs.io/en/latest/gamestate.html
+-- FIXME: call order
 
 --- Scene management.
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
@@ -19,6 +22,11 @@ end
 -- make them scene-independent, for example by creating a scene-specific TimerRegistry (TimedFunctions that are keept accross
 -- states are generally a bad idea). Theses scene-specific states should be created and available in the table returned by
 -- abstract.scene.new.
+-- Currently, the implementation always execute a scene's file before setting it as current, but this may change in the future or
+-- for some implementations (e.g., on a computer where memory isn't a problem, the scene may be put in a cache). The result of this
+-- is that you can load assets, libraries, etc. outside of the enter callback, so they can be cached and not reloaded each time
+-- the scene is entered, but all the other scene initialization should be done in the enter callback, since it won't be executed on
+-- each enter otherwise.
 -- The expected code-organisation is:
 -- * each scene is in a file, identified by its module name (same identifier used by Lua's require)
 -- * each scene file create a new scene table using abstract.scene.new and returns it at the end of the file
@@ -47,7 +55,8 @@ scene = {
 		return {
 			time = time.new(), -- Scene-specific TimerRegistry.
 
-			exit = function() end, -- Called when exiting a scene, and not expecting to come back (scene will be unloaded).
+			enter = function(...) end, -- Called when entering a scene.
+			exit = function() end, -- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
 
 			suspend = function() end, -- Called when suspending a scene, and expecting to come back (scene won't be unloaded).
 			resume = function() end, -- Called when resuming a suspended scene (after calling suspend).
@@ -58,15 +67,17 @@ scene = {
 	end,
 
 	--- Switch to a new scene.
-	-- The current scene exit function will be called, the new scene will be loaded, and then
-	-- the current scene will then be replaced by the new one.
+	-- The current scene exit function will be called, the new scene will be loaded,
+	-- the current scene will then be replaced by the new one, and then the enter callback is called.
 	-- @tparam string scenePath the new scene module name
+	-- @param ... arguments to pass to the scene's enter function
 	-- @impl abstract
-	switch = function(scenePath)
+	switch = function(scenePath, ...)
 		if scene.current then scene.current.exit() end
 		scene.current = dofile(getPath(scene.prefix..scenePath))
 		local i = #scene.stack
 		scene.stack[math.max(i, 1)] = scene.current
+		scene.current.enter(...)
 	end,
 
 	--- Push a new scene to the scene stack.
@@ -74,11 +85,13 @@ scene = {
 	-- and the current scene is not replaced: when the new scene call abstract.scene.pop, the old scene
 	-- will be reused.
 	-- @tparam string scenePath the new scene module name
+	-- @param ... arguments to pass to the scene's enter function
 	-- @impl abstract
-	push = function(scenePath)
+	push = function(scenePath, ...)
 		if scene.current then scene.current.suspend() end
 		scene.current = dofile(getPath(scene.prefix..scenePath))
 		table.insert(scene.stack, scene.current)
+		scene.current.enter(...)
 	end,
 
 	--- Pop the current scene from the scene stack.
@@ -88,9 +101,9 @@ scene = {
 	pop = function()
 		if scene.current then scene.current.exit() end
 		local previous = scene.stack[#scene.stack-1]
+		scene.current = previous
 		if previous then previous.resume() end
 		table.remove(scene.stack)
-		scene.current = previous
 	end,
 
 	--- Update the current scene.
