@@ -1,4 +1,4 @@
--- abstract.audio
+-- ubiquitousse.audio
 
 --- Audio functions.
 return {

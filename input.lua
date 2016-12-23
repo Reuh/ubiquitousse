@@ -1,6 +1,6 @@
--- abstract.input
-local abstract = require((...):match("^(.-abstract)%."))
-local draw = require((...):match("^(.-abstract)%.")..".draw")
+-- ubiquitousse.input
+local uqt = require((...):match("^(.-ubiquitousse)%."))
+local draw = require((...):match("^(.-ubiquitousse)%.")..".draw")
 
 --- Used to store inputs which were updated this frame
 -- { Input: true, ... }
@@ -251,11 +251,11 @@ input = {
 					if mode == "relative" then
 						local movX, movY = math.abs(xAxis:value()), math.abs(yAxis:value())
 						if movX > maxMovX then
-							newX = x + (xSpeed and (xAxis:value() * xSpeed * abstract.time.dt) or xAxis:raw())
+							newX = x + (xSpeed and (xAxis:value() * xSpeed * uqt.time.dt) or xAxis:raw())
 							maxMovX = movX
 						end
 						if movY > maxMovY then
-							newY = y + (ySpeed and (yAxis:value() * ySpeed * abstract.time.dt) or yAxis:raw())
+							newY = y + (ySpeed and (yAxis:value() * ySpeed * uqt.time.dt) or yAxis:raw())
 							maxMovY = movY
 						end
 					elseif mode == "absolute" then
@@ -365,7 +365,7 @@ input = {
 	},
 
 	--- Update all the Inputs.
-	-- Supposed to be called in abstract.event.update.
+	-- Supposed to be called in ubiquitousse.event.update.
 	-- @tparam numder dt the delta-time
 	-- @impl abstract
 	update = function(dt)

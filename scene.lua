@@ -1,5 +1,5 @@
--- abstract.scene
-local time = require((...):match("^(.-abstract)%.")..".time")
+-- ubiquitousse.scene
+local time = require((...):match("^(.-ubiquitousse)%.")..".time")
 
 --- Returns the file path of the given module name.
 local function getPath(modname)
@@ -18,10 +18,10 @@ end
 --- Scene management.
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
 -- This module is fully implemented in abstract and is mostly a "recommended way" of organising an abstract-based game.
--- However, you don't have to use this if you don't want to. abstract.scene handles all the differents abstract-states and
+-- However, you don't have to use this if you don't want to. ubiquitousse.scene handles all the differents abstract-states and
 -- make them scene-independent, for example by creating a scene-specific TimerRegistry (TimedFunctions that are keept accross
 -- states are generally a bad idea). Theses scene-specific states should be created and available in the table returned by
--- abstract.scene.new.
+-- ubiquitousse.scene.new.
 -- Currently, the implementation always execute a scene's file before setting it as current, but this may change in the future or
 -- for some implementations (e.g., on a computer where memory isn't a problem, the scene may be put in a cache). The result of this
 -- is that you can load assets, libraries, etc. outside of the enter callback, so they can be cached and not reloaded each time
@@ -29,11 +29,11 @@ end
 -- each enter otherwise.
 -- The expected code-organisation is:
 -- * each scene is in a file, identified by its module name (same identifier used by Lua's require)
--- * each scene file create a new scene table using abstract.scene.new and returns it at the end of the file
+-- * each scene file create a new scene table using ubiquitousse.scene.new and returns it at the end of the file
 -- Order of callbacks:
--- * all scene exit callbacks are called before changing the stack or the current scene (ie, abstract.scene.current and the
+-- * all scene exit callbacks are called before changing the stack or the current scene (ie, ubiquitousse.scene.current and the
 --   last stack element is the scene in which the exit or suspend function was called)
--- * all scene enter callbacks are called before changing the stack or the current scene (ie, abstract.scene.current and the
+-- * all scene enter callbacks are called before changing the stack or the current scene (ie, ubiquitousse.scene.current and the
 --   last stack element is the previous scene which was just exited, and not the new scene)
 local scene
 scene = {
@@ -61,8 +61,8 @@ scene = {
 			suspend = function() end, -- Called when suspending a scene, and expecting to come back (scene won't be unloaded).
 			resume = function() end, -- Called when resuming a suspended scene (after calling suspend).
 
-			update = function(dt, ...) end, -- Called on each abstract.event.update on the current scene.
-			draw = function(...) end -- Called on each abstract.event.draw on the current scene.
+			update = function(dt, ...) end, -- Called on each ubiquitousse.event.update on the current scene.
+			draw = function(...) end -- Called on each ubiquitousse.event.draw on the current scene.
 		}
 	end,
 
@@ -81,8 +81,8 @@ scene = {
 	end,
 
 	--- Push a new scene to the scene stack.
-	-- Similar to abstract.scene.switch, except suspend is called on the current scene instead of exit,
-	-- and the current scene is not replaced: when the new scene call abstract.scene.pop, the old scene
+	-- Similar to ubiquitousse.scene.switch, except suspend is called on the current scene instead of exit,
+	-- and the current scene is not replaced: when the new scene call ubiquitousse.scene.pop, the old scene
 	-- will be reused.
 	-- @tparam string scenePath the new scene module name
 	-- @param ... arguments to pass to the scene's enter function
@@ -107,7 +107,7 @@ scene = {
 	end,
 
 	--- Update the current scene.
-	-- Should be called in abstract.event.update.
+	-- Should be called in ubiquitousse.event.update.
 	-- @tparam number dt the delta-time (milisecond)
 	-- @param ... arguments to pass to the scene's update function after dt
 	-- @impl abstract
@@ -119,7 +119,7 @@ scene = {
 	end,
 
 	--- Draw the current scene.
-	-- Should be called in abstract.event.draw.
+	-- Should be called in ubiquitousse.event.draw.
 	-- @param ... arguments to pass to the scene's draw function
 	-- @impl abstract
 	draw = function(...)

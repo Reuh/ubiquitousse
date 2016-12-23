@@ -13,7 +13,7 @@ local displayKeyConstant = true -- If using ScanCodes, sets this to true so the 
 local version = "0.0.1"
 
 -- Require stuff
-local abstract = require((...):match("^(.-abstract)%."))
+local uqt = require((...):match("^(.-ubiquitousse)%."))
 
 -- Version compatibility warning
 do
@@ -26,7 +26,7 @@ do
 		end
 	end
 	checkCompat("Löve", "0.10.1", ("%s.%s.%s"):format(love.getVersion()))
-	checkCompat("abstract", "0.0.1", abstract.version)
+	checkCompat("abstract", "0.0.1", uqt.version)
 end
 
 -- Redefine all functions in tbl which also are in toAdd, so when used they call the old function (in tbl) and then the new (in toAdd).
@@ -40,35 +40,35 @@ local function add(tbl, toAdd)
 	end
 end
 
--- abstract
-abstract.backend = "love"
+-- uqt
+uqt.backend = "love"
 
--- abstract.event
-if abstract.event then
-local updateDefault = abstract.event.update
-abstract.event.update = function() end
+-- uqt.event
+if uqt.event then
+local updateDefault = uqt.event.update
+uqt.event.update = function() end
 function love.update(dt)
 	-- Value update
-	abstract.draw.fps = love.timer.getFPS()
+	uqt.draw.fps = love.timer.getFPS()
 
 	-- Stuff defined in abstract.lua
 	updateDefault(dt*1000)
 
 	-- Callback
-	abstract.event.update(dt)
+	uqt.event.update(dt)
 end
 
-local drawDefault = abstract.event.draw
-abstract.event.draw = function() end
+local drawDefault = uqt.event.draw
+uqt.event.draw = function() end
 function love.draw()
 	love.graphics.push()
 
 	-- Resize type
 	local winW, winH = love.graphics.getWidth(), love.graphics.getHeight()
-	local gameW, gameH = abstract.draw.params.width, abstract.draw.params.height
-	if abstract.draw.params.resizeType == "auto" then
+	local gameW, gameH = uqt.draw.params.width, uqt.draw.params.height
+	if uqt.draw.params.resizeType == "auto" then
 		love.graphics.scale(winW/gameW, winH/gameH)
-	elseif abstract.draw.params.resizeType == "center" then
+	elseif uqt.draw.params.resizeType == "center" then
 		love.graphics.translate(math.floor(winW/2-gameW/2), math.floor(winH/2-gameH/2))
 	end
 
@@ -76,18 +76,18 @@ function love.draw()
 	drawDefault()
 
 	-- Callback
-	abstract.event.draw()
+	uqt.event.draw()
 
 	love.graphics.pop()
 end
 end
 
--- abstract.draw
-if abstract.draw then
+-- uqt.draw
+if uqt.draw then
 local defaultFont = love.graphics.getFont()
-add(abstract.draw, {
+add(uqt.draw, {
 	init = function(params)
-		local p = abstract.draw.params
+		local p = uqt.draw.params
 		love.window.setTitle(p.title)
 		love.window.setMode(p.width, p.height, {
 			resizable = p.resizable
@@ -134,16 +134,16 @@ add(abstract.draw, {
 	end,
 })
 function love.resize(width, height)
-	if abstract.draw.params.resizeType == "none" then
-		abstract.draw.width = width
-		abstract.draw.height = height
+	if uqt.draw.params.resizeType == "none" then
+		uqt.draw.width = width
+		uqt.draw.height = height
 	end
 end
 end
 
--- abstract.audio
-if abstract.audio then
-add(abstract.audio, {
+-- uqt.audio
+if uqt.audio then
+add(uqt.audio, {
 	-- TODO: doc
 	load = function(filepath)
 		local audio = love.audio.newSource(filepath)
@@ -156,17 +156,17 @@ add(abstract.audio, {
 })
 end
 
--- abstract.time
-if abstract.time then
-add(abstract.time, {
+-- uqt.time
+if uqt.time then
+add(uqt.time, {
 	get = function()
 		return love.timer.getTime()
 	end
 })
 end
 
--- abstract.input
-if abstract.input then
+-- uqt.input
+if uqt.input then
 local buttonsInUse = {}
 local axesInUse = {}
 function love.keypressed(key, scancode, isrepeat)
@@ -227,7 +227,7 @@ end
 
 love.mouse.setVisible(false)
 
-add(abstract.input, {
+add(uqt.input, {
 	buttonDetector = function(...)
 		local ret = {}
 		for _,id in ipairs({...}) do
@@ -290,7 +290,7 @@ add(abstract.input, {
 		for _,id in ipairs({...}) do
 			-- Binary axis
 			if id:match(".+%,.+") then
-				local d1, d2 = abstract.input.buttonDetector(id:match("^(.+)%,(.+)$"))
+				local d1, d2 = uqt.input.buttonDetector(id:match("^(.+)%,(.+)$"))
 				table.insert(ret, function()
 					local b1, b2 = d1(), d2()
 					if b1 and b2 then return 0
@@ -427,7 +427,7 @@ add(abstract.input, {
 		for _,id in ipairs({...}) do
 			-- Binary axis
 			if id:match(".+%,.+") then
-				local b1, b2 = abstract.input.buttonName(id:match("^(.+)%,(.+)$"))
+				local b1, b2 = uqt.input.buttonName(id:match("^(.+)%,(.+)$"))
 				table.insert(ret, b1.." / "..b2)
 			-- Mouse move
 			elseif id:match("^mouse%.move%.") then
@@ -466,31 +466,31 @@ add(abstract.input, {
 })
 
 -- Defaults
-abstract.input.default.pointer:bind(
+uqt.input.default.pointer:bind(
 	{ "absolute", "keyboard.left,keyboard.right", "keyboard.up,keyboard.down" },
 	{ "absolute", "gamepad.axis.1.leftx", "gamepad.axis.1.lefty" }
 )
-abstract.input.default.up:bind(
+uqt.input.default.up:bind(
 	"keyboard.up", "keyboard.w",
 	"gamepad.button.1.dpup", "gamepad.axis.1.lefty%-0.5"
 )
-abstract.input.default.down:bind(
+uqt.input.default.down:bind(
 	"keyboard.down", "keyboard.s",
 	"gamepad.button.1.dpdown", "gamepad.axis.1.lefty%0.5"
 )
-abstract.input.default.right:bind(
+uqt.input.default.right:bind(
 	"keyboard.right", "keyboard.d",
 	"gamepad.button.1.dpright", "gamepad.axis.1.leftx%0.5"
 )
-abstract.input.default.left:bind(
+uqt.input.default.left:bind(
 	"keyboard.left", "keyboard.a",
 	"gamepad.button.1.dpleft", "gamepad.axis.1.leftx%-0.5"
 )
-abstract.input.default.confirm:bind(
+uqt.input.default.confirm:bind(
 	"keyboard.enter", "keyboard.space", "keyboard.lshift", "keyboard.e",
 	"gamepad.button.1.a"
 )
-abstract.input.default.cancel:bind(
+uqt.input.default.cancel:bind(
 	"keyboard.escape", "keyboard.backspace",
 	"gamepad.button.1.b"
 )

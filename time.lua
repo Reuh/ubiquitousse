@@ -1,9 +1,9 @@
--- abstract.time
-local ease = require((...):match("^(.-abstract)%.")..".lib.easing")
+-- ubiquitousse.time
+local ease = require((...):match("^(.-ubiquitousse)%.")..".lib.easing")
 
 --- Time related functions
 local function newTimerRegistry()
-	--- Used to store all the functions delayed with abstract.time.delay
+	--- Used to store all the functions delayed with ubiquitousse.time.delay
 	-- The default implementation use the structure {<key: function> = <value: data table>, ...}
 	-- This table is for internal use and shouldn't be used from an external script.
 	local delayed = {}
@@ -14,9 +14,9 @@ local function newTimerRegistry()
 	local registry
 	registry = {
 		--- Creates and return a new TimerRegistry.
-		-- A TimerRegistry is a separate abstract.time instance: its TimedFunctions will be independant
-		-- from the one registered using abstract.time.run (the global TimerRegistry). If you use the scene
-		-- system, a scene-specific TimerRegistry is available at abstract.scene.current.time.
+		-- A TimerRegistry is a separate ubiquitousse.time instance: its TimedFunctions will be independant
+		-- from the one registered using ubiquitousse.time.run (the global TimerRegistry). If you use the scene
+		-- system, a scene-specific TimerRegistry is available at ubiquitousse.scene.current.time.
 		-- @impl abstract
 		new = function()
 			local new = newTimerRegistry()
@@ -31,7 +31,7 @@ local function newTimerRegistry()
 		get = function() end,
 
 		--- Update all the TimedFunctions calls.
-		-- Supposed to be called in abstract.event.update.
+		-- Supposed to be called in ubiquitousse.event.update.
 		-- @tparam[opt=calculate here] numder dt the delta-time (time spent since last time the function was called) (miliseconds)
 		-- @impl abstract
 		update = function(dt)

@@ -1,4 +1,4 @@
--- abstract
+-- ubiquitousse
 
 --- Abstract Engine.
 -- Main module, containing the abstract things.
@@ -50,9 +50,9 @@
 -- @usage local abstract = require("abstract")
 
 local p = ... -- require path
-local abstract
+local ubiquitousse
 
-abstract = {
+ubiquitousse = {
 	--- Abstract version.
 	-- @impl abstract
 	version = "0.0.1",
@@ -64,12 +64,12 @@ abstract = {
 }
 
 -- We're going to require modules requiring abstract, so to avoid stack overflows we already register the abstract package
-package.loaded[p] = abstract
+package.loaded[p] = ubiquitousse
 
 -- Require external submodules
 for _, m in ipairs({"time", "draw", "audio", "input", "scene", "event"}) do
 	local s, t = pcall(require, p.."."..m)
-	if s then abstract[m] = t end
+	if s then ubiquitousse[m] = t end
 end
 
 -- Backend engine autodetect and load
@@ -79,4 +79,4 @@ elseif package.loaded["ctr"] then
 	require(p..".backend.ctrulua")
 end
 
-return abstract
+return ubiquitousse

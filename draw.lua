@@ -1,5 +1,5 @@
--- abstract.draw
-local abstract = require((...):match("^(.-abstract)%."))
+-- ubiquitousse.draw
+local uqt = require((...):match("^(.-ubiquitousse)%."))
 
 --- The drawing functions: everything that affect the display/window.
 -- The coordinate system used is:
@@ -28,7 +28,7 @@ draw = {
 	-- This function is expected to be only called once, before doing any drawing operation.
 	-- @tparam table params the game parameters
 	-- @usage -- Default values:
-	-- abstract.setup {
+	-- ubiquitousse.init {
 	--   title = "Abstract Engine", -- usually window title
 	--   width = 800, -- in px
 	--   height = 600, -- in px
