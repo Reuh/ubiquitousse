@@ -1,9 +1,9 @@
-project = "Abstract"
-description = "Abstract Game Engine"
-full_description = "A simple Lua game engine, made to run everywhere. See the abstract module for more information."
+project = "Ubiquitousse"
+description = "Ubiquitousse Game Engine"
+full_description = "A simple Lua game engine, made to run everywhere. See the Ubiquitousse module for more information."
 
-title = "Abstract Reference"
-package = "abstract"
+title = "Ubiquitousse Reference"
+package = "ubiquitousse"
 
 file = "./"
 format = "markdown"

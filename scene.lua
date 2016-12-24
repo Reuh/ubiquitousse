@@ -17,8 +17,8 @@ end
 
 --- Scene management.
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
--- This module is fully implemented in abstract and is mostly a "recommended way" of organising an abstract-based game.
--- However, you don't have to use this if you don't want to. ubiquitousse.scene handles all the differents abstract-states and
+-- This module is fully implemented in Ubiquitousse and is mostly a "recommended way" of organising an Ubiquitousse-based game.
+-- However, you don't have to use this if you don't want to. ubiquitousse.scene handles all the differents Ubiquitousse-states and
 -- make them scene-independent, for example by creating a scene-specific TimerRegistry (TimedFunctions that are keept accross
 -- states are generally a bad idea). Theses scene-specific states should be created and available in the table returned by
 -- ubiquitousse.scene.new.
@@ -38,19 +38,19 @@ end
 local scene
 scene = {
 	--- The current scene table.
-	-- @impl abstract
+	-- @impl ubiquitousse
 	current = nil,
 
 	--- The scene stack: list of scene, from the farest one to the nearest.
-	-- @impl abstract
+	-- @impl ubiquitousse
 	stack = {},
 
 	--- A prefix for scene modules names
-	-- @impl abstract
+	-- @impl ubiquitousse
 	prefix = "",
 
 	--- Creates and returns a new Scene object.
-	-- @impl abstract
+	-- @impl ubiquitousse
 	new = function()
 		return {
 			time = time.new(), -- Scene-specific TimerRegistry.
@@ -71,7 +71,7 @@ scene = {
 	-- the current scene will then be replaced by the new one, and then the enter callback is called.
 	-- @tparam string scenePath the new scene module name
 	-- @param ... arguments to pass to the scene's enter function
-	-- @impl abstract
+	-- @impl ubiquitousse
 	switch = function(scenePath, ...)
 		if scene.current then scene.current.exit() end
 		scene.current = dofile(getPath(scene.prefix..scenePath))
@@ -86,7 +86,7 @@ scene = {
 	-- will be reused.
 	-- @tparam string scenePath the new scene module name
 	-- @param ... arguments to pass to the scene's enter function
-	-- @impl abstract
+	-- @impl ubiquitousse
 	push = function(scenePath, ...)
 		if scene.current then scene.current.suspend() end
 		scene.current = dofile(getPath(scene.prefix..scenePath))
@@ -97,7 +97,7 @@ scene = {
 	--- Pop the current scene from the scene stack.
 	-- The current scene exit function will be called, then the previous scene resume function will be called.
 	-- Then the current scene will be removed from the stack, and the previous scene will be set as the current scene.
-	-- @impl abstract
+	-- @impl ubiquitousse
 	pop = function()
 		if scene.current then scene.current.exit() end
 		local previous = scene.stack[#scene.stack-1]
@@ -110,7 +110,7 @@ scene = {
 	-- Should be called in ubiquitousse.event.update.
 	-- @tparam number dt the delta-time (milisecond)
 	-- @param ... arguments to pass to the scene's update function after dt
-	-- @impl abstract
+	-- @impl ubiquitousse
 	update = function(dt, ...)
 		if scene.current then
 			scene.current.time.update(dt)
@@ -121,7 +121,7 @@ scene = {
 	--- Draw the current scene.
 	-- Should be called in ubiquitousse.event.draw.
 	-- @param ... arguments to pass to the scene's draw function
-	-- @impl abstract
+	-- @impl ubiquitousse
 	draw = function(...)
 		if scene.current then scene.current.draw(...) end
 	end

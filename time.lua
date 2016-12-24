@@ -17,7 +17,7 @@ local function newTimerRegistry()
 		-- A TimerRegistry is a separate ubiquitousse.time instance: its TimedFunctions will be independant
 		-- from the one registered using ubiquitousse.time.run (the global TimerRegistry). If you use the scene
 		-- system, a scene-specific TimerRegistry is available at ubiquitousse.scene.current.time.
-		-- @impl abstract
+		-- @impl ubiquitousse
 		new = function()
 			local new = newTimerRegistry()
 			new.get = registry.get
@@ -32,8 +32,8 @@ local function newTimerRegistry()
 
 		--- Update all the TimedFunctions calls.
 		-- Supposed to be called in ubiquitousse.event.update.
-		-- @tparam[opt=calculate here] numder dt the delta-time (time spent since last time the function was called) (miliseconds)
-		-- @impl abstract
+		-- @tparam[opt=calculate here] number dt the delta-time (time spent since last time the function was called) (miliseconds)
+		-- @impl ubiquitousse
 		update = function(dt)
 			if dt then
 				registry.dt = dt
@@ -95,7 +95,7 @@ local function newTimerRegistry()
 		-- The function will receive as first parameter the wait(time) function, which will pause the function execution for time miliseconds.
 		-- @tparam[opt] function func the function to schedule
 		-- @treturn TimedFunction the object
-		-- @impl abstract
+		-- @impl ubiquitousse
 		run = function(func)
 			-- Creates empty function (the TimedFunction may be used for time measure or stuff like that which doesn't need a specific function)
 			func = func or function() end
@@ -159,7 +159,7 @@ local function newTimerRegistry()
 		-- @tparam table to the new values
 		-- @tparam[opt="linear"] string/function method tweening method (string name or the actual function(time, start, change, duration))
 		-- @treturn TimedFunction the object
-		-- @impl abstract
+		-- @impl ubiquitousse
 		tween = function(duration, tbl, to, method)
 			method = method or "linear"
 			method = type(method) == "string" and ease[method] or method
@@ -177,13 +177,13 @@ local function newTimerRegistry()
 		end,
 
 		--- Cancels all the running TimedFunctions.
-		-- @impl abstract
+		-- @impl ubiquitousse
 		clear = function()
 			delayed = {}
 		end,
 
 		--- Time since last update (miliseconds).
-		-- @impl abstract
+		-- @impl ubiquitousse
 		dt = 0
 	}
 

@@ -1,7 +1,7 @@
---- Löve backend 0.0.1 for Abstract.
--- Provides all the Abstract API on a Löve environment.
--- Made for Löve 0.10.1 and abstract 0.0.1.
--- See `abstract` for Abstract API.
+--- Löve backend 0.0.1 for Ubiquitousse.
+-- Provides all the Ubiquitousse API on a Löve environment.
+-- Made for Löve 0.10.1 and Ubiquitousse 0.0.1.
+-- See `ubiquitousse` for Ubiquitousse API.
 
 -- Config
 local useScancodes = true -- Use ScanCodes (layout independant input) instead of KeyConstants (layout dependant) for keyboard input
@@ -19,14 +19,14 @@ local uqt = require((...):match("^(.-ubiquitousse)%."))
 do
 	local function checkCompat(stuffName, expectedVersion, actualVersion)
 		if actualVersion ~= expectedVersion then
-			local txt = ("Abstract Löve backend version "..version.." was made for %s %s but %s is used!\nThings may not work as expected.")
+			local txt = ("Ubiquitousse Löve backend version "..version.." was made for %s %s but %s is used!\nThings may not work as expected.")
 			            :format(stuffName, expectedVersion, actualVersion)
 			print(txt)
 			love.window.showMessageBox("Warning", txt, "warning")
 		end
 	end
-	checkCompat("Löve", "0.10.1", ("%s.%s.%s"):format(love.getVersion()))
-	checkCompat("abstract", "0.0.1", uqt.version)
+	checkCompat("Löve", "0.10.2", ("%s.%s.%s"):format(love.getVersion()))
+	checkCompat("Ubiquitousse", "0.0.1", uqt.version)
 end
 
 -- Redefine all functions in tbl which also are in toAdd, so when used they call the old function (in tbl) and then the new (in toAdd).
@@ -51,7 +51,7 @@ function love.update(dt)
 	-- Value update
 	uqt.draw.fps = love.timer.getFPS()
 
-	-- Stuff defined in abstract.lua
+	-- Stuff defined in ubiquitousse.lua
 	updateDefault(dt*1000)
 
 	-- Callback
@@ -72,7 +72,7 @@ function love.draw()
 		love.graphics.translate(math.floor(winW/2-gameW/2), math.floor(winH/2-gameH/2))
 	end
 
-	-- Stuff defined in abstract.lua
+	-- Stuff defined in ubiquitousse.lua
 	drawDefault()
 
 	-- Callback
@@ -468,23 +468,9 @@ add(uqt.input, {
 -- Defaults
 uqt.input.default.pointer:bind(
 	{ "absolute", "keyboard.left,keyboard.right", "keyboard.up,keyboard.down" },
-	{ "absolute", "gamepad.axis.1.leftx", "gamepad.axis.1.lefty" }
-)
-uqt.input.default.up:bind(
-	"keyboard.up", "keyboard.w",
-	"gamepad.button.1.dpup", "gamepad.axis.1.lefty%-0.5"
-)
-uqt.input.default.down:bind(
-	"keyboard.down", "keyboard.s",
-	"gamepad.button.1.dpdown", "gamepad.axis.1.lefty%0.5"
-)
-uqt.input.default.right:bind(
-	"keyboard.right", "keyboard.d",
-	"gamepad.button.1.dpright", "gamepad.axis.1.leftx%0.5"
-)
-uqt.input.default.left:bind(
-	"keyboard.left", "keyboard.a",
-	"gamepad.button.1.dpleft", "gamepad.axis.1.leftx%-0.5"
+	{ "absolute", "keyboard.a,keyboard.d", "keyboard.w,keyboard.s" },
+	{ "absolute", "gamepad.axis.1.leftx", "gamepad.axis.1.lefty" },
+	{ "absolute", "gamepad.button.1.dpleft,gamepad.button.1.dpright", "gamepad.button.1.dpup,gamepad.button.1.dpdown"}
 )
 uqt.input.default.confirm:bind(
 	"keyboard.enter", "keyboard.space", "keyboard.lshift", "keyboard.e",

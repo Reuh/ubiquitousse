@@ -3,7 +3,7 @@ local uqt = require((...):match("^(.-ubiquitousse)%."))
 
 --- The drawing functions: everything that affect the display/window.
 -- The coordinate system used is:
--- 
+--
 --  (0,0) +---> (x)
 --        |
 --        |
@@ -14,9 +14,9 @@ local uqt = require((...):match("^(.-ubiquitousse)%."))
 local draw
 draw = {
 	--- Initial game view paramters (some defaults).
-	-- @impl abstract
+	-- @impl ubiquitousse
 	params = {
-		title = "Abstract Engine",
+		title = "Ubiquitousse Game",
 		width = 800,
 		height = 600,
 		resizable = false,
@@ -29,7 +29,7 @@ draw = {
 	-- @tparam table params the game parameters
 	-- @usage -- Default values:
 	-- ubiquitousse.init {
-	--   title = "Abstract Engine", -- usually window title
+	--   title = "Ubiquitousse Game", -- usually window title
 	--   width = 800, -- in px
 	--   height = 600, -- in px
 	--   resizable = false, -- can the game be resized?
