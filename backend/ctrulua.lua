@@ -91,7 +91,7 @@ add(uqt.input, {
 				error("Unknown button identifier: "..id)
 			end
 		end
-		return unpack(ret)
+		return table.unpack(ret)
 	end,
 
 	axisDetector = function(...)
@@ -197,7 +197,7 @@ add(uqt.input, {
 				error("Unknown axis identifier: "..id)
 			end
 		end
-		return unpack(ret)
+		return table.unpack(ret)
 	end,
 
 	buttonsInUse = function(threshold)
@@ -249,7 +249,7 @@ add(uqt.input, {
 				table.insert(ret, id)
 			end
 		end
-		return unpack(ret)
+		return table.unpack(ret)
 	end,
 
 	axisName = function(...)
@@ -311,7 +311,7 @@ add(uqt.input, {
 				table.insert(ret, id)
 			end
 		end
-		return unpack(ret)
+		return table.unpack(ret)
 	end
 })
 
