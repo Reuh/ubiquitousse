@@ -30,12 +30,17 @@ do
 end
 
 -- Redefine all functions in tbl which also are in toAdd, so when used they call the old function (in tbl) and then the new (in toAdd).
+-- Functions with names prefixed by a exclamation mark will overwrite the old function.
 local function add(tbl, toAdd)
 	for k,v in pairs(toAdd) do
 		local old = tbl[k]
-		tbl[k] = function(...)
-			old(...)
-			return v(...)
+		if k:sub(1,1) == "!" then
+			tbl[k] = v
+		else
+			tbl[k] = function(...)
+				old(...)
+				return v(...)
+			end
 		end
 	end
 end
@@ -48,9 +53,6 @@ if uqt.event then
 local updateDefault = uqt.event.update
 uqt.event.update = function() end
 function love.update(dt)
-	-- Value update
-	uqt.draw.fps = love.timer.getFPS()
-
 	-- Stuff defined in ubiquitousse.lua
 	updateDefault(dt*1000)
 
@@ -93,6 +95,9 @@ add(uqt.draw, {
 			resizable = p.resizable
 		})
 	end,
+	fps = function()
+		return love.timer.getFPS()
+	end,
 	color = function(r, g, b, a)
 		love.graphics.setColor(r, g, b, a)
 	end,
@@ -100,16 +105,34 @@ add(uqt.draw, {
 		love.graphics.setFont(defaultFont)
 		love.graphics.print(text, x, y)
 	end,
-	line = function(x1, y1, x2, y2)
-		love.graphics.line(x1, y1, x2, y2)
+	lineWidth = function(width)
+		love.graphics.setLineWidth(width)
 	end,
-	rectangle = function(x, y, width, height)
+	line = function(x1, y1, x2, y2, ...)
+		love.graphics.line(x1, y1, x2, y2, ...)
+	end,
+	polygon = function(...)
+		love.graphics.polygon("fill", ...)
+	end,
+	linedPolygon = function(...)
+		love.graphics.polygon("line", ...)
+	end,
+	["!rectangle"] = function(x, y, width, height)
 		love.graphics.rectangle("fill", x, y, width, height)
+	end,
+	["!linedRectangle"] = function(x, y, width, height)
+		love.graphics.rectangle("line", x, y, width, height)
+	end,
+	circle = function(x, y, radius)
+		love.graphics.circle("fill", x, y, radius)
+	end,
+	linedCircle = function(x, y, radius)
+		love.graphics.circle("line", x, y, radius)
 	end,
 	scissor = function(x, y, width, height)
 		love.graphics.setScissor(x, y, width, height)
 	end,
-	-- TODO: doc
+	-- TODO: cf draw.lua
 	image = function(filename)
 		local img = love.graphics.newImage(filename)
 		return {
@@ -144,7 +167,7 @@ end
 -- uqt.audio
 if uqt.audio then
 add(uqt.audio, {
-	-- TODO: doc
+	-- TODO: cf audio.lua
 	load = function(filepath)
 		local audio = love.audio.newSource(filepath)
 		return {
@@ -199,18 +222,6 @@ function love.mousemoved(x, y, dx, dy)
 	if dx ~= 0 then axesInUse["mouse.move.x"] = dx/love.graphics.getWidth() end
 	if dy ~= 0 then axesInUse["mouse.move.y"] = dy/love.graphics.getHeight() end
 end
--- love.wheelmoved doesn't trigger when the wheel stop moving, so we need to clear up our stuff after love.update (so in love.draw)
-add(love, {
-	draw = function()
-		buttonsInUse["mouse.wheel.up"] = nil
-		buttonsInUse["mouse.wheel.down"] = nil
-		buttonsInUse["mouse.wheel.right"] = nil
-		buttonsInUse["mouse.wheel.left"] = nil
-		-- Same for mouse axis
-		axesInUse["mouse.move.x"] = nil
-		axesInUse["mouse.move.y"] = nil
-	end
-})
 function love.gamepadpressed(joystick, button)
 	buttonsInUse["gamepad.button."..joystick:getID().."."..button] = true
 end
@@ -228,6 +239,17 @@ end
 love.mouse.setVisible(false)
 
 add(uqt.input, {
+	-- love.wheelmoved doesn't trigger when the wheel stop moving, so we need to clear up our stuff at each update
+	update = function()
+		buttonsInUse["mouse.wheel.up"] = nil
+		buttonsInUse["mouse.wheel.down"] = nil
+		buttonsInUse["mouse.wheel.right"] = nil
+		buttonsInUse["mouse.wheel.left"] = nil
+		-- Same for mouse axis
+		axesInUse["mouse.move.x"] = nil
+		axesInUse["mouse.move.y"] = nil
+	end,
+
 	buttonDetector = function(...)
 		local ret = {}
 		for _,id in ipairs({...}) do
@@ -356,7 +378,7 @@ add(uqt.input, {
 
 	buttonsInUse = function(threshold)
 		local r = {}
-		local threshold = threshold or 0.5
+		threshold = threshold or 0.5
 		for b in pairs(buttonsInUse) do
 			table.insert(r, b)
 		end
@@ -370,7 +392,7 @@ add(uqt.input, {
 
 	axesInUse = function(threshold)
 		local r = {}
-		local threshold = threshold or 0.5
+		threshold = threshold or 0.5
 		for b,v in pairs(axesInUse) do
 			if math.abs(v) > threshold then
 				table.insert(r, b.."%"..threshold)
@@ -416,7 +438,7 @@ add(uqt.input, {
 					table.insert(ret, ("Gamepad %s axis %s (deadzone %s%%)"):format(gid, axis, math.abs(threshold*100)))
 				end
 			else
-				table.insert(r, id)
+				table.insert(ret, id)
 			end
 		end
 		return unpack(ret)
@@ -429,13 +451,13 @@ add(uqt.input, {
 			if id:match(".+%,.+") then
 				local b1, b2 = uqt.input.buttonName(id:match("^(.+)%,(.+)$"))
 				table.insert(ret, b1.." / "..b2)
-			-- Mouse move
+			-- Mouse movement
 			elseif id:match("^mouse%.move%.") then
 				local axis, threshold = id:match("^mouse%.move%.(.+)%%(.+)$")
 				if not axis then axis = id:match("^mouse%.move%.(.+)$") end -- no threshold (=0)
 				threshold = tonumber(threshold) or 0
 				table.insert(ret, ("Mouse %s movement (threshold %s%%)"):format(axis, math.abs(threshold*100)))
-			-- Mouse move
+			-- Mouse position
 			elseif id:match("^mouse%.position%.") then
 				local axis, threshold = id:match("^mouse%.position%.(.+)%%(.+)$")
 				if not axis then axis = id:match("^mouse%.position%.(.+)$") end -- no threshold (=0)
@@ -458,7 +480,7 @@ add(uqt.input, {
 					table.insert(ret, ("Gamepad %s axis %s (deadzone %s%%)"):format(gid, axis, math.abs(threshold*100)))
 				end
 			else
-				table.insert(r, id)
+				table.insert(ret, id)
 			end
 		end
 		return unpack(ret)

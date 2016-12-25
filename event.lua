@@ -5,7 +5,8 @@ local scene = require((...):match("^(.-ubiquitousse)%.")..".scene")
 
 --- The events: callback functions that will be called when something interesting occurs.
 -- Theses are expected to be redefined in the game.
--- For backend writers: if they already contain code, then this code has to be called on each call.
+-- For backend writers: if they already contain code, then this code has to be called on each call, even
+-- if the user manually redefines them.
 -- @usage -- in the game's code
 -- ubiquitousse.event.draw = function()
 --   ubiquitousse.draw.text(5, 5, "Hello world")

@@ -12,9 +12,6 @@ local function getPath(modname)
 	return filepath
 end
 
--- FIXME: http://hump.readthedocs.io/en/latest/gamestate.html
--- FIXME: call order
-
 --- Scene management.
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
 -- This module is fully implemented in Ubiquitousse and is mostly a "recommended way" of organising an Ubiquitousse-based game.
@@ -22,19 +19,17 @@ end
 -- make them scene-independent, for example by creating a scene-specific TimerRegistry (TimedFunctions that are keept accross
 -- states are generally a bad idea). Theses scene-specific states should be created and available in the table returned by
 -- ubiquitousse.scene.new.
--- Currently, the implementation always execute a scene's file before setting it as current, but this may change in the future or
--- for some implementations (e.g., on a computer where memory isn't a problem, the scene may be put in a cache). The result of this
--- is that you can load assets, libraries, etc. outside of the enter callback, so they can be cached and not reloaded each time
+-- Currently, the implementation always execute a scene's file before switching to it or adding it to the stack, but this may change in
+-- the future or for some implementations (e.g., on a computer where memory isn't a problem, the scene may be put in a cache). The result
+-- of this is that you can load assets, libraries, etc. outside of the enter callback, so they can be cached and not reloaded each time
 -- the scene is entered, but all the other scene initialization should be done in the enter callback, since it won't be executed on
 -- each enter otherwise.
 -- The expected code-organisation is:
 -- * each scene is in a file, identified by its module name (same identifier used by Lua's require)
 -- * each scene file create a new scene table using ubiquitousse.scene.new and returns it at the end of the file
 -- Order of callbacks:
--- * all scene exit callbacks are called before changing the stack or the current scene (ie, ubiquitousse.scene.current and the
---   last stack element is the scene in which the exit or suspend function was called)
--- * all scene enter callbacks are called before changing the stack or the current scene (ie, ubiquitousse.scene.current and the
---   last stack element is the previous scene which was just exited, and not the new scene)
+-- * all scene change callbacks are called after setting scene.current to the new scene but before changing scene.stack
+-- * all scene exit/suspend callbacks are called before scene enter/resume callbacks
 local scene
 scene = {
 	--- The current scene table.
@@ -53,31 +48,35 @@ scene = {
 	-- @impl ubiquitousse
 	new = function()
 		return {
+			name = "loading scene", -- The scene name.
+
 			time = time.new(), -- Scene-specific TimerRegistry.
 
-			enter = function(...) end, -- Called when entering a scene.
-			exit = function() end, -- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
+			enter = function(self, ...) end, -- Called when entering a scene.
+			exit = function(self) end, -- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
 
-			suspend = function() end, -- Called when suspending a scene, and expecting to come back (scene won't be unloaded).
-			resume = function() end, -- Called when resuming a suspended scene (after calling suspend).
+			suspend = function(self) end, -- Called when suspending a scene, and expecting to come back (scene won't be unloaded).
+			resume = function(self) end, -- Called when resuming a suspended scene (after calling suspend).
 
-			update = function(dt, ...) end, -- Called on each ubiquitousse.event.update on the current scene.
-			draw = function(...) end -- Called on each ubiquitousse.event.draw on the current scene.
+			update = function(self, dt, ...) end, -- Called on each ubiquitousse.event.update on the current scene.
+			draw = function(self, ...) end -- Called on each ubiquitousse.event.draw on the current scene.
 		}
 	end,
 
 	--- Switch to a new scene.
-	-- The current scene exit function will be called, the new scene will be loaded,
-	-- the current scene will then be replaced by the new one, and then the enter callback is called.
+	-- The new scene will be loaded and the current scene will be replaced by the new one,
+	-- then the previous scene exit function will be called, then the enter callback is called on the new scence.
+	-- Then the stack is changed to replace the old scene with the new one.
 	-- @tparam string scenePath the new scene module name
 	-- @param ... arguments to pass to the scene's enter function
 	-- @impl ubiquitousse
 	switch = function(scenePath, ...)
-		if scene.current then scene.current.exit() end
+		local previous = scene.current
 		scene.current = dofile(getPath(scene.prefix..scenePath))
-		local i = #scene.stack
-		scene.stack[math.max(i, 1)] = scene.current
-		scene.current.enter(...)
+		scene.current.name = scenePath
+		if previous then previous:exit() end
+		scene.current:enter(...)
+		scene.stack[math.max(#scene.stack, 1)] = scene.current
 	end,
 
 	--- Push a new scene to the scene stack.
@@ -88,21 +87,23 @@ scene = {
 	-- @param ... arguments to pass to the scene's enter function
 	-- @impl ubiquitousse
 	push = function(scenePath, ...)
-		if scene.current then scene.current.suspend() end
+		local previous = scene.current
 		scene.current = dofile(getPath(scene.prefix..scenePath))
+		scene.current.name = scenePath
+		if previous then previous:suspend() end
+		scene.current:enter(...)
 		table.insert(scene.stack, scene.current)
-		scene.current.enter(...)
 	end,
 
 	--- Pop the current scene from the scene stack.
-	-- The current scene exit function will be called, then the previous scene resume function will be called.
-	-- Then the current scene will be removed from the stack, and the previous scene will be set as the current scene.
+	-- The previous scene will be set as the current scene, then the current scene exit function will be called,
+	-- then the previous scene resume function will be called, and then the current scene will be removed from the stack.
 	-- @impl ubiquitousse
 	pop = function()
-		if scene.current then scene.current.exit() end
-		local previous = scene.stack[#scene.stack-1]
-		scene.current = previous
-		if previous then previous.resume() end
+		local previous = scene.current
+		scene.current = scene.stack[#scene.stack-1]
+		if previous then previous:exit() end
+		if scene.current then scene.current:resume() end
 		table.remove(scene.stack)
 	end,
 
@@ -114,7 +115,7 @@ scene = {
 	update = function(dt, ...)
 		if scene.current then
 			scene.current.time.update(dt)
-			scene.current.update(dt, ...)
+			scene.current:update(dt, ...)
 		end
 	end,
 
@@ -123,7 +124,7 @@ scene = {
 	-- @param ... arguments to pass to the scene's draw function
 	-- @impl ubiquitousse
 	draw = function(...)
-		if scene.current then scene.current.draw(...) end
+		if scene.current then scene.current:draw(...) end
 	end
 }
 

@@ -11,19 +11,30 @@
 --
 -- For backend writers:
 -- If a function defined here already contains some code, this means this code is mandatory and you must put/call
--- it in your implementation.
+-- it in your implementation (except if the backend provides a more efficient implementation).
 -- Also, a backend file shouldn't redefine the ubiquitousse table itself but only redefine the backend-dependant fields.
--- The API doesn't make the difference between numbers and integers, so convert to integers when needed.
+-- Lua 5.3: The API doesn't make the difference between numbers and integers, so convert to integers when needed.
+--
+-- For game writer:
+-- Ubiquitousse works with Lua 5.1 to 5.3, including LuaJit, but doesn't provide any version checking or compatibility layer
+-- between the different versions, so it's up to you to handle that in your game (or ignore the problem and sticks to your
+-- main's backend Lua version).
 --
 -- Ubiquitousse's goal is to run everywhere with the least porting effort possible.
 -- To achieve this, the engine needs to stay simple, and only provide features that are almost sure to be
 -- available everywhere, so writing a backend should be straighforward.
--- However, Ubiquitousse still make some small assumptions about the engine:
--- * The engine has some kind of main loop, or at least a function called very often (may or may not be the
---   same as the redraw screen callback).
--- * 32bit color depth.
 --
--- Regarding data formats, Ubiquitousse reference implemtations expect and recommend:
+-- However, a full Ubiquitousse backend still have a few requirement about the destination platform:
+-- * The backend needs to have access to some kind of main loop, or at least a function called very often (may or may not be the
+--   same as the redraw screen callback).
+-- * A 2D matrix graphic output with 32bit RGB color depth.
+-- * Inputs which match ubiquitousse.input.default (a pointing/4 direction input, a confirm button, and a cancel button).
+-- * Some way of measuring time with millisecond-precision.
+-- * Some kind of filesystem.
+-- * An available audio output would be preferable.
+-- * Lua 5.1, 5.2, 5.3 or LuaJit.
+--
+-- Regarding data formats, Ubiquitousse implementations expect and recommend:
 -- * For images, PNG support is expected.
 -- * For audio files, OGG Vorbis support is expected.
 -- * For fonts, TTF support is expected.
@@ -46,6 +57,10 @@
 -- * mixed: partly implemented in Ubiquitousse but must be complemeted in backend
 -- * ubiquitousse: fully-working version in Ubiquitousse, may or may not be redefined in backend
 -- The implementation level is indicated using the "@impl level" annotation.
+--
+-- Regarding the documentation: Ubiquitousse used LDoc/LuaDoc styled-comments, but since LDoc hates me and my code, the
+-- generated result is complete garbage, so please read the documentation directly in the comments here.
+-- Stuff you're interested in starts with triple - (e.g., "--- This functions saves the world").
 --
 -- @usage local ubiquitousse = require("ubiquitousse")
 

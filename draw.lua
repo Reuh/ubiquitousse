@@ -11,6 +11,8 @@ local uqt = require((...):match("^(.-ubiquitousse)%."))
 --
 -- x and y values can be float, so make sure to perform math.floor if your engine only support
 -- integer coordinates.
+--
+-- Mostly plagiarized from the Löve API, with some parts from ctrµLua.
 local draw
 draw = {
 	--- Initial game view paramters (some defaults).
@@ -46,9 +48,10 @@ draw = {
 		draw.height = params.height
 	end,
 
-	--- Frames per second (the backend should update this value).
+	--- Return the number of frames per second.
+	-- @treturn number the current FPS
 	-- @impl backend
-	fps = 60,
+	fps = function() end,
 
 	--- Sets the drawing color
 	-- @tparam number r the red component (0-255)
@@ -65,21 +68,63 @@ draw = {
 	-- @impl backend
 	text = function(x, y, text) end,
 
+	--- Sets the width.
+	-- @tparam number width the line width
+	-- @impl backend
+	lineWidth = function(width) end,
+
 	--- Draws a line.
 	-- @tparam number x1 line start x coordinate
 	-- @tparam number y1 line start y coordinate
 	-- @tparam number x2 line end x coordinate
 	-- @tparam number y2 line end y coordinate
+	-- @tparam number ... other vertices to continue drawing a polyline
 	-- @impl backend
-	line = function(x1, y1, x2, y2) end,
+	line = function(x1, y1, x2, y2, ...) end,
 
-	--- Draws a filled rectangle
+	--- Draws a filled polygon.
+	-- @tparam number x1,y1,x2,y2... the vertices of the polygon
+	-- @impl backend
+	polygon = function(...) end,
+
+	--- Draws a polygon outline.
+	-- @tparam number x1,y1,x2,y2... the vertices of the polygon
+	-- @impl backend
+	linedPolygon = function(...) end,
+
+	--- Draws a filled rectangle.
 	-- @tparam number x rectangle top-left x coordinate
 	-- @tparam number y rectangle top-left x coordinate
 	-- @tparam number width rectangle width
 	-- @tparam number height rectangle height
+	-- @impl ubiquitousse
+	rectangle = function(x, y, width, height)
+		draw.polygon(x, y, x + width, y, x + width, y + height, x, y + height)
+	end,
+
+	--- Draws a rectangle outline.
+	-- @tparam number x rectangle top-left x coordinate
+	-- @tparam number y rectangle top-left x coordinate
+	-- @tparam number width rectangle width
+	-- @tparam number height rectangle height
+	-- @impl ubiquitousse
+	linedRectangle = function(x, y, width, height)
+		draw.linedPolygon(x, y, x + width, y, x + width, y + height, x, y + height)
+	end,
+
+	--- Draws a filled circle.
+	-- @tparam number x center x coordinate
+	-- @tparam number y center x coordinate
+	-- @tparam number radius circle radius
 	-- @impl backend
-	rectangle = function(x, y, width, height) end,
+	circle = function(x, y, radius) end,
+
+	--- Draws a circle outline.
+	-- @tparam number x center x coordinate
+	-- @tparam number y center x coordinate
+	-- @tparam number radius circle radius
+	-- @impl backend
+	linedCircle = function(x, y, radius) end,
 
 	--- Enables the scissor test.
 	-- When enabled, every pixel drawn outside of the scissor rectangle is discarded.
@@ -102,9 +147,9 @@ draw = {
 	-- TODO: doc & api
 	push = function() end,
 	pop = function() end,
-	polygon = function(...) end,
-	circle = function(x, y, radius) end,
 	translate = function(x, y) end,
+	rotate = function(angle) end,
+	scale = function(sx, sy) end,
 	font = function(filename) end,
 	image = function(filename) end,
 }
