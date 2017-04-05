@@ -165,6 +165,11 @@ function love.resize(width, height)
 		uqt.draw.height = height
 	end
 end
+elseif uqt.input then -- fields required by uqt.input
+	uqt.draw = {
+		width = love.graphics.getWidth(),
+		height = love.graphics.getHeight()
+	}
 end
 
 -- uqt.audio

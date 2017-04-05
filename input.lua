@@ -1,6 +1,6 @@
 -- ubiquitousse.input
 local uqt = require((...):match("^(.-ubiquitousse)%."))
-local draw = require((...):match("^(.-ubiquitousse)%.")..".draw")
+local draw = uqt.draw
 
 --- Used to store inputs which were updated this frame
 -- { Input: true, ... }

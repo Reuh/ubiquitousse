@@ -1,7 +1,8 @@
 -- ubiquitousse.event
-local input = require((...):match("^(.-ubiquitousse)%.")..".input")
-local time = require((...):match("^(.-ubiquitousse)%.")..".time")
-local scene = require((...):match("^(.-ubiquitousse)%.")..".scene")
+local uqt = require((...):match("^(.-ubiquitousse)%."))
+local input = uqt.input
+local time = uqt.time
+local scene = uqt.scene
 
 --- The events: callback functions that will be called when something interesting occurs.
 -- Theses are expected to be redefined in the game.
@@ -16,15 +17,15 @@ return {
 	-- @tparam number dt time since last call, in miliseconds
 	-- @impl mixed
 	update = function(dt)
-		input.update(dt)
-		time.update(dt)
-		scene.update(dt)
+		if input then input.update(dt) end
+		if time then time.update(dt) end
+		if scene then scene.update(dt) end
 	end,
 
 	--- Called each time the game expect a new frame to be drawn.
 	-- The screen is expected to be cleared since last frame.
 	-- @impl backend
 	draw = function()
-		scene.draw()
+		if scene then scene.draw() end
 	end
 }

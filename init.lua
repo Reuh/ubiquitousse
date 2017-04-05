@@ -58,6 +58,10 @@
 -- * ubiquitousse: fully-working version in Ubiquitousse, may or may not be redefined in backend
 -- The implementation level is indicated using the "@impl level" annotation.
 --
+-- Some Ubiquitousse modules require parts of other modules to work. Because every module should work when all the others are
+-- disabled, the backend may need to provide defaults values for a few fields in disabled modules required by an enabled one.
+-- Thoses fields are indicated with "@requiredby module" annotations.
+--
 -- Regarding the documentation: Ubiquitousse used LDoc/LuaDoc styled-comments, but since LDoc hates me and my code, the
 -- generated result is complete garbage, so please read the documentation directly in the comments here.
 -- Stuff you're interested in starts with triple - (e.g., "--- This functions saves the world").

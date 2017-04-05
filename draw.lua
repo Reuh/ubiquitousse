@@ -1,5 +1,4 @@
 -- ubiquitousse.draw
-local uqt = require((...):match("^(.-ubiquitousse)%."))
 
 --- The drawing functions: everything that affect the display/window.
 -- The coordinate system used is:
@@ -144,10 +143,12 @@ draw = {
 	scissor = function(x, y, width, height) end,
 
 	--- The drawing area width, in pixels.
+	-- @requiredby input
 	-- @impl backend
 	width = 800,
 
 	--- The drawing area height, in pixels.
+	-- @requiredby input
 	-- @impl backend
 	height = 600,
 
