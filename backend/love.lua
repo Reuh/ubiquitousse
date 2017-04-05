@@ -14,6 +14,7 @@ local version = "0.0.1"
 
 -- Require stuff
 local uqt = require((...):match("^(.-ubiquitousse)%."))
+local m = uqt.module
 
 -- Version compatibility warning
 do
@@ -49,7 +50,7 @@ end
 uqt.backend = "love"
 
 -- uqt.event
-if uqt.event then
+if m.event then
 local updateDefault = uqt.event.update
 uqt.event.update = function() end
 function love.update(dt)
@@ -63,15 +64,17 @@ end
 local drawDefault = uqt.event.draw
 uqt.event.draw = function() end
 function love.draw()
-	love.graphics.push()
+	if m.draw then
+		love.graphics.push()
 
-	-- Resize type
-	local winW, winH = love.graphics.getWidth(), love.graphics.getHeight()
-	local gameW, gameH = uqt.draw.params.width, uqt.draw.params.height
-	if uqt.draw.params.resizeType == "auto" then
-		love.graphics.scale(winW/gameW, winH/gameH)
-	elseif uqt.draw.params.resizeType == "center" then
-		love.graphics.translate(math.floor(winW/2-gameW/2), math.floor(winH/2-gameH/2))
+		-- Resize type
+		local winW, winH = love.graphics.getWidth(), love.graphics.getHeight()
+		local gameW, gameH = uqt.draw.params.width, uqt.draw.params.height
+		if uqt.draw.params.resizeType == "auto" then
+			love.graphics.scale(winW/gameW, winH/gameH)
+		elseif uqt.draw.params.resizeType == "center" then
+			love.graphics.translate(math.floor(winW/2-gameW/2), math.floor(winH/2-gameH/2))
+		end
 	end
 
 	-- Stuff defined in ubiquitousse.lua
@@ -80,12 +83,14 @@ function love.draw()
 	-- Callback
 	uqt.event.draw()
 
-	love.graphics.pop()
+	if m.draw then
+		love.graphics.pop()
+	end
 end
 end
 
 -- uqt.draw
-if uqt.draw then
+if m.draw then
 local defaultFont = love.graphics.getFont()
 add(uqt.draw, {
 	init = function(params)
@@ -165,7 +170,7 @@ function love.resize(width, height)
 		uqt.draw.height = height
 	end
 end
-elseif uqt.input then -- fields required by uqt.input
+elseif m.input then -- fields required by uqt.input
 	uqt.draw = {
 		width = love.graphics.getWidth(),
 		height = love.graphics.getHeight()
@@ -173,7 +178,7 @@ elseif uqt.input then -- fields required by uqt.input
 end
 
 -- uqt.audio
-if uqt.audio then
+if m.audio then
 add(uqt.audio, {
 	-- TODO: cf audio.lua
 	load = function(filepath)
@@ -188,7 +193,7 @@ add(uqt.audio, {
 end
 
 -- uqt.time
-if uqt.time then
+if m.time then
 add(uqt.time, {
 	get = function()
 		return love.timer.getTime()
@@ -197,7 +202,7 @@ add(uqt.time, {
 end
 
 -- uqt.input
-if uqt.input then
+if m.input then
 local buttonsInUse = {}
 local axesInUse = {}
 function love.keypressed(key, scancode, isrepeat)

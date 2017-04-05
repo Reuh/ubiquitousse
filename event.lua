@@ -1,5 +1,6 @@
 -- ubiquitousse.event
 local uqt = require((...):match("^(.-ubiquitousse)%."))
+local m = uqt.module
 local input = uqt.input
 local time = uqt.time
 local scene = uqt.scene
@@ -17,15 +18,15 @@ return {
 	-- @tparam number dt time since last call, in miliseconds
 	-- @impl mixed
 	update = function(dt)
-		if input then input.update(dt) end
-		if time then time.update(dt) end
-		if scene then scene.update(dt) end
+		if m.input then input.update(dt) end
+		if m.time then time.update(dt) end
+		if m.scene then scene.update(dt) end
 	end,
 
 	--- Called each time the game expect a new frame to be drawn.
 	-- The screen is expected to be cleared since last frame.
 	-- @impl backend
 	draw = function()
-		if scene then scene.draw() end
+		if m.scene then scene.draw() end
 	end
 }

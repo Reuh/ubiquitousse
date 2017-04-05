@@ -1,5 +1,6 @@
 -- ubiquitousse.scene
 local uqt = require((...):match("^(.-ubiquitousse)%."))
+local m = uqt.module
 local time = uqt.time
 
 --- Returns the file path of the given module name.
@@ -52,7 +53,7 @@ scene = {
 		return {
 			name = name or "unamed", -- The scene name.
 
-			time = time and time.new(), -- Scene-specific TimerRegistry, if uqt.time is enabled.
+			time = m.time and time.new(), -- Scene-specific TimerRegistry, if uqt.time is enabled.
 
 			enter = function(self, ...) end, -- Called when entering a scene.
 			exit = function(self) end, -- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
@@ -116,7 +117,7 @@ scene = {
 	-- @impl ubiquitousse
 	update = function(dt, ...)
 		if scene.current then
-			if time then scene.current.time.update(dt) end
+			if m.time then scene.current.time.update(dt) end
 			scene.current:update(dt, ...)
 		end
 	end,

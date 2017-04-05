@@ -76,6 +76,17 @@ ubiquitousse = {
 	-- @impl ubiquitousse
 	version = "0.0.1",
 
+	--- Table of enabled modules.
+	-- @impl ubiquitousse
+	module = {
+		time = false,
+		draw = false,
+		audio = false,
+		input = false,
+		scene = false,
+		event = false
+	},
+
 	--- Backend name.
 	-- For consistency, only use lowercase letters [a-z] (no special char)
 	-- @impl backend
@@ -86,9 +97,12 @@ ubiquitousse = {
 package.loaded[p] = ubiquitousse
 
 -- Require external submodules
-for _, m in ipairs({"time", "draw", "audio", "input", "scene", "event"}) do
+for m in pairs(ubiquitousse.module) do
 	local s, t = pcall(require, p.."."..m)
-	if s then ubiquitousse[m] = t end
+	if s then
+		ubiquitousse[m] = t
+		ubiquitousse.module[m] = true
+	end
 end
 
 -- Backend engine autodetect and load
