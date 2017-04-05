@@ -68,6 +68,13 @@ draw = {
 	-- @impl backend
 	text = function(x, y, text) end,
 
+	--- Draws a point.
+	-- @tparam number x point x coordinate
+	-- @tparam number y point y coordinate
+	-- @tparam number ... other vertices to draw other points
+	-- @impl backend
+	point = function(x, y, ...) end,
+
 	--- Sets the width.
 	-- @tparam number width the line width
 	-- @impl backend
@@ -153,5 +160,9 @@ draw = {
 	font = function(filename) end,
 	image = function(filename) end,
 }
+
+-- TODO: canvas stuff ; also make everything here actually be shortcut to draw to the game's framebuffer.
+-- TODO: add software implementations of everything.
+-- TODO: add function to draw a message (used eg for the error message when there is a version mismatch)
 
 return draw

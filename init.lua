@@ -31,7 +31,7 @@
 -- * Inputs which match ubiquitousse.input.default (a pointing/4 direction input, a confirm button, and a cancel button).
 -- * Some way of measuring time with millisecond-precision.
 -- * Some kind of filesystem.
--- * An available audio output would be preferable.
+-- * An available audio output would be preferable but optional.
 -- * Lua 5.1, 5.2, 5.3 or LuaJit.
 --
 -- Regarding data formats, Ubiquitousse implementations expect and recommend:
@@ -92,6 +92,8 @@ if love then
 	require(p..".backend.love")
 elseif package.loaded["ctr"] then
 	require(p..".backend.ctrulua")
+elseif package.loaded["libretro"] then
+	error("NYI")
 end
 
 return ubiquitousse

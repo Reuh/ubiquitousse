@@ -51,10 +51,19 @@ end
 uqt.backend = "ctrulua"
 
 -- uqt.event: TODO
+if uqt.event then
+	error("uqt.event: NYI")
+end
 
 -- uqt.draw: TODO
+if uqt.draw then
+	error("uqt.draw: NYI")
+end
 
 -- uqt.audio: TODO
+if uqt.audio then
+	error("uqt.audio: NYI")
+end
 
 -- uqt.time
 if uqt.time then

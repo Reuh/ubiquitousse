@@ -45,10 +45,11 @@ scene = {
 	prefix = "",
 
 	--- Creates and returns a new Scene object.
+	-- @tparam[opt="unamed"] string name the new scene name
 	-- @impl ubiquitousse
-	new = function()
+	new = function(name)
 		return {
-			name = "loading scene", -- The scene name.
+			name = name or "unamed", -- The scene name.
 
 			time = time.new(), -- Scene-specific TimerRegistry.
 

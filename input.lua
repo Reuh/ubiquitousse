@@ -480,4 +480,10 @@ input.default.pointer = input.pointer()
 input.default.confirm = input.button()
 input.default.cancel = input.button()
 
+-- TODO: some key selection helper? Will be backend-implemented, to account for all the possible input methods.
+-- TODO: some way to list all possible input / outputs, or make the *inUse make some separation between inputs indiscutitably in use and those who are incertain.
+-- TODO: outputs ! (rumble, lights, I don't know)
+-- TODO: other, optional, default/generic inputs, and a way to know if they are binded.
+-- TODO: multiplayer input helpers? something like getting the same input for different players, or default inputs for different players
+
 return input

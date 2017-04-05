@@ -105,6 +105,9 @@ add(uqt.draw, {
 		love.graphics.setFont(defaultFont)
 		love.graphics.print(text, x, y)
 	end,
+	point = function(x, y, ...)
+		love.graphics.points(x, y, ...)
+	end,
 	lineWidth = function(width)
 		love.graphics.setLineWidth(width)
 	end,
