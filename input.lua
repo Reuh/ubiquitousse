@@ -1,6 +1,5 @@
 -- ubiquitousse.input
 local uqt = require((...):match("^(.-ubiquitousse)%."))
-local draw = uqt.draw
 
 --- Used to store inputs which were updated this frame
 -- { Input: true, ... }
@@ -263,6 +262,7 @@ input = {
 	-- @tretrun PointerInput the object
 	-- @impl ubiquitousse
 	pointer = function(...)
+		local draw = uqt.draw -- requires width and height
 		local pointers = {} -- pointers list
 		local x, y = 0, 0 -- pointer position
 		local width, height = 1, 1 -- half-dimensions of the movement area

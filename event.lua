@@ -1,9 +1,6 @@
 -- ubiquitousse.event
 local uqt = require((...):match("^(.-ubiquitousse)%."))
 local m = uqt.module
-local input = uqt.input
-local time = uqt.time
-local scene = uqt.scene
 
 --- The events: callback functions that will be called when something interesting occurs.
 -- Theses are expected to be redefined in the game.
@@ -18,15 +15,15 @@ return {
 	-- @tparam number dt time since last call, in miliseconds
 	-- @impl mixed
 	update = function(dt)
-		if m.input then input.update(dt) end
-		if m.time then time.update(dt) end
-		if m.scene then scene.update(dt) end
+		if m.input then uqt.input.update(dt) end
+		if m.time then uqt.time.update(dt) end
+		if m.scene then uqt.scene.update(dt) end
 	end,
 
 	--- Called each time the game expect a new frame to be drawn.
 	-- The screen is expected to be cleared since last frame.
 	-- @impl backend
 	draw = function()
-		if m.scene then scene.draw() end
+		if m.scene then uqt.scene.draw() end
 	end
 }
