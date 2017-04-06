@@ -196,7 +196,7 @@ end
 if m.time then
 add(uqt.time, {
 	get = function()
-		return love.timer.getTime()
+		return love.timer.getTime() * 1000
 	end
 })
 end
