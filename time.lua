@@ -69,7 +69,7 @@ local function newTimerRegistry()
 
 			local d = delayed
 			for func, t in pairs(d) do
-				if all(t.initWhen, true) then
+				if t and all(t.initWhen, true) then
 					t.initWhen = {}
 					local co = t.coroutine
 					t.after = t.after - dt
