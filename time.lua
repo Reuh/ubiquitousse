@@ -82,14 +82,14 @@ local function newTimerRegistry()
 							t.coroutine = co
 							t.started = registry.get()
 							if t.times > 0 then t.times = t.times - 1 end
-							for _, f in ipairs(t.onStart) do f() end
+							for _, f in ipairs(t.onStart) do f(t.object) end
 						end
 						assert(coroutine.resume(co, function(delay)
 							t.after = delay
 							d[func] = t
 							coroutine.yield()
 						end, dt))
-						for _, f in ipairs(t.onUpdate) do f() end
+						for _, f in ipairs(t.onUpdate) do f(t.object) end
 						if all(t.stopWhen, false) then t.forceStop = true end
 						if t.forceStop or coroutine.status(co) == "dead" then
 							if t.forceStop
@@ -98,7 +98,7 @@ local function newTimerRegistry()
 								or (not all(t.repeatWhile, true))
 								or (t.every == -1 and t.times == -1 and t.during == -1 and #t.repeatWhile == 0) -- no repeat
 							then
-								for _, f in ipairs(t.onEnd) do f() end
+								for _, f in ipairs(t.onEnd) do f(t.object) end
 							else
 								if t.times > 0 then t.times = t.times - 1 end
 								t.after = t.every
@@ -129,6 +129,7 @@ local function newTimerRegistry()
 			-- Since delayed functions can end in any order, it doesn't really make sense to use a integer-keyed list.
 			-- Using the function as the key works and it's unique.
 			delayed[func] = {
+				object = nil,
 				coroutine = nil,
 				started = 0,
 
@@ -216,17 +217,17 @@ local function newTimerRegistry()
 				end,
 
 				--- Callbacks functions ---
-				--- Will execute func() when the function execution start.
+				--- Will execute func(self) when the function execution start.
 				onStart = function(_, func)
 					table.insert(t.onStart, func)
 					return r
 				end,
-				--- Will execute func() each frame the main function is run..
+				--- Will execute func(self) each frame the main function is run..
 				onUpdate = function(_, func)
 					table.insert(t.onUpdate, func)
 					return r
 				end,
-				--- Will execute func() when the function execution end.
+				--- Will execute func(self) when the function execution end.
 				onEnd = function(_, func)
 					table.insert(t.onEnd, func)
 					return r
@@ -242,6 +243,7 @@ local function newTimerRegistry()
 						:initWhen(function() return done end)
 				end
 			}
+			t.object = r
 			return r
 		end,
 
