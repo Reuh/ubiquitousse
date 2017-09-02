@@ -2,17 +2,6 @@
 local uqt = require((...):match("^(.-ubiquitousse)%."))
 local m = uqt.module
 
---- Returns the file path of the given module name.
-local function getPath(modname)
-	local filepath = ""
-	for path in package.path:gmatch("[^;]+") do
-		path = path:gsub("%?", (modname:gsub("%.", "/")))
-		local f = io.open(path)
-		if f then f:close() filepath = path break end
-	end
-	return filepath
-end
-
 --- Scene management.
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
 -- This module is fully implemented in Ubiquitousse and is mostly a "recommended way" of organising an Ubiquitousse-based game.
@@ -47,7 +36,17 @@ scene = {
 
 	--- Function which load a scene file
 	-- @impl ubiquitousse
-	dofile = dofile,
+	load = function(scenePath)
+		for path in package.path:gmatch("[^;]+") do
+			path = path:gsub("%?", (scenePath:gsub("%.", "/")))
+			local f = io.open(path)
+			if f then
+				f:close()
+				return dofile(path)
+			end
+		end
+		error("can't find scene "..tostring(scenePath))
+	end,
 
 	--- Creates and returns a new Scene object.
 	-- @tparam[opt="unamed"] string name the new scene name
@@ -78,7 +77,7 @@ scene = {
 	-- @impl ubiquitousse
 	switch = function(scenePath, ...)
 		local previous = scene.current
-		scene.current = scene.dofile(getPath(scene.prefix..scenePath))
+		scene.current = scene.load(scene.prefix..scenePath)
 		scene.current.name = scenePath
 		if previous then previous:exit() end
 		scene.current:enter(...)
@@ -94,7 +93,7 @@ scene = {
 	-- @impl ubiquitousse
 	push = function(scenePath, ...)
 		local previous = scene.current
-		scene.current = scene.dofile(getPath(scene.prefix..scenePath))
+		scene.current = scene.load(scene.prefix..scenePath)
 		scene.current.name = scenePath
 		if previous then previous:suspend() end
 		scene.current:enter(...)
