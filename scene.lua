@@ -45,6 +45,10 @@ scene = {
 	-- @impl ubiquitousse
 	prefix = "",
 
+	--- Function which load a scene file
+	-- @impl ubiquitousse
+	dofile = dofile,
+
 	--- Creates and returns a new Scene object.
 	-- @tparam[opt="unamed"] string name the new scene name
 	-- @impl ubiquitousse
@@ -74,7 +78,7 @@ scene = {
 	-- @impl ubiquitousse
 	switch = function(scenePath, ...)
 		local previous = scene.current
-		scene.current = dofile(getPath(scene.prefix..scenePath))
+		scene.current = scene.dofile(getPath(scene.prefix..scenePath))
 		scene.current.name = scenePath
 		if previous then previous:exit() end
 		scene.current:enter(...)
@@ -90,7 +94,7 @@ scene = {
 	-- @impl ubiquitousse
 	push = function(scenePath, ...)
 		local previous = scene.current
-		scene.current = dofile(getPath(scene.prefix..scenePath))
+		scene.current = scene.dofile(getPath(scene.prefix..scenePath))
 		scene.current.name = scenePath
 		if previous then previous:suspend() end
 		scene.current:enter(...)
