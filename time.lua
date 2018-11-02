@@ -85,7 +85,7 @@ local function newTimerRegistry()
 							for _, f in ipairs(t.onStart) do f(t.object) end
 						end
 						assert(coroutine.resume(co, function(delay)
-							t.after = delay
+							t.after = delay or 0
 							d[func] = t
 							coroutine.yield()
 						end, dt))

@@ -1,6 +1,6 @@
 --- Löve backend 0.0.1 for Ubiquitousse.
 -- Provides all the Ubiquitousse API on a Löve environment.
--- Made for Löve 0.10.1 and Ubiquitousse 0.0.1.
+-- Made for Löve 11.1.0 and Ubiquitousse 0.0.1.
 -- See `ubiquitousse` for Ubiquitousse API.
 
 -- Config
@@ -26,7 +26,7 @@ do
 			love.window.showMessageBox("Warning", txt, "warning")
 		end
 	end
-	checkCompat("Löve", "0.10.2", ("%s.%s.%s"):format(love.getVersion()))
+	checkCompat("Löve", "11.1.0", ("%s.%s.%s"):format(love.getVersion()))
 	checkCompat("Ubiquitousse", "0.0.1", uqt.version)
 end
 

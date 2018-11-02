@@ -78,7 +78,7 @@ scene = {
 	switch = function(scenePath, ...)
 		local previous = scene.current
 		scene.current = scene.load(scene.prefix..scenePath)
-		scene.current.name = scenePath
+		scene.current.name = scene.current.name or scenePath
 		if previous then previous:exit() end
 		scene.current:enter(...)
 		scene.stack[math.max(#scene.stack, 1)] = scene.current
@@ -94,7 +94,7 @@ scene = {
 	push = function(scenePath, ...)
 		local previous = scene.current
 		scene.current = scene.load(scene.prefix..scenePath)
-		scene.current.name = scenePath
+		scene.current.name = scene.current.name or scenePath
 		if previous then previous:suspend() end
 		scene.current:enter(...)
 		table.insert(scene.stack, scene.current)
