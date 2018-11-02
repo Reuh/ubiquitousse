@@ -21,7 +21,7 @@ local m = uqt.module
 -- * all scene change callbacks are called after setting scene.current to the new scene but before changing scene.stack
 -- * all scene exit/suspend callbacks are called before scene enter/resume callbacks
 local scene
-scene = {
+scene = setmetatable({
 	--- The current scene table.
 	-- @impl ubiquitousse
 	current = nil,
@@ -131,6 +131,11 @@ scene = {
 	draw = function(...)
 		if scene.current then scene.current:draw(...) end
 	end
-}
+}, {
+	--- scene(...) is a shortcut for scene.new(...)
+	__call = function(self, ...)
+		return scene.new(...)
+	end
+})
 
 return scene

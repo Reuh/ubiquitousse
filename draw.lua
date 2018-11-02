@@ -53,10 +53,10 @@ draw = {
 	fps = function() end,
 
 	--- Sets the drawing color
-	-- @tparam number r the red component (0-255)
-	-- @tparam number g the green component (0-255)
-	-- @tparam number b the blue component (0-255)
-	-- @tparam[opt=255] number a the alpha (opacity) component (0-255)
+	-- @tparam number r the red component (0-1)
+	-- @tparam number g the green component (0-1)
+	-- @tparam number b the blue component (0-1)
+	-- @tparam[opt=1] number a the alpha (opacity) component (0-1)
 	-- @impl backend
 	color = function(r, g, b, a) end,
 
