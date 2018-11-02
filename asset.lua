@@ -18,7 +18,9 @@ asset = setmetatable({
 	-- To load an asset, ubiquitousse will, in this order:
 	-- * try to load the directory loader: a file named loader.lua in the same directory as the asset we are trying to load
 	-- * try to load the asset-specific loader: a file in the same directory and with the same name (except with the .lua extension) as the asset we are trying to load
-	-- Loaders are expected to return the new asset.
+	-- Loaders should return either:
+	-- * the new asset
+	-- * nil, message if there was an error loading the asset
 	-- These loaders have acces to the following variables:
 	-- * directory: the asset directory (including prefix)
 	-- * name: the asset name (directory information removed)
@@ -36,28 +38,45 @@ asset = setmetatable({
 			local dir = (asset.prefix..path):gsub("%.", "/")
 
 			-- Setup env
-			local oName, oAsset, oDirectory = name, asset, directory
-			name, asset, directory = name, nil, dir
+			local oName, oAsset, oDirectory = _G.name, _G.asset, _G.directory
+			_G.name, _G.asset, _G.directory = name, nil, dir
+
+			-- Load
+			local err = ("couldn't load asset %q:"):format(assetName)
 
 			-- Asset directory loader
 			local f = io.open(dir.."/loader.lua")
 			if f then
 				f:close()
-				asset = dofile(dir.."/loader.lua")
+				local r, msg = dofile(dir.."/loader.lua")
+				if r ~= nil then
+					_G.asset = r
+				else
+					err = err .. ("\n\t* directory loader %q failed to load the asset: %s"):format(dir.."/loader.lua", msg)
+				end
+			else
+				err = err .. ("\n\t* no directory loader %q found"):format(dir.."/loader.lua")
 			end
 
 			-- Asset specific loader
 			local f = io.open(dir.."/"..name..".lua")
 			if f then
 				f:close()
-				asset = dofile(dir.."/"..name..".lua")
+				local r, msg = dofile(dir.."/"..name..".lua")
+				if r ~= nil then
+					_G.asset = r
+				else
+					err = err .. ("\n\t* asset specific loader %q failed to load the asset: %s"):format(dir.."/"..name..".lua", msg)
+				end
+			else
+				err = err .. ("\n\t* no asset specific loader %q found"):format(dir.."/"..name..".lua")
 			end
 
 			-- Done
-			cache[assetName] = asset
+			cache[assetName] = assert(_G.asset, err)
 
 			-- Restore env
-			name, asset, directory = oName, oAsset, oDirectory
+			_G.name, _G.asset, _G.directory = oName, oAsset, oDirectory
 		end
 
 		return cache[assetName]
