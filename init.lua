@@ -85,7 +85,8 @@ ubiquitousse = {
 		input = false,
 		scene = false,
 		event = false,
-		asset = false
+		asset = false,
+		util = false
 	},
 
 	--- Backend name.
