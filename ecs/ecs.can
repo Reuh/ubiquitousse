@@ -1,0 +1,308 @@
+--- ubiquitousse.ecs
+-- No dependency.
+
+--- Entity Component System library, inspired by the excellent tiny-ecs. Main differences include:
+-- * ability to nest systems;
+-- * instanciation of systems for each world;
+-- * adding and removing entities is done instantaneously.
+
+-- TODO: Implement a skip list for faster search.
+
+--- Recursively remove subsystems from a system.
+let recDestroySystems = (system)
+	for i=#system.systems, 1, -1 do
+		let s = system.systems[i]
+		recDestroySystems(s)
+		system.systems[i] = nil
+		if s.name then
+			system.world.s[s.name] = nil
+		end
+	end
+end
+--- Recursively call :clear and :onRemoveFromWorld to a list of systems in a world.
+let recCallOnRemoveFromWorld = (world, systems)
+	for _, s in ipairs(systems) do
+		s:clear()
+		recCallOnRemoveFromWorld(world, s.systems)
+		s:onRemoveFromWorld(world)
+	end
+end
+
+--- Iterate through the next entity, based on state s: { previousLinkedListItem }
+let nextEntity = (s)
+	if s[1] then
+		let var = s[1][1]
+		s[1] = s[1][2]
+		return var
+	else
+		return nil
+	end
+end
+
+--- System fields and methods.
+-- When they are added to a world, a new, per-world self table is created and used for every method call (which we call "instancied system").
+-- Instancied systems can be retrieved in system.s or system.systems.
+-- Oh, the "world" is just the top-level system.
+let system_mt = {
+	--- Read-only after creation system options ---
+	-- I mean, you can try to change them afterwards. But, heh.
+
+	--- Name of the system (optional).
+	-- Used to create a field with the system's name in world.system.
+	name = nil,
+
+	--- List of subsystems.
+	-- On a instancied system, this is a list of the same subsystems, but instancied for this world.
+	systems = nil,
+
+	--- Returns true if the entity should be added to this system (and therefore its subsystems).
+	-- By default, rejects everything.
+	filter = :(e) return false end,
+	--- Returns true if e1 <= e2.
+	compare = :(e1, e2) return true end,
+
+	--- Modifiable system options ---
+
+	--- Called when adding an entity to the system.
+	onAdd = :(e) end,
+	--- Called when removing an entity from the system.
+	onRemove = :(e) end,
+	--- Called when the system is added to a world.
+	onAddToWorld = :(world) end,
+	--- Called when the system is removed from a world (i.e., the world is destroyed).
+	onRemoveFromWorld = :(world) end,
+	--- Called when updating the system.
+	onUpdate = :(dt) end,
+	--- Called when drawing the system.
+	onDraw = :() end,
+	--- Called when updating the system, for every entity the system contains.
+	process = :(e, dt) end,
+	--- Called when drawing the system, for every entity the system contains.
+	render = :(e) end,
+
+	--- If set, the system will only update every interval seconds.
+	interval = nil,
+	--- The system and its susbsystems will only update if this is true.
+	active = true,
+	--- The system and its subsystems will only draw if this is true.
+	visible = true,
+
+	--- Read-only system options ---
+
+	--- The world the system belongs to.
+	world = nil,
+	--- Number of entities in the system.
+	entityCount = 0,
+	--- Map of named systems in the world (not only subsystems).
+	s = nil,
+
+	--- Private fields ---
+
+	--- First element of the linked list of entities.
+	_first = nil,
+	--- Amount of time waited since last update (if interval is set).
+	_waited = 0,
+
+	--- Methods ---
+
+	--- Add entities to the system and its subsystems.
+	-- If this is called on a subsystem instead of the world, be warned that this will bypass all the parent's systems filters.
+	-- Since :remove will not search for entities in systems where they should have been filtered out, the added entities will not be removed
+	-- when calling :remove on a parent system or the world. The entity can only be removed by calling :remove on the system :add was called on.
+	add = :(...)
+		for _, e in ipairs({...}) do
+			if @filter(e) then
+				if @_first == nil then
+					@_first = { e, nil }
+				elseif @compare(e, @_first[1]) then
+					@_first = { e, @_first }
+				else
+					let entity = @_first
+					while entity[2] ~= nil do
+						if @compare(e, entity[2][1]) then
+							entity[2] = { e, entity[2] }
+							break
+						end
+						entity = entity[2]
+					end
+					if entity[2] == nil then
+						entity[2] = { e, nil }
+					end
+				end
+				for _, s in ipairs(@systems) do
+					s:add(e)
+				end
+				@entityCount += 1
+				@onAdd(e)
+			end
+		end
+		return ...
+	end,
+	--- Remove entities to the system and its subsystems.
+	-- If you intend to call this on a subsystem instead of the world, please read the warning in :add.
+	remove = :(...)
+		for _, e in ipairs({...}) do
+			if @filter(e) then
+				let found = false
+				if @_first == nil then
+					return
+				elseif @_first[1] == e then
+					@_first = @_first[2]
+					found = true
+				else
+					let entity = @_first
+					while entity[2] ~= nil do
+						if entity[2][1] == e then
+							entity[2] = entity[2][2]
+							found = true
+							break
+						end
+						entity = entity[2]
+					end
+				end
+				if found then
+					for _, s in ipairs(@systems) do
+						s:remove(e)
+					end
+					@entityCount -= 1
+					@onRemove(e)
+				end
+			end
+		end
+	end,
+	--- Returns an iterator that iterate through the entties in this system.
+	iter = :()
+		return nextEntity, { @_first }
+	end,
+	--- Remove every entity from the system and its subsystems.
+	clear = :()
+		for e in @iter() do
+			@remove(e)
+		end
+		for _, s in ipairs(@systems) do
+			s:clear()
+		end
+	end,
+	--- Try to update the system and its subsystems. Should be called on every game update.
+	update = :(dt)
+		if @active then
+			if @interval then
+				@_waited += dt
+				if @_waited < @interval then
+					return
+				end
+			end
+			for _, s in ipairs(@systems) do
+				s:update(dt)
+			end
+			if @process ~= system_mt.process then
+				for e in @iter() do
+					@process(e, dt)
+				end
+			end
+			@onUpdate(dt)
+			if @interval then
+				@_waited = 0
+			end
+		end
+	end,
+	--- Try to draw the system and its subsystems. Should be called on every game draw.
+	draw = :()
+		if @visible then
+			for _, s in ipairs(@systems) do
+				s:draw()
+			end
+			if @render ~= system_mt.render then
+				for e in @iter() do
+					@render(e)
+				end
+			end
+			@onDraw()
+		end
+	end,
+	--- Remove all the entities and subsystems in this system.
+	destroy = :()
+		recCallOnRemoveFromWorld(@world, { @ })
+		recDestroySystems({ systems = { @ } })
+	end
+}
+
+--- Recursively instanciate a list of systems for a world:
+-- * create their self table with instance fields set
+-- * create a field with their name in world.s (if name defined)
+let recInstanciateSystems = (world, systems)
+	let t = {}
+	for _, s in ipairs(systems) do
+		table.insert(t, setmetatable({
+			systems = recInstanciateSystems(world, s.systems or {}),
+			world = world,
+			s = world.s
+		}, {
+			__index = :(k)
+				if s[k] ~= nil then
+					return s[k]
+				else
+					return system_mt[k]
+				end
+			end
+		}))
+		let system = t[#t]
+		if s.name then
+			world.s[s.name] = system
+		end
+	end
+	return t
+end
+--- Recursively call :onAddToWorld to a list of systems in a world.
+let recCallOnAddToWorld = (world, systems)
+	for _, s in ipairs(systems) do
+		recCallOnAddToWorld(world, s.systems)
+		s:onAddToWorld(world)
+	end
+end
+
+--- Create and returns a world system based on a list of systems.
+-- The systems will be instancied for this world.
+let world = (...)
+	let world = setmetatable({
+		filter = (e) return true end,
+		s = {}
+	}, { __index = system_mt })
+	world.world = world
+	world.systems = recInstanciateSystems(world, {...})
+	recCallOnAddToWorld(world, world.systems)
+	return world
+end
+
+--- Returns a filter that returns true if, for every argument, a field with the same name exists in the entity.
+let all = (...)
+	let l = {...}
+	return function(s, e)
+		for _, k in ipairs(l) do
+			if e[k] == nil then
+				return false
+			end
+		end
+		return true
+	end
+end
+
+--- Returns a filter that returns true if one of the arguments if the name of a field in the entity.
+let any = (...)
+	let l = {...}
+	return function(s, e)
+		for _, k in ipairs(l) do
+			if e[k] ~= nil then
+				return true
+			end
+		end
+		return false
+	end
+end
+
+--- ECS module.
+return {
+	world = world,
+	all = all,
+	any = any
+}
