@@ -1,6 +1,5 @@
 --- ubiquitousse.time
 -- Depends on a backend.
-
 local ease = require((...):match("^.-time")..".easing")
 local time
 

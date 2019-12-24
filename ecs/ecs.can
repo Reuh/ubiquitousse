@@ -1,5 +1,7 @@
 --- ubiquitousse.ecs
--- No dependency.
+-- Optional dependency: ubiquitousse.scene, to allow quick creation of ECS-based scenes.
+local loaded, newScene = pcall(require, (...):match("^(.-)ecs").."scene")
+if not loaded then newScene = nil end
 
 --- Entity Component System library, inspired by the excellent tiny-ecs. Main differences include:
 -- * ability to nest systems;
@@ -109,65 +111,70 @@ let system_mt = {
 	-- If this is called on a subsystem instead of the world, be warned that this will bypass all the parent's systems filters.
 	-- Since :remove will not search for entities in systems where they should have been filtered out, the added entities will not be removed
 	-- when calling :remove on a parent system or the world. The entity can only be removed by calling :remove on the system :add was called on.
-	add = :(...)
-		for _, e in ipairs({...}) do
-			if @filter(e) then
-				if @_first == nil then
-					@_first = { e, nil }
-				elseif @compare(e, @_first[1]) then
-					@_first = { e, @_first }
-				else
-					let entity = @_first
-					while entity[2] ~= nil do
-						if @compare(e, entity[2][1]) then
-							entity[2] = { e, entity[2] }
-							break
-						end
-						entity = entity[2]
+	add = :(e, ...)
+		if e ~= nil and @filter(e) then
+			if @_first == nil then
+				@_first = { e, nil }
+			elseif @compare(e, @_first[1]) then
+				@_first = { e, @_first }
+			else
+				let entity = @_first
+				while entity[2] ~= nil do
+					if @compare(e, entity[2][1]) then
+						entity[2] = { e, entity[2] }
+						break
 					end
-					if entity[2] == nil then
-						entity[2] = { e, nil }
-					end
+					entity = entity[2]
 				end
-				for _, s in ipairs(@systems) do
-					s:add(e)
+				if entity[2] == nil then
+					entity[2] = { e, nil }
 				end
-				@entityCount += 1
-				@onAdd(e)
 			end
+			for _, s in ipairs(@systems) do
+				s:add(e)
+			end
+			@entityCount += 1
+			@onAdd(e)
 		end
-		return ...
+		if ... then
+			return e, @add(...)
+		else
+			return e
+		end
 	end,
 	--- Remove entities to the system and its subsystems.
 	-- If you intend to call this on a subsystem instead of the world, please read the warning in :add.
-	remove = :(...)
-		for _, e in ipairs({...}) do
-			if @filter(e) then
-				let found = false
-				if @_first == nil then
-					return
-				elseif @_first[1] == e then
-					@_first = @_first[2]
-					found = true
-				else
-					let entity = @_first
-					while entity[2] ~= nil do
-						if entity[2][1] == e then
-							entity[2] = entity[2][2]
-							found = true
-							break
-						end
-						entity = entity[2]
+	remove = :(e, ...)
+		if e ~= nil and @filter(e) then
+			let found = false
+			if @_first == nil then
+				return
+			elseif @_first[1] == e then
+				@_first = @_first[2]
+				found = true
+			else
+				let entity = @_first
+				while entity[2] ~= nil do
+					if entity[2][1] == e then
+						entity[2] = entity[2][2]
+						found = true
+						break
 					end
-				end
-				if found then
-					for _, s in ipairs(@systems) do
-						s:remove(e)
-					end
-					@entityCount -= 1
-					@onRemove(e)
+					entity = entity[2]
 				end
 			end
+			if found then
+				for _, s in ipairs(@systems) do
+					s:remove(e)
+				end
+				@entityCount -= 1
+				@onRemove(e)
+			end
+		end
+		if ... then
+			return e, @remove(...)
+		else
+			return e
 		end
 	end,
 	--- Returns an iterator that iterate through the entties in this system.
@@ -300,9 +307,31 @@ let any = (...)
 	end
 end
 
+let scene = (name, systems={}, entities={})
+	let s = newScene(name)
+	let w
+
+	function s:enter()
+		w = world(unpack(systems))
+		w:add(unpack(entities))
+	end
+	function s:exit()
+		w:destroy()
+	end
+	function s:update(dt)
+		w:update(dt)
+	end
+	function s:draw()
+		w:draw()
+	end
+
+	return s
+end
+
 --- ECS module.
 return {
 	world = world,
 	all = all,
-	any = any
+	any = any,
+	scene = scene
 }

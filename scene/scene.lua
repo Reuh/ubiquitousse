@@ -1,6 +1,6 @@
 --- ubiquitousse.scene
 -- Optional dependencies: ubiquitousse.time (to provide each scene a time registry)
-local loaded, time = pcall(require, (...):match("^.-ubiquitousse%.").."time")
+local loaded, time = pcall(require, (...):match("^(.-)scene").."time")
 if not loaded then time = nil end
 
 --- Scene management.
