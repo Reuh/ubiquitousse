@@ -1,7 +1,7 @@
---- ubiquitousse.time
+--- ubiquitousse.timer
 -- Depends on a backend.
-local ease = require((...):match("^.-time")..".easing")
-local time
+local ease = require((...):match("^.-timer")..".easing")
+local timer
 
 --- Returns true if all the values in the list are true ; functions in the list will be called and the test will be performed on their return value.
 -- Returns default if the list is empty.
@@ -28,7 +28,7 @@ local registry_mt = {
 	-- @tparam[opt=calculate here] number dt the delta-time (time spent since last time the function was called) (miliseconds)
 	-- @impl ubiquitousse
 	update = function(self, dt)
-		local currentTime = time.get()
+		local currentTime = timer.get()
 
 		if not dt then
 			dt = currentTime - self.lastTime
@@ -297,7 +297,7 @@ local registry_mt = {
 registry_mt.__index = registry_mt
 
 --- Time related functions
-time = {
+timer = {
 	--- Creates and return a new TimerRegistry.
 	-- A TimerRegistry is a separate ubiquitousse.time instance: its TimedFunctions will be independant
 	-- from the one registered using ubiquitousse.time.run (the global TimerRegistry). If you use the scene
@@ -311,7 +311,7 @@ time = {
 			delayed = {},
 
 			-- Used to calculate the deltatime
-			lastTime = time.get(),
+			lastTime = timer.get(),
 
 			--- Time since last timer update (miliseconds).
 			dt = 0
@@ -333,17 +333,17 @@ time = {
 	delayed = {},
 	lastTime = 0,
 	update = function(...)
-		return registry_mt.update(time, ...)
+		return registry_mt.update(timer, ...)
 	end,
 	run = function(...)
-		return registry_mt.run(time, ...)
+		return registry_mt.run(timer, ...)
 	end,
 	tween = function(...)
-		return registry_mt.tween(time, ...)
+		return registry_mt.tween(timer, ...)
 	end,
 	clear = function(...)
-		return registry_mt.clear(time, ...)
+		return registry_mt.clear(timer, ...)
 	end
 }
 
-return time
+return timer

@@ -8,7 +8,7 @@ elseif package.loaded["ctr"] then
 elseif package.loaded["libretro"] then
 	error("NYI")
 else
-	error("no backend for ubiquitousse.time")
+	error("no backend for ubiquitousse.timer")
 end
 
 return time

@@ -1,7 +1,7 @@
 --- ubiquitousse.scene
--- Optional dependencies: ubiquitousse.time (to provide each scene a time registry)
-local loaded, time = pcall(require, (...):match("^(.-)scene").."time")
-if not loaded then time = nil end
+-- Optional dependencies: ubiquitousse.timer (to provide each scene a timer registry)
+local loaded, timer = pcall(require, (...):match("^(.-)scene").."timer")
+if not loaded then timer = nil end
 
 --- Scene management.
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
@@ -28,9 +28,9 @@ scene = setmetatable({
 	-- @impl ubiquitousse
 	current = nil,
 
-	--- Shortcut for scene.current.time.
+	--- Shortcut for scene.current.timer.
 	-- @impl ubiquitousse
-	time = nil,
+	timer = nil,
 
 	--- The scene stack: list of scene, from the farest one to the nearest.
 	-- @impl ubiquitousse
@@ -73,7 +73,7 @@ scene = setmetatable({
 		return {
 			name = name or "unamed", -- The scene name.
 
-			time = time and time.new(), -- Scene-specific TimerRegistry, if uqt.time is available.
+			timer = timer and timer.new(), -- Scene-specific TimerRegistry, if uqt.time is available.
 
 			enter = function(self, ...) end, -- Called when entering a scene.
 			exit = function(self) end, -- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
@@ -97,7 +97,7 @@ scene = setmetatable({
 	switch = function(scenePath, ...)
 		local previous = scene.current
 		scene.current = type(scenePath) == "string" and scene.load(scene.prefix..scenePath) or scenePath
-		scene.time = scene.current.time
+		scene.timer = scene.current.timer
 		scene.current.name = scene.current.name or tostring(scenePath)
 		if previous then previous:exit() end
 		scene.current:enter(...)
@@ -114,7 +114,7 @@ scene = setmetatable({
 	push = function(scenePath, ...)
 		local previous = scene.current
 		scene.current = type(scenePath) == "string" and scene.load(scene.prefix..scenePath) or scenePath
-		scene.time = scene.current.time
+		scene.timer = scene.current.timer
 		scene.current.name = scene.current.name or tostring(scenePath)
 		if previous then previous:suspend() end
 		scene.current:enter(...)
@@ -128,7 +128,7 @@ scene = setmetatable({
 	pop = function()
 		local previous = scene.current
 		scene.current = scene.stack[#scene.stack-1]
-		scene.time = scene.current.time
+		scene.timer = scene.current.timer
 		if previous then previous:exit() end
 		if scene.current then scene.current:resume() end
 		table.remove(scene.stack)
@@ -141,7 +141,7 @@ scene = setmetatable({
 	-- @impl ubiquitousse
 	update = function(dt, ...)
 		if scene.current then
-			if time then scene.current.time:update(dt) end
+			if timer then scene.current.timer:update(dt) end
 			scene.current:update(dt, ...)
 		end
 	end,

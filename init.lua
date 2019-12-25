@@ -70,7 +70,7 @@ ubiquitousse = {
 	-- @tparam number dt time since last call, in miliseconds
 	-- @impl mixed
 	update = function(dt)
-		if ubiquitousse.time then ubiquitousse.time.update(dt) end
+		if ubiquitousse.timer then ubiquitousse.timer.update(dt) end
 		if ubiquitousse.scene then ubiquitousse.scene.update(dt) end
 		if ubiquitousse.input then ubiquitousse.input.update(dt) end
 	end,
@@ -87,7 +87,7 @@ ubiquitousse = {
 package.loaded[p] = ubiquitousse
 
 -- Require external submodules
-for _, m in ipairs{"asset", "ecs", "input", "scene", "time", "util"} do
+for _, m in ipairs{"asset", "ecs", "input", "scene", "timer", "util"} do
 	local s, t = pcall(require, p.."."..m)
 	if s then
 		ubiquitousse[m] = t
