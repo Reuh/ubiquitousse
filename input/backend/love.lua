@@ -1,5 +1,8 @@
 local input = require((...):match("^(.-%.)backend").."input")
 
+local loaded, signal = pcall(require, (...):match("^(.-)input").."signal")
+if not loaded then signal = nil end
+
 -- Config --
 
 -- Use ScanCodes (layout independant input) instead of KeyConstants (layout dependant) for keyboard input
@@ -13,24 +16,23 @@ local displayKeyConstant = true
 love.mouse.setVisible(false)
 
 -- Button detection
--- FIXME  love callbacks do something cleaner
 local buttonsInUse = {}
 local axesInUse = {}
-function love.keypressed(key, scancode, isrepeat)
+function input.keypressed(key, scancode, isrepeat)
 	if useScancodes then key = scancode end
 	buttonsInUse["keyboard."..key] = true
 end
-function love.keyreleased(key, scancode)
+function input.keyreleased(key, scancode)
 	if useScancodes then key = scancode end
 	buttonsInUse["keyboard."..key] = nil
 end
-function love.mousepressed(x, y, button, istouch)
+function input.mousepressed(x, y, button, istouch)
 	buttonsInUse["mouse."..button] = true
 end
-function love.mousereleased(x, y, button, istouch)
+function input.mousereleased(x, y, button, istouch)
 	buttonsInUse["mouse."..button] = nil
 end
-function love.wheelmoved(x, y)
+function input.wheelmoved(x, y)
 	if y > 0 then
 		buttonsInUse["mouse.wheel.up"] = true
 	elseif y < 0 then
@@ -42,17 +44,17 @@ function love.wheelmoved(x, y)
 		buttonsInUse["mouse.wheel.left"] = true
 	end
 end
-function love.mousemoved(x, y, dx, dy)
+function input.mousemoved(x, y, dx, dy)
 	if dx ~= 0 then axesInUse["mouse.move.x"] = dx/love.graphics.getWidth() end
 	if dy ~= 0 then axesInUse["mouse.move.y"] = dy/love.graphics.getHeight() end
 end
-function love.gamepadpressed(joystick, button)
+function input.gamepadpressed(joystick, button)
 	buttonsInUse["gamepad.button."..joystick:getID().."."..button] = true
 end
-function love.gamepadreleased(joystick, button)
+function input.gamepadreleased(joystick, button)
 	buttonsInUse["gamepad.button."..joystick:getID().."."..button] = nil
 end
-function love.gamepadaxis(joystick, axis, value)
+function input.gamepadaxis(joystick, axis, value)
 	if value ~= 0 then
 		axesInUse["gamepad.axis."..joystick:getID().."."..axis] = value
 	else
@@ -61,11 +63,7 @@ function love.gamepadaxis(joystick, axis, value)
 end
 
 -- Windows size
-input.drawWidth, input.drawHeight = love.graphics.getWidth(), love.graphics.getHeight()
-function love.resize(width, height)
-	input.drawWidth = width
-	input.drawHeight = height
-end
+input.getDrawWidth, input.getDrawHeight = love.graphics.getWidth, love.graphics.getHeight
 
 -- Update
 local oUpdate = input.update
@@ -190,7 +188,7 @@ input.basicAxisDetector = function(id)
 	end
 end
 
-input.buttonsInUse = function(threshold)
+input.buttonUsed = function(threshold)
 	local r = {}
 	threshold = threshold or 0.5
 	for b in pairs(buttonsInUse) do
@@ -201,10 +199,10 @@ input.buttonsInUse = function(threshold)
 			table.insert(r, b.."%"..(v < 0 and -threshold or threshold))
 		end
 	end
-	return r
+	return unpack(r)
 end
 
-input.axesInUse = function(threshold)
+input.axisUsed = function(threshold)
 	local r = {}
 	threshold = threshold or 0.5
 	for b,v in pairs(axesInUse) do
@@ -212,7 +210,7 @@ input.axesInUse = function(threshold)
 			table.insert(r, b.."%"..threshold)
 		end
 	end
-	return r
+	return unpack(r)
 end
 
 input.buttonName = function(...)
@@ -315,5 +313,19 @@ input.default.cancel:bind(
 	"keyboard.escape", "keyboard.backspace",
 	"gamepad.button.1.b"
 )
+
+--- Register signals
+if signal then
+	signal.event:bind("keypressed", input.keypressed)
+	signal.event:bind("keyreleased", input.keyreleased)
+	signal.event:bind("mousepressed", input.mousepressed)
+	signal.event:bind("mousereleased", input.mousereleased)
+	signal.event:bind("wheelmoved", input.wheelmoved)
+	signal.event:bind("mousemoved", input.mousemoved)
+	signal.event:bind("gamepadpressed", input.gamepadpressed)
+	signal.event:bind("gamepadreleased", input.gamepadreleased)
+	signal.event:bind("gamepadaxis", input.gamepadaxis)
+	signal.event:replace("update", oUpdate, input.update)
+end
 
 return input

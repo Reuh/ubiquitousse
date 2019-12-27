@@ -1,5 +1,8 @@
 --- ubiquitousse.scene
 -- Optional dependencies: ubiquitousse.timer (to provide each scene a timer registry)
+-- Optional dependencies: ubiquitousse.signal (to bind to update and draw signal in signal.event)
+local loaded, signal = pcall(require, (...):match("^(.-)scene").."signal")
+if not loaded then signal = nil end
 local loaded, timer = pcall(require, (...):match("^(.-)scene").."timer")
 if not loaded then timer = nil end
 
@@ -134,8 +137,16 @@ scene = setmetatable({
 		table.remove(scene.stack)
 	end,
 
+	--- Pop all scenes.
+	-- @impl ubiquitousse
+	popAll = function()
+		while scene.current do
+			scene.pop()
+		end
+	end,
+
 	--- Update the current scene.
-	-- Should be called at every game update; called by ubiquitousse.update.
+	-- Should be called at every game update. If ubiquitousse.signal is available, will be bound to the "update" signal in signal.event.
 	-- @tparam number dt the delta-time (milisecond)
 	-- @param ... arguments to pass to the scene's update function after dt
 	-- @impl ubiquitousse
@@ -147,7 +158,7 @@ scene = setmetatable({
 	end,
 
 	--- Draw the current scene.
-	-- Should be called every time the game is draw; called by ubiquitousse.draw.
+	-- Should be called every time the game is draw. If ubiquitousse.signal is available, will be bound to the "draw" signal in signal.event.
 	-- @param ... arguments to pass to the scene's draw function
 	-- @impl ubiquitousse
 	draw = function(...)
@@ -159,5 +170,11 @@ scene = setmetatable({
 		return scene.new(...)
 	end
 })
+
+-- Bind signals
+if signal then
+	signal.event:bind("update", scene.update)
+	signal.event:bind("draw", scene.draw)
+end
 
 return scene

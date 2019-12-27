@@ -1,5 +1,8 @@
 local input = require((...):match("^(.-%.)backend").."input")
 
+local loaded, signal = pcall(require, (...):match("^(.-)input").."signal")
+if not loaded then signal = nil end
+
 local gfx = require("ctr.gfx")
 local hid = require("ctr.hid")
 
@@ -265,5 +268,10 @@ input.default.pointer:bind(
 )
 input.default.confirm:bind("key.a")
 input.default.cancel:bind("key.b")
+
+--- Register signals
+if signal then
+	signal.event:replace("update", oUpdate, input.update)
+end
 
 return input

@@ -1,0 +1,116 @@
+--- ubiquitousse.signal
+
+let registry_mt = {
+	--- Map of signals to list of listeners.
+	-- @impl ubiquitousse
+	signals = {},
+
+	--- Bind one or several functions to a signal name.
+	-- @impl ubiquitousse
+	bind = :(name, fn, ...)
+		if not @signals[name] then
+			@signals[name] = {}
+		end
+		table.insert(@signals[name], fn)
+		if ... then
+			return @bind(name, ...)
+		end
+	end,
+
+	--- Unbind one or several functions to a signal name.
+	-- @impl ubiquitousse
+	unbind = :(name, fn, ...)
+		if not @signals[name] then
+			return
+		end
+		for i=#@signals[name], 1, -1 do
+			if @signals[name] == fn then
+				table.remove(@signals[name], i)
+			end
+		end
+		if ... then
+			return @unbind(name, ...)
+		end
+	end,
+
+	--- Remove every bound function to a signal name.
+	-- @impl ubiquitousse
+	unbindAll = :(name)
+		@signals[name] = nil
+	end,
+
+	--- Replace a bound function with another function.
+	-- @impl ubiquitousse
+	replace = :(name, sourceFn, destFn)
+		if not @signals[name] then
+			@signals[name] = {}
+		end
+		for i, fn in ipairs(@signals[name]) do
+			if fn == sourceFn then
+				@signals[name][i] = destFn
+				break
+			end
+		end
+	end,
+
+	--- Remove every bound function to every signal.
+	-- @impl ubiquitousse
+	clear = :()
+		@signals = {}
+	end,
+
+	--- Emit a signal, i.e. call every function bound to it, with the given arguments.
+	-- @impl ubiquitousse
+	emit = :(name, ...)
+		if @signals[name] then
+			for _, fn in ipairs(@signals[name]) do
+				fn(...)
+			end
+		end
+	end
+}
+registry_mt.__index = registry_mt
+
+let signal = {
+	--- Creates and return a new SignalRegistry.
+	-- A SignalRegistry is a separate ubiquitousse.signal instance: its signals will be independant from other registries.
+	-- @impl ubiquitousse
+	new = ()
+		return setmetatable({ signals = {} }, registry_mt)
+	end,
+	
+	--- Global SignalRegistry.
+	-- @impl ubiquitousse
+	signals = {},
+	bind = (...)
+		return registry_mt.bind(signal, ...)
+	end,
+	unbind = (...)
+		return registry_mt.unbind(signal, ...)
+	end,
+	clear = (...)
+		return registry_mt.clear(signal, ...)
+	end,
+	emit = (...)
+		return registry_mt.emit(signal, ...)
+	end,
+
+	--- SignalRegistry which will be used to bind signals that need to be called on game engine event.
+	-- For example, every ubiquitousse module with a "update" function will bind it to the "update" signal in the registry;
+	-- you can then call this signal on each game update to update every ubiquitousse module easily.
+	-- Provided signals:
+	-- * update, should be called on every game update
+	-- * draw, should be called on every game draw
+	-- * for LÖVE, there are callbacks for every LÖVE callback function that need to be called on their corresponding LÖVE callback
+	-- @impl mixed
+	event = nil,
+
+	--- Call this function to hook signal.event signals to the current backend.
+	-- For LÖVE, this means overriding every existing LÖVE callback. If a callback is already defined, the new one will call the old function along with the signal:emit.
+	-- @impl backend
+	registerEvents = () end
+}
+
+signal.event = signal.new()
+
+return signal

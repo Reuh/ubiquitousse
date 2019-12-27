@@ -1,5 +1,9 @@
 --- ubiquitousse.timer
 -- Depends on a backend.
+-- Optional dependencies: ubiquitousse.signal (to bind to update signal in signal.event)
+local loaded, signal = pcall(require, (...):match("^(.-)timer").."signal")
+if not loaded then signal = nil end
+
 local ease = require((...):match("^.-timer")..".easing")
 local timer
 
@@ -332,7 +336,7 @@ timer = {
 	-- @impl ubiquitousse
 	delayed = {},
 	lastTime = 0,
-	update = function(...)
+	update = function(...) -- If ubiquitousse.signal is available, will be bound to the "update" signal in signal.event.
 		return registry_mt.update(timer, ...)
 	end,
 	run = function(...)
@@ -345,5 +349,10 @@ timer = {
 		return registry_mt.clear(timer, ...)
 	end
 }
+
+-- Bind signals
+if signal then
+	signal.event:bind("update", timer.update)
+end
 
 return timer

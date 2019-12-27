@@ -1,5 +1,8 @@
 --- ubiquitousse.input
 -- Depends on a backend.
+-- Optional dependencies: ubiquitousse.signal (to bind to update signal in signal.event)
+local loaded, signal = pcall(require, (...):match("^(.-)input").."signal")
+if not loaded then signal = nil end
 
 -- TODO: some key selection helper? Will be backend-implemented, to account for all the possible input methods.
 -- TODO: some way to list all possible input / outputs, or make the *inUse make some separation between inputs indiscutitably in use and those who are incertain.
@@ -40,8 +43,8 @@ local button_mt = {
 	-- @treturn ButtonInput this ButtonInput object
 	unbind = function(self, ...)
 		for _, d in ipairs({...}) do
-			for i, detector in ipairs(self.detectors) do
-				if detector == d then
+			for i=#self.detectors, 1, -1 do
+				if self.detectors[i] == d then
 					table.remove(self.detectors, i)
 					break
 				end
@@ -270,7 +273,9 @@ local axis_mt = {
 			self.val, self.raw, self.max = val, raw, max
 			updated[self] = true
 		end
-	end
+	end,
+
+	--- LÖVE note: other callbacks that are defined in backend/love.lua and need to be called in the associated LÖVE callbacks.
 }
 axis_mt.__index = axis_mt
 
@@ -382,9 +387,9 @@ local pointer_mt = {
 	x = function(self)
 		if self.grabbing == self then
 			self:update()
-			return self.valX + (self.offsetX or self.width or input.drawWidth/2)
+			return self.valX + (self.offsetX or self.width or input.getDrawWidth()/2)
 		else
-			return self.offsetX or self.width or input.drawWidth/2
+			return self.offsetX or self.width or input.getDrawWidth()/2
 		end
 	end,
 	--- Returns the current Y value of the pointer.
@@ -392,9 +397,9 @@ local pointer_mt = {
 	y = function(self)
 		if self.grabbing == self then
 			self:update()
-			return self.valY + (self.offsetY or self.height or input.drawHeight/2)
+			return self.valY + (self.offsetY or self.height or input.getDrawHeight()/2)
 		else
-			return self.offsetY or self.height or input.drawHeight/2
+			return self.offsetY or self.height or input.getDrawHeight()/2
 		end
 	end,
 
@@ -418,9 +423,9 @@ local pointer_mt = {
 				local magnitude = sqrt(x*x + y*y)
 				cx, cy = cx / magnitude * width, cy / magnitude * height
 			end
-			return cx + (self.offsetX or width or input.drawWidth/2), cy + (self.offsetY or height or input.drawHeight/2)
+			return cx + (self.offsetX or width or input.getDrawWidth()/2), cy + (self.offsetY or height or input.getDrawHeight()/2)
 		else
-			return self.offsetX or width or input.drawWidth/2, self.offsetY or height or input.drawHeight/2
+			return self.offsetX or width or input.getDrawWidth()/2, self.offsetY or height or input.getDrawHeight()/2
 		end
 	end,
 
@@ -445,7 +450,7 @@ local pointer_mt = {
 		if not updated[self] then
 			local x, y = self.valX, self.valY
 			local xSpeed, ySpeed = self.xSpeed, self.ySpeed
-			local width, height = self.width or input.drawWidth/2, self.height or input.drawHeight/2
+			local width, height = self.width or input.getDrawWidth()/2, self.height or input.getDrawHeight()/2
 			local newX, newY = x, y
 			local maxMovX, maxMovY = 0, 0 -- the maxium axis movement in a direction (used to determine which axes have the priority) (absolute value)
 			for _, pointer in ipairs(self.detectors) do
@@ -642,16 +647,16 @@ input = {
 
 	--- Returns a list of the buttons currently in use, identified by their string button identifier.
 	-- This may also returns "axis threshold" buttons if an axis passes the threshold.
-	-- @treturn table<string> buttons identifiers list
-	-- @treturn[opt=0.5] number threshold the threshold to detect axes as button
+	-- @tparam[opt=0.5] number threshold the threshold to detect axes as button
+	-- @treturn string,... buttons identifiers list
 	-- @impl backend
-	buttonsInUse = function(threshold) end,
+	buttonUsed = function(threshold) end,
 
 	--- Returns a list of the axes currently in use, identified by their string axis identifier
-	-- @treturn table<string> axes identifiers list
-	-- @treturn[opt=0.5] number threshold the threshold to detect axes
+	-- @tparam[opt=0.5] number threshold the threshold to detect axes
+	-- @treturn string,... axes identifiers list
 	-- @impl backend
-	axesInUse = function(threshold) end,
+	axisUsed = function(threshold) end,
 
 	--- Returns a nice name for the button identifier.
 	-- Can be locale-depedant and stuff, it's only for display.
@@ -686,14 +691,14 @@ input = {
 		cancel = nil -- Button: used to cancel something. Example binds: Escape, B button.
 	},
 
-	--- Draw area dimensions.
+	--- Get draw area dimensions.
 	-- Used for pointers.
 	-- @impl backend
-	drawWidth = 1,
-	drawHeight = 1,
+	getDrawWidth = function() return 1 end,
+	getDrawHeight = function() return 1 end,
 
 	--- Update all the Inputs.
-	-- Should be called at every game update; called by ubiquitousse.update.
+	-- Should be called at every game update. If ubiquitousse.signal is available, will be bound to the "update" signal in signal.event.
 	-- The backend can hook into this function to to its input-related updates.
 	-- @tparam numder dt the delta-time
 	-- @impl ubiquitousse
@@ -701,11 +706,21 @@ input = {
 		dt = newDt
 		updated = {}
 	end
+
+	--- If you use LÖVE, note that in order to provide every feature (especially key detection), several callbacks functions will
+	-- need to be called on LÖVE events. See backend/love.lua.
+	-- If ubiquitousse.signal is available, these callbacks will be bound to signals in signal.event (with the same name as the LÖVE
+	-- callbacks, minux the "love.").
 }
 
 -- Create default inputs
 input.default.pointer = input.pointer()
 input.default.confirm = input.button()
 input.default.cancel = input.button()
+
+-- Bind signals
+if signal then
+	signal.event:bind("update", input.update)
+end
 
 return input

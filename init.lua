@@ -64,33 +64,19 @@ local ubiquitousse
 ubiquitousse = {
 	--- Ubiquitousse version.
 	-- @impl ubiquitousse
-	version = "0.0.1",
-
-	--- Should be called each time the game loop is ran; will update every loaded Ubiquitousse module that needs it.
-	-- @tparam number dt time since last call, in miliseconds
-	-- @impl mixed
-	update = function(dt)
-		if ubiquitousse.timer then ubiquitousse.timer.update(dt) end
-		if ubiquitousse.scene then ubiquitousse.scene.update(dt) end
-		if ubiquitousse.input then ubiquitousse.input.update(dt) end
-	end,
-
-	--- Should be called each time the game expect a new frame to be drawn; will draw every loaded Ubiquitousse module that needs it
-	-- The screen is expected to be cleared since last frame.
-	-- @impl mixed
-	draw = function()
-		if ubiquitousse.scene then ubiquitousse.scene.draw() end
-	end
+	version = "0.0.1"
 }
 
 -- We're going to require modules requiring Ubiquitousse, so to avoid stack overflows we already register the ubiquitousse package
 package.loaded[p] = ubiquitousse
 
 -- Require external submodules
-for _, m in ipairs{"asset", "ecs", "input", "scene", "timer", "util"} do
+for _, m in ipairs{"signal", "asset", "ecs", "input", "scene", "timer", "util"} do
 	local s, t = pcall(require, p.."."..m)
 	if s then
 		ubiquitousse[m] = t
+	elseif not t:match("^module [^n]+ not found") then
+		error(t)
 	end
 end
 
