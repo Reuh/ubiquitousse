@@ -1,7 +1,7 @@
 --- ubiquitousse.ecs
 -- Optional dependency: ubiquitousse.scene, to allow quick creation of ECS-based scenes.
-local loaded, newScene = pcall(require, (...):match("^(.-)ecs").."scene")
-if not loaded then newScene = nil end
+local loaded, scene = pcall(require, (...):match("^(.-)ecs").."scene")
+if not loaded then scene = nil end
 
 --- Entity Component System library, inspired by the excellent tiny-ecs. Main differences include:
 -- * ability to nest systems;
@@ -268,70 +268,72 @@ let recCallOnAddToWorld = (world, systems)
 	end
 end
 
---- Create and returns a world system based on a list of systems.
--- The systems will be instancied for this world.
-let world = (...)
-	let world = setmetatable({
-		filter = (e) return true end,
-		s = {}
-	}, { __index = system_mt })
-	world.world = world
-	world.systems = recInstanciateSystems(world, {...})
-	recCallOnAddToWorld(world, world.systems)
-	return world
-end
-
---- Returns a filter that returns true if, for every argument, a field with the same name exists in the entity.
-let all = (...)
-	let l = {...}
-	return function(s, e)
-		for _, k in ipairs(l) do
-			if e[k] == nil then
-				return false
-			end
-		end
-		return true
-	end
-end
-
---- Returns a filter that returns true if one of the arguments if the name of a field in the entity.
-let any = (...)
-	let l = {...}
-	return function(s, e)
-		for _, k in ipairs(l) do
-			if e[k] ~= nil then
-				return true
-			end
-		end
-		return false
-	end
-end
-
-let scene = (name, systems={}, entities={})
-	let s = newScene(name)
-	let w
-
-	function s:enter()
-		w = world(unpack(systems))
-		w:add(unpack(entities))
-	end
-	function s:exit()
-		w:destroy()
-	end
-	function s:update(dt)
-		w:update(dt)
-	end
-	function s:draw()
-		w:draw()
-	end
-
-	return s
-end
-
 --- ECS module.
-return {
-	world = world,
-	all = all,
-	any = any,
-	scene = scene
+let ecs = {
+	--- Create and returns a world system based on a list of systems.
+	-- The systems will be instancied for this world.
+	-- @impl ubiquitousse
+	world = (...)
+		let world = setmetatable({
+			filter = (e) return true end,
+			s = {}
+		}, { __index = system_mt })
+		world.world = world
+		world.systems = recInstanciateSystems(world, {...})
+		recCallOnAddToWorld(world, world.systems)
+		return world
+	end,
+
+	--- Returns a filter that returns true if, for every argument, a field with the same name exists in the entity.
+	-- @impl ubiquitousse
+	all = (...)
+		let l = {...}
+		return function(s, e)
+			for _, k in ipairs(l) do
+				if e[k] == nil then
+					return false
+				end
+			end
+			return true
+		end
+	end,
+
+	--- Returns a filter that returns true if one of the arguments if the name of a field in the entity.
+	-- @impl ubiquitousse
+	any = (...)
+		let l = {...}
+		return function(s, e)
+			for _, k in ipairs(l) do
+				if e[k] ~= nil then
+					return true
+				end
+			end
+			return false
+		end
+	end,
+
+	--- If uqt.scene is available, returns a new scene that will consist of a ECS world with the specified systems and entities.
+	-- @impl ubiquitousse
+	scene = (name, systems={}, entities={})
+		let s = scene.new(name)
+		let w
+
+		function s:enter()
+			w = ecs.world(unpack(systems))
+			w:add(unpack(entities))
+		end
+		function s:exit()
+			w:destroy()
+		end
+		function s:update(dt)
+			w:update(dt)
+		end
+		function s:draw()
+			w:draw()
+		end
+
+		return s
+	end
 }
+
+return ecs

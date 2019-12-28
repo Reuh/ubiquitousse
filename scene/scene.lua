@@ -26,7 +26,7 @@ if not loaded then timer = nil end
 -- * all scene change callbacks are called after setting scene.current to the new scene but before changing scene.stack
 -- * all scene exit/suspend callbacks are called before scene enter/resume callbacks
 local scene
-scene = setmetatable({
+scene = {
 	--- The current scene table.
 	-- @impl ubiquitousse
 	current = nil,
@@ -34,6 +34,9 @@ scene = setmetatable({
 	--- Shortcut for scene.current.timer.
 	-- @impl ubiquitousse
 	timer = nil,
+	--- Shortcut for scene.current.signal.
+	-- @impl ubiquitousse
+	signal = nil,
 
 	--- The scene stack: list of scene, from the farest one to the nearest.
 	-- @impl ubiquitousse
@@ -77,6 +80,7 @@ scene = setmetatable({
 			name = name or "unamed", -- The scene name.
 
 			timer = timer and timer.new(), -- Scene-specific TimerRegistry, if uqt.time is available.
+			signal = signal and signal.new(), -- Scene-specific SignalRegistry, if uqt.signal is available.
 
 			enter = function(self, ...) end, -- Called when entering a scene.
 			exit = function(self) end, -- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
@@ -101,8 +105,12 @@ scene = setmetatable({
 		local previous = scene.current
 		scene.current = type(scenePath) == "string" and scene.load(scene.prefix..scenePath) or scenePath
 		scene.timer = scene.current.timer
+		scene.signal = scene.current.signal
 		scene.current.name = scene.current.name or tostring(scenePath)
-		if previous then previous:exit() end
+		if previous then
+			previous:exit()
+			if timer then previous.timer:clear() end
+		end
 		scene.current:enter(...)
 		scene.stack[math.max(#scene.stack, 1)] = scene.current
 	end,
@@ -118,6 +126,7 @@ scene = setmetatable({
 		local previous = scene.current
 		scene.current = type(scenePath) == "string" and scene.load(scene.prefix..scenePath) or scenePath
 		scene.timer = scene.current.timer
+		scene.signal = scene.current.signal
 		scene.current.name = scene.current.name or tostring(scenePath)
 		if previous then previous:suspend() end
 		scene.current:enter(...)
@@ -131,8 +140,12 @@ scene = setmetatable({
 	pop = function()
 		local previous = scene.current
 		scene.current = scene.stack[#scene.stack-1]
-		scene.timer = scene.current.timer
-		if previous then previous:exit() end
+		scene.timer = scene.current and scene.current.timer or nil
+		scene.signal = scene.current and scene.current.signal or nil
+		if previous then
+			previous:exit()
+			if timer then previous.timer:clear() end
+		end
 		if scene.current then scene.current:resume() end
 		table.remove(scene.stack)
 	end,
@@ -164,12 +177,7 @@ scene = setmetatable({
 	draw = function(...)
 		if scene.current then scene.current:draw(...) end
 	end
-}, {
-	--- scene(...) is a shortcut for scene.new(...)
-	__call = function(self, ...)
-		return scene.new(...)
-	end
-})
+}
 
 -- Bind signals
 if signal then

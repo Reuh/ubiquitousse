@@ -501,6 +501,7 @@ input = {
 	-- identifier, preceded by a % : for example "gamepad.axis.1.leftx%-0.5" should return true when the left-stick of the first gamepad is moved to the right
 	-- by more of 50%. The negative threshold value means that the button will be pressed only when the axis has a negative value (in the example, it won't be
 	-- pressed when the axis is moved to the right).
+	-- Buttons can also be defined by a list of buttons (string or functions), in which case the button will be considered down if all the buttons are down.
 
 	--- Makes a new button detector from a identifier string.
 	-- The function may error if the identifier is incorrect.
@@ -509,7 +510,7 @@ input = {
 	-- @impl backend
 	basicButtonDetector = function(str) end,
 
-	--- Make a new button detector from a detector function of string.
+	--- Make a new button detector from a detector function, string, or list of buttons.
 	-- @tparam string, function button identifier
 	-- @impl ubiquitousse
 	buttonDetector = function(obj)
@@ -517,6 +518,19 @@ input = {
 			return obj
 		elseif type(obj) == "string" then
 			return input.basicButtonDetector(obj)
+		elseif type(obj) == "table" then
+			local l = {}
+			for _, b in ipairs(obj) do
+				table.insert(l, input.buttonDetector(b))
+			end
+			return function()
+				for _, b in ipairs(l) do
+					if not b() then
+						return false
+					end
+				end
+				return true
+			end
 		end
 		error(("Not a valid button detector: %s"):format(obj))
 	end,
