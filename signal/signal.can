@@ -99,7 +99,7 @@ let signal = {
 	-- For example, every ubiquitousse module with a "update" function will bind it to the "update" signal in the registry;
 	-- you can then call this signal on each game update to update every ubiquitousse module easily.
 	-- Provided signals:
-	-- * update, should be called on every game update
+	-- * update(dt), should be called on every game update
 	-- * draw, should be called on every game draw
 	-- * for LÖVE, there are callbacks for every LÖVE callback function that need to be called on their corresponding LÖVE callback
 	-- @impl mixed
