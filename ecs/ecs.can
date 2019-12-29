@@ -15,6 +15,7 @@ let recDestroySystems = (system)
 	for i=#system.systems, 1, -1 do
 		let s = system.systems[i]
 		recDestroySystems(s)
+		s:onDestroy()
 		system.systems[i] = nil
 		if s.name then
 			system.world.s[s.name] = nil
@@ -69,17 +70,21 @@ let system_mt = {
 	onAdd = :(e) end,
 	--- Called when removing an entity from the system.
 	onRemove = :(e) end,
+	--- Called when the system is instancied, before any call to :onnAddToWorld (including other systems in the world).
+	onInstance = :() end,
 	--- Called when the system is added to a world.
 	onAddToWorld = :(world) end,
 	--- Called when the system is removed from a world (i.e., the world is destroyed).
 	onRemoveFromWorld = :(world) end,
+	--- Called when the world is destroyed, after every call to :onRemoveFromWorld (including other systems in the world).
+	onDestroy = :() end,
 	--- Called when updating the system.
 	onUpdate = :(dt) end,
 	--- Called when drawing the system.
 	onDraw = :() end,
-	--- Called when updating the system, for every entity the system contains.
+	--- Called when updating the system, for every entity the system contains. Called after :onUpdate was called on the system.
 	process = :(e, dt) end,
-	--- Called when drawing the system, for every entity the system contains.
+	--- Called when drawing the system, for every entity the system contains. Called after :onDraw was called on the system.
 	render = :(e) end,
 
 	--- If set, the system will only update every interval seconds.
@@ -108,6 +113,7 @@ let system_mt = {
 	--- Methods ---
 
 	--- Add entities to the system and its subsystems.
+	-- Entities are added to subsystems after they were succesfully added to their parent system.
 	-- If this is called on a subsystem instead of the world, be warned that this will bypass all the parent's systems filters.
 	-- Since :remove will not search for entities in systems where they should have been filtered out, the added entities will not be removed
 	-- when calling :remove on a parent system or the world. The entity can only be removed by calling :remove on the system :add was called on.
@@ -130,11 +136,11 @@ let system_mt = {
 					entity[2] = { e, nil }
 				end
 			end
+			@entityCount += 1
+			@onAdd(e)
 			for _, s in ipairs(@systems) do
 				s:add(e)
 			end
-			@entityCount += 1
-			@onAdd(e)
 		end
 		if ... then
 			return e, @add(...)
@@ -143,6 +149,7 @@ let system_mt = {
 		end
 	end,
 	--- Remove entities to the system and its subsystems.
+	-- Entities are removed from subsystems after they were succesfully removed from their parent system.
 	-- If you intend to call this on a subsystem instead of the world, please read the warning in :add.
 	remove = :(e, ...)
 		if e ~= nil and @filter(e) then
@@ -191,6 +198,7 @@ let system_mt = {
 		end
 	end,
 	--- Try to update the system and its subsystems. Should be called on every game update.
+	-- Subsystems are updated after their parent system.
 	update = :(dt)
 		if @active then
 			if @interval then
@@ -199,32 +207,33 @@ let system_mt = {
 					return
 				end
 			end
-			for _, s in ipairs(@systems) do
-				s:update(dt)
-			end
+			@onUpdate(dt)
 			if @process ~= system_mt.process then
 				for e in @iter() do
 					@process(e, dt)
 				end
 			end
-			@onUpdate(dt)
+			for _, s in ipairs(@systems) do
+				s:update(dt)
+			end
 			if @interval then
 				@_waited = 0
 			end
 		end
 	end,
 	--- Try to draw the system and its subsystems. Should be called on every game draw.
+	-- Subsystems are drawn after their parent system.
 	draw = :()
 		if @visible then
-			for _, s in ipairs(@systems) do
-				s:draw()
-			end
+			@onDraw()
 			if @render ~= system_mt.render then
 				for e in @iter() do
 					@render(e)
 				end
 			end
-			@onDraw()
+			for _, s in ipairs(@systems) do
+				s:draw()
+			end
 		end
 	end,
 	--- Remove all the entities and subsystems in this system.
@@ -257,6 +266,7 @@ let recInstanciateSystems = (world, systems)
 		if s.name then
 			world.s[s.name] = system
 		end
+		system:onInstance()
 	end
 	return t
 end
@@ -268,6 +278,10 @@ let recCallOnAddToWorld = (world, systems)
 	end
 end
 
+--- Self descriptive
+let alwaysTrue = () return true end
+let alwaysFalse = () return true end
+
 --- ECS module.
 let ecs = {
 	--- Create and returns a world system based on a list of systems.
@@ -275,7 +289,7 @@ let ecs = {
 	-- @impl ubiquitousse
 	world = (...)
 		let world = setmetatable({
-			filter = (e) return true end,
+			filter = ecs.all(),
 			s = {}
 		}, { __index = system_mt })
 		world.world = world
@@ -287,28 +301,36 @@ let ecs = {
 	--- Returns a filter that returns true if, for every argument, a field with the same name exists in the entity.
 	-- @impl ubiquitousse
 	all = (...)
-		let l = {...}
-		return function(s, e)
-			for _, k in ipairs(l) do
-				if e[k] == nil then
-					return false
+		if ... then
+			let l = {...}
+			return function(s, e)
+				for _, k in ipairs(l) do
+					if e[k] == nil then
+						return false
+					end
 				end
+				return true
 			end
-			return true
+		else
+			return alwaysTrue
 		end
 	end,
 
 	--- Returns a filter that returns true if one of the arguments if the name of a field in the entity.
 	-- @impl ubiquitousse
 	any = (...)
-		let l = {...}
-		return function(s, e)
-			for _, k in ipairs(l) do
-				if e[k] ~= nil then
-					return true
+		if ... then
+			let l = {...}
+			return function(s, e)
+				for _, k in ipairs(l) do
+					if e[k] ~= nil then
+						return true
+					end
 				end
+				return false
 			end
-			return false
+		else
+			return alwaysFalse
 		end
 	end,
 

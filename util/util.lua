@@ -157,6 +157,19 @@ util = {
 		return setmetatable(r, getmetatable(t))
 	end,
 
+	--- Returns a table which, when indexed, will require() the module with the index as a name (and a optional prefix).
+	-- @tparam string[opt=""] string that will prefix modules names when calling require()
+	-- @treturn table the requirer table
+	requirer = function(prefix)
+		prefix = prefix and tostring(prefix) or ""
+		return setmetatable({}, {
+			__index = function(self, key)
+				self[key] = require(prefix..tostring(key))
+				return self[key]
+			end
+		})
+	end,
+
 	-----------------------
 	--- Random and UUID ---
 	-----------------------
