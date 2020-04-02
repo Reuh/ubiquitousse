@@ -59,6 +59,7 @@ let system_mt = {
 	systems = nil,
 
 	--- Returns true if the entity should be added to this system (and therefore its subsystems).
+	-- If this is a string, it will be converted to a filter function on instanciation using ecs.all.
 	-- By default, rejects everything.
 	filter = :(e) return false end,
 	--- Returns true if e1 <= e2.
@@ -87,8 +88,8 @@ let system_mt = {
 	--- Called when drawing the system, for every entity the system contains. Called after :onDraw was called on the system.
 	render = :(e) end,
 
-	--- If set, the system will only update every interval seconds.
-	interval = nil,
+	--- If not false, the system will only update every interval seconds.
+	interval = false,
 	--- The system and its susbsystems will only update if this is true.
 	active = true,
 	--- The system and its subsystems will only draw if this is true.
@@ -263,6 +264,9 @@ let recInstanciateSystems = (world, systems)
 			end
 		}))
 		let system = t[#t]
+		if type(s.filter) == "string" then
+			system.filter = (_, e) return e[s.filter] ~= nil end
+		end
 		if s.name then
 			world.s[s.name] = system
 		end

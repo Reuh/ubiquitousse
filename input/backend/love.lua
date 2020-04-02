@@ -113,9 +113,9 @@ input.basicButtonDetector = function(id)
 	-- Gamepad axis
 	elseif id:match("^gamepad%.axis%.") then
 		local gid, axis, threshold = id:match("^gamepad%.axis%.(.+)%.(.+)%%(.+)$")
-		if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0)
+		if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0.5)
 		gid = tonumber(gid)
-		threshold = tonumber(threshold) or 0.1
+		threshold = tonumber(threshold) or 0.5
 		return function()
 			local gamepad
 			for _,j in ipairs(love.joystick.getJoysticks()) do
@@ -168,7 +168,7 @@ input.basicAxisDetector = function(id)
 	-- Gamepad axis
 	elseif id:match("^gamepad%.axis%.") then
 		local gid, axis, threshold = id:match("^gamepad%.axis%.(.+)%.(.+)%%(.+)$")
-		if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0)
+		if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0.1)
 		gid = tonumber(gid)
 		threshold = tonumber(threshold) or 0.1
 		return function()

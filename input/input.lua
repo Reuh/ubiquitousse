@@ -59,38 +59,38 @@ local button_mt = {
 		return self
 	end,
 
-	--- Grabs the input.
-	-- This function returns a new input object which mirrors the current object, except it will grab every new input.
+	--- Hijacks the input.
+	-- This function returns a new input object which mirrors the current object, except it will hijack every new input.
 	-- This means any new button press/down/release will only be visible to the new object; the button will always appear unpressed for the initial object.
 	-- This is useful for contextual input, for example if you want to display a menu without pausing the game: the menu
-	-- can grab relevant inputs while it is open, so they don't trigger any action in the rest of the game.
-	-- An input can be grabbed several times; the one which grabbed it last will be the active one.
-	-- @treturn ButtonInput the new input object which is grabbing the input
-	grab = function(self)
-		local grabbed = setmetatable({}, { __index = self, __newindex = self })
-		table.insert(self.grabStack, grabbed)
-		self.grabbing = grabbed
-		return grabbed
+	-- can hijack relevant inputs while it is open, so they don't trigger any action in the rest of the game.
+	-- An input can be hijacked several times; the one which hijacked it last will be the active one.
+	-- @treturn ButtonInput the new input object which is hijacking the input
+	hijack = function(self)
+		local hijacked = setmetatable({}, { __index = self, __newindex = self })
+		table.insert(self.hijackStack, hijacked)
+		self.hijacking = hijacked
+		return hijacked
 	end,
-	--- Release the input that was grabbed by this object.
+	--- Release the input that was hijacked by this object.
 	-- Input will be given back to the previous object.
 	-- @treturn ButtonInput this ButtonInput object
-	release = function(self)
-		local grabStack = self.grabStack
-		for i, v in ipairs(grabStack) do
+	free = function(self)
+		local hijackStack = self.hijackStack
+		for i, v in ipairs(hijackStack) do
 			if v == self then
-				table.remove(grabStack, i)
-				self.grabbing = grabStack[#grabStack]
+				table.remove(hijackStack, i)
+				self.hijacking = hijackStack[#hijackStack]
 				return self
 			end
 		end
-		error("This object is currently not grabbing this input")
+		error("This object is currently not hijacking this input")
 	end,
 
 	--- Returns true if the input was just pressed.
 	-- @treturn boolean true if the input was pressed, false otherwise
 	pressed = function(self)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			return self.state == "pressed"
 		else
@@ -100,7 +100,7 @@ local button_mt = {
 	--- Returns true if the input was just released.
 	-- @treturn boolean true if the input was released, false otherwise
 	released = function(self)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			return self.state == "released"
 		else
@@ -110,7 +110,7 @@ local button_mt = {
 	--- Returns true if the input is down.
 	-- @treturn boolean true if the input is currently down, false otherwise
 	down = function(self)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			local state = self.state
 			return state == "down" or state == "pressed"
@@ -183,27 +183,28 @@ local axis_mt = {
 	-- @treturn AxisInput this AxisInput object
 	clear = button_mt.clear,
 
-	--- Grabs the input.
-	-- This function returns a new input object which mirrors the current object, except it will grab every new input.
+	--- Hijacks the input.
+	-- This function returns a new input object which mirrors the current object, except it will hijack every new input.
 	-- This means any value change will only be visible to the new object; the axis will always appear to be at 0 for the initial object.
-	-- An input can be grabbed several times; the one which grabbed it last will be the active one.
-	-- @treturn AxisInput the new input object which is grabbing the input
-	grab = function(self)
-		local grabbed
-		grabbed = setmetatable({
-			positive = input.button(function() return grabbed:value() > 0 end),
-			negative = input.button(function() return grabbed:value() < 0 end)
+	-- An input can be hijacked several times; the one which hijacked it last will be the active one.
+	-- @treturn AxisInput the new input object which is hijacking the input
+	hijack = function(self)
+		local hijacked
+		hijacked = setmetatable({
+			positive = input.button(function() return hijacked:value() > self.triggeringThreshold end),
+			negative = input.button(function() return hijacked:value() < self.triggeringThreshold end)
 		}, { __index = self, __newindex = self })
-		table.insert(self.grabStack, grabbed)
-		self.grabbing = grabbed
-		return grabbed
+		table.insert(self.hijackStack, hijacked)
+		self.hijacking = hijacked
+		return hijacked
 	end,
-	--- Release the input that was grabbed by this object.
+	--- Release the input that was hijacked by this object.
 	-- Input will be given back to the previous object.
 	-- @treturn AxisInput this AxisInput object
-	release = button_mt.release,
+	free = button_mt.free,
 
 	--- Sets the default detection threshold (deadzone).
+	-- 0 by default.
 	-- @tparam number new the new detection threshold
 	-- @treturn AxisInput this AxisInput object
 	threshold = function(self, new)
@@ -215,7 +216,7 @@ local axis_mt = {
 	-- @tparam[opt=default threshold] number threshold value to use
 	-- @treturn number the input value
 	value = function(self, curThreshold)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			local val = self.val
 			return math.abs(val) > math.abs(curThreshold or self.threshold) and val or 0
@@ -226,7 +227,7 @@ local axis_mt = {
 	--- Returns the change in value of the input since last update (between -2 and 2).
 	-- @treturn number the value delta
 	delta = function(self)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			return self.dval
 		else
@@ -237,7 +238,7 @@ local axis_mt = {
 	-- @tparam[opt=default threshold*max] number raw threshold value to use
 	-- @treturn number the input raw value
 	raw = function(self, rawThreshold)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			local raw = self.raw
 			return math.abs(raw) > math.abs(rawThreshold or self.threshold*self.max) and raw or 0
@@ -250,6 +251,15 @@ local axis_mt = {
 	max = function(self)
 		self:update()
 		return self.max
+	end,
+
+	--- Sets the default triggering threshold, i.e. how the minimal axis value for which the associated buttons will be considered down.
+	-- 0.5 by default.
+	-- @tparam number new the new triggering threshold
+	-- @treturn AxisInput this AxisInput object
+	triggeringThreshold = function(self, new)
+		self.triggeringThreshold = tonumber(new)
+		return self
 	end,
 
 	--- The associated button pressed when the axis reaches a positive value.
@@ -319,36 +329,36 @@ local pointer_mt = {
 	-- @treturn PointerInput this PointerInput object
 	clear = button_mt.clear,
 
-	--- Grabs the input.
-	-- This function returns a new input object which mirrors the current object, except it will grab every new input.
+	--- Hijacks the input.
+	-- This function returns a new input object which mirrors the current object, except it will hijack every new input.
 	-- This means any value change will only be visible to the new object; the pointer will always appear to be at offsetX,offsetY for the initial object.
-	-- An input can be grabbed several times; the one which grabbed it last will be the active one.
-	-- @treturn PointerInput the new input object which is grabbing the input
-	grab = function(self)
-		local grabbed
-		grabbed = {
+	-- An input can be hijacked several times; the one which hijacked it last will be the active one.
+	-- @treturn PointerInput the new input object which is hijacking the input
+	hijack = function(self)
+		local hijacked
+		hijacked = {
 			horizontal = input.axis(function()
-				local h = grabbed:x()
-				local width = grabbed.width
+				local h = hijacked:x()
+				local width = hijacked.width
 				return h/width, h, width
 			end),
 			vertical = input.axis(function()
-				local v = grabbed:y()
-				local height = grabbed.height
+				local v = hijacked:y()
+				local height = hijacked.height
 				return v/height, v, height
 			end)
 		}
-		grabbed.right, grabbed.left = grabbed.horizontal.positive, grabbed.horizontal.negative
-		grabbed.up, grabbed.down = grabbed.vertical.negative, grabbed.vertical.positive
-		setmetatable(grabbed, { __index = self, __newindex = self })
-		table.insert(self.grabStack, grabbed)
-		self.grabbing = grabbed
-		return grabbed
+		hijacked.right, hijacked.left = hijacked.horizontal.positive, hijacked.horizontal.negative
+		hijacked.up, hijacked.down = hijacked.vertical.negative, hijacked.vertical.positive
+		setmetatable(hijacked, { __index = self, __newindex = self })
+		table.insert(self.hijackStack, hijacked)
+		self.hijacking = hijacked
+		return hijacked
 	end,
-	--- Release the input that was grabbed by this object.
+	--- Free the input that was hijacked by this object.
 	-- Input will be given back to the previous object.
 	-- @treturn PointerInput this PointerInput object
-	release = button_mt.release,
+	free = button_mt.free,
 
 	--- Set the moving area half-dimensions.
 	-- Call without argument to use half the window dimensions.
@@ -385,7 +395,7 @@ local pointer_mt = {
 	--- Returns the current X value of the pointer.
 	-- @treturn number X value
 	x = function(self)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			return self.valX + (self.offsetX or self.width or input.getDrawWidth()/2)
 		else
@@ -395,7 +405,7 @@ local pointer_mt = {
 	--- Returns the current Y value of the pointer.
 	-- @treturn number Y value
 	y = function(self)
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			return self.valY + (self.offsetY or self.height or input.getDrawHeight()/2)
 		else
@@ -414,7 +424,7 @@ local pointer_mt = {
 	-- @treturn number Y value
 	clamped = function(self)
 		local width, height = self.width, self.height
-		if self.grabbing == self then
+		if self.hijacking == self then
 			self:update()
 			local x, y = self.valX, self.valY
 			local cx, cy = x, y
@@ -582,39 +592,40 @@ input = {
 	-- @impl ubiquitousse
 	button = function(...)
 		local r = setmetatable({
-			grabStack = {}, -- grabbers stack, last element is the object currently grabbing this input
-			grabbing = nil, -- object currently grabbing this input
+			hijackStack = {}, -- hijackers stack, last element is the object currently hijacking this input
+			hijacking = nil, -- object currently hijacking this input
 			detectors = {}, -- detectors list
 			state = "none" -- current state (none, pressed, down, released)
 		}, button_mt)
-		table.insert(r.grabStack, r)
-		r.grabbing = r
+		table.insert(r.hijackStack, r)
+		r.hijacking = r
 		r:bind(...)
 		return r
 	end,
 
 	-- Axis inputs --
 	-- Axis input is a container for axes detector. An axis input will return the value of the axis detector the most far away from their center (0).
-	-- Axis input provide a threshold setting ; every axis which has a distance to the center below the threshold (none by default) will be ignored.
+	-- Axis input provide a threshold setting; every axis which has a distance to the center below the threshold (none by default) will be ignored.
 	-- @tparam AxisDetectors ... all the axis detectors or axis identifiers
 	-- @tretrun AxisInput the object
 	-- @impl ubiquitousse
 	axis = function(...)
 		local r = setmetatable({
-			grabStack = {}, -- grabbers stack, last element is the object currently grabbing this input
-			grabbing = nil, -- object currently grabbing this input
+			hijackStack = {}, -- hijackers stack, last element is the object currently hijacking this input
+			hijacking = nil, -- object currently hijacking this input
 			detectors = {}, -- detectors list
 			val = 0, -- current value between -1 and 1
 			dval = 0, -- change between -2 and 2
 			raw = 0, -- raw value between -max and +max
 			max = 1, -- maximum for raw values
-			threshold = 0 -- ie., the deadzone
+			threshold = 0, -- ie., the deadzone
+			triggeringThreshold = 0.5 -- digital button threshold
 		}, axis_mt)
-		table.insert(r.grabStack, r)
-		r.grabbing = r
+		table.insert(r.hijackStack, r)
+		r.hijacking = r
 		r:bind(...)
-		r.positive = input.button(function() return r:value() > 0 end)
-		r.negative = input.button(function() return r:value() < 0 end)
+		r.positive = input.button(function() return r:value() > r.triggeringThreshold end)
+		r.negative = input.button(function() return r:value() < r.triggeringThreshold end)
 		return r
 	end,
 
@@ -628,16 +639,16 @@ input = {
 	-- @impl ubiquitousse
 	pointer = function(...)
 		local r = setmetatable({
-			grabStack = {}, -- grabbers stack, first element is the object currently grabbing this input
-			grabbing = nil, -- object currently grabbing this input
+			hijackStack = {}, -- hijackers stack, first element is the object currently hijacking this input
+			hijacking = nil, -- object currently hijacking this input
 			detectors = {}, -- pointers list (composite detectors)
 			valX = 0, valY = 0, -- pointer position
 			width = 1, height = 1, -- half-dimensions of the movement area
 			offsetX = 0, offsetY = 0, -- offsets
 			xSpeed = 1, ySpeed = 1, -- speed (pixels/milisecond); for relative mode
 		}, pointer_mt)
-		table.insert(r.grabStack, r)
-		r.grabbing = r
+		table.insert(r.hijackStack, r)
+		r.hijacking = r
 		r:bind(...)
 		r.horizontal = input.axis(function()
 			local h = r:x()
