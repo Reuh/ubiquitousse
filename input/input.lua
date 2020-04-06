@@ -192,7 +192,7 @@ local axis_mt = {
 		local hijacked
 		hijacked = setmetatable({
 			positive = input.button(function() return hijacked:value() > self.triggeringThreshold end),
-			negative = input.button(function() return hijacked:value() < self.triggeringThreshold end)
+			negative = input.button(function() return hijacked:value() < -self.triggeringThreshold end)
 		}, { __index = self, __newindex = self })
 		table.insert(self.hijackStack, hijacked)
 		self.hijacking = hijacked
@@ -625,7 +625,7 @@ input = {
 		r.hijacking = r
 		r:bind(...)
 		r.positive = input.button(function() return r:value() > r.triggeringThreshold end)
-		r.negative = input.button(function() return r:value() < r.triggeringThreshold end)
+		r.negative = input.button(function() return r:value() < -r.triggeringThreshold end)
 		return r
 	end,
 

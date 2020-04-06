@@ -101,27 +101,39 @@ input.basicButtonDetector = function(id)
 		end
 	-- Gamepad button
 	elseif id:match("^gamepad%.button%.") then
-		local gid, key = id:match("^gamepad%.button%.(.+)%.(.+)$")
-		gid = tonumber(gid)
+		local gidkey = id:match("^gamepad%.button%.(.+)$")
+		local key = gidkey:match("([^.]+)$")
+		local gid = tonumber(gidkey:match("^(.+)%..+$"))
+		local gamepad
 		return function()
-			local gamepad
-			for _,j in ipairs(love.joystick.getJoysticks()) do
-				if j:getID() == gid then gamepad = j end
+			if not gamepad or not gamepad:isConnected() then
+				for _, j in ipairs(love.joystick.getJoysticks()) do
+					if (gid and j:getID() == gid) or j:isGamepad() then
+						gamepad = j
+						break
+					end
+				end
 			end
 			return gamepad and gamepad:isGamepadDown(key)
 		end
 	-- Gamepad axis
 	elseif id:match("^gamepad%.axis%.") then
-		local gid, axis, threshold = id:match("^gamepad%.axis%.(.+)%.(.+)%%(.+)$")
-		if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0.5)
-		gid = tonumber(gid)
+		local gidaxis, threshold = id:match("^gamepad%.axis%.(.+)%%(.+)$")
+		if not gidaxis then gidaxis = id:match("^gamepad%.axis%.(.+)$") end -- no threshold (=0.5)
+		local axis = gidaxis:match("([^.]+)$")
+		local gid = tonumber(gidaxis:match("^(.+)%..+$"))
 		threshold = tonumber(threshold) or 0.5
+		local gamepad
 		return function()
-			local gamepad
-			for _,j in ipairs(love.joystick.getJoysticks()) do
-				if j:getID() == gid then gamepad = j end
+			if not gamepad or not gamepad:isConnected() then
+				for _, j in ipairs(love.joystick.getJoysticks()) do
+					if (gid and j:getID() == gid) or j:isGamepad() then
+						gamepad = j
+						break
+					end
+				end
 			end
-			if not gamepad then
+			if not gamepad or not gamepad:isConnected() then
 				return false
 			else
 				local val = gamepad:getGamepadAxis(axis)
@@ -167,16 +179,22 @@ input.basicAxisDetector = function(id)
 		end
 	-- Gamepad axis
 	elseif id:match("^gamepad%.axis%.") then
-		local gid, axis, threshold = id:match("^gamepad%.axis%.(.+)%.(.+)%%(.+)$")
-		if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0.1)
-		gid = tonumber(gid)
+		local gidaxis, threshold = id:match("^gamepad%.axis%.(.+)%%(.+)$")
+		if not gidaxis then gidaxis = id:match("^gamepad%.axis%.(.+)$") end -- no threshold (=0.1)
+		local axis = gidaxis:match("([^.]+)$")
+		local gid = tonumber(gidaxis:match("^(.+)%..+$"))
 		threshold = tonumber(threshold) or 0.1
+		local gamepad
 		return function()
-			local gamepad
-			for _,j in ipairs(love.joystick.getJoysticks()) do
-				if j:getID() == gid then gamepad = j end
+			if not gamepad or not gamepad:isConnected() then
+				for _, j in ipairs(love.joystick.getJoysticks()) do
+					if (gid and j:getID() == gid) or j:isGamepad() then
+						gamepad = j
+						break
+					end
+				end
 			end
-			if not gamepad then
+			if not gamepad or not gamepad:isConnected() then
 				return 0
 			else
 				local val = gamepad:getGamepadAxis(axis)
@@ -231,24 +249,42 @@ input.buttonName = function(...)
 			table.insert(ret, "Mouse "..key)
 		-- Gamepad button
 		elseif id:match("^gamepad%.button%.") then
-			local gid, key = id:match("^gamepad%.button%.(.+)%.(.+)$")
-			table.insert(ret, "Gamepad "..gid.." button "..key)
+			local gidkey = id:match("^gamepad%.button%.(.+)$")
+			local key = gidkey:match("([^.]+)$")
+			local gid = tonumber(gidkey:match("^(.+)%..+$"))
+			if gid then
+				table.insert(ret, "Gamepad "..gid.." button "..key)
+			else
+				table.insert(ret, "Gamepad button "..key)
+			end
 		-- Gamepad axis
 		elseif id:match("^gamepad%.axis%.") then
-			local gid, axis, threshold = id:match("^gamepad%.axis%.(.+)%.(.+)%%(.+)$")
-			if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0)
-			threshold = tonumber(threshold) or 0.1
-			if axis == "rightx" then
-				table.insert(ret, ("Gamepad %s right stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "right" or "left", math.abs(threshold*100)))
-			elseif axis == "righty" then
-				table.insert(ret, ("Gamepad %s right stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "down" or "up", math.abs(threshold*100)))
-			elseif axis == "leftx" then
-				table.insert(ret, ("Gamepad %s left stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "right" or "left", math.abs(threshold*100)))
-			elseif axis == "lefty" then
-				table.insert(ret, ("Gamepad %s left stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "down" or "up", math.abs(threshold*100)))
+			local gidaxis, threshold = id:match("^gamepad%.axis%.(.+)%%(.+)$")
+			if not gidaxis then gidaxis = id:match("^gamepad%.axis%.(.+)$") end -- no threshold (=0.5)
+			local axis = gidaxis:match("([^.]+)$")
+			local gid = tonumber(gidaxis:match("^(.+)%..+$"))
+			threshold = tonumber(threshold) or 0.5
+
+			local str
+			if gid then
+				str = "Gamepad "..gid
 			else
-				table.insert(ret, ("Gamepad %s axis %s (deadzone %s%%)"):format(gid, axis, math.abs(threshold*100)))
+				str = "Gamepad"
 			end
+			if axis == "rightx" then
+				str = str .. (" right stick %s (deadzone %s%%)"):format(threshold >= 0 and "right" or "left")
+			elseif axis == "righty" then
+				str = str .. (" right stick %s (deadzone %s%%)"):format(threshold >= 0 and "down" or "up")
+			elseif axis == "leftx" then
+				str = str .. (" left stick %s (deadzone %s%%)"):format(threshold >= 0 and "right" or "left")
+			elseif axis == "lefty" then
+				str = str .. (" left stick %s (deadzone %s%%)"):format(threshold >= 0 and "down" or "up")
+			else
+				str = str .. (" axis %s (deadzone %s%%)"):format(axis, math.abs(threshold*100))
+			end
+			str = str .. " (deadzone %s%%)"):format(math.abs(threshold*100))
+
+			table.insert(ret, str)
 		else
 			table.insert(ret, id)
 		end
@@ -277,20 +313,32 @@ input.axisName = function(...)
 			table.insert(ret, ("Mouse %s position (threshold %s%%)"):format(axis, math.abs(threshold*100)))
 		-- Gamepad axis
 		elseif id:match("^gamepad%.axis%.") then
-			local gid, axis, threshold = id:match("^gamepad%.axis%.(.+)%.(.+)%%(.+)$")
-			if not gid then gid, axis = id:match("^gamepad%.axis%.(.+)%.(.+)$") end -- no threshold (=0)
+			local gidaxis, threshold = id:match("^gamepad%.axis%.(.+)%%(.+)$")
+			if not gidaxis then gidaxis = id:match("^gamepad%.axis%.(.+)$") end -- no threshold (=0.1)
+			local axis = gidaxis:match("([^.]+)$")
+			local gid = tonumber(gidaxis:match("^(.+)%..+$"))
 			threshold = tonumber(threshold) or 0.1
-			if axis == "rightx" then
-				table.insert(ret, ("Gamepad %s right stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "right" or "left", math.abs(threshold*100)))
-			elseif axis == "righty" then
-				table.insert(ret, ("Gamepad %s right stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "down" or "up", math.abs(threshold*100)))
-			elseif axis == "leftx" then
-				table.insert(ret, ("Gamepad %s left stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "right" or "left", math.abs(threshold*100)))
-			elseif axis == "lefty" then
-				table.insert(ret, ("Gamepad %s left stick %s (deadzone %s%%)"):format(gid, threshold >= 0 and "down" or "up", math.abs(threshold*100)))
+
+			local str
+			if gid then
+				str = "Gamepad "..gid
 			else
-				table.insert(ret, ("Gamepad %s axis %s (deadzone %s%%)"):format(gid, axis, math.abs(threshold*100)))
+				str = "Gamepad"
 			end
+			if axis == "rightx" then
+				str = str .. (" right stick %s (deadzone %s%%)"):format(threshold >= 0 and "right" or "left")
+			elseif axis == "righty" then
+				str = str .. (" right stick %s (deadzone %s%%)"):format(threshold >= 0 and "down" or "up")
+			elseif axis == "leftx" then
+				str = str .. (" left stick %s (deadzone %s%%)"):format(threshold >= 0 and "right" or "left")
+			elseif axis == "lefty" then
+				str = str .. (" left stick %s (deadzone %s%%)"):format(threshold >= 0 and "down" or "up")
+			else
+				str = str .. (" axis %s (deadzone %s%%)"):format(axis, math.abs(threshold*100))
+			end
+			str = str .. " (deadzone %s%%)"):format(math.abs(threshold*100))
+
+			table.insert(ret, str)
 		else
 			table.insert(ret, id)
 		end
