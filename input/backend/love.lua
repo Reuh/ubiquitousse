@@ -282,7 +282,7 @@ input.buttonName = function(...)
 			else
 				str = str .. (" axis %s (deadzone %s%%)"):format(axis, math.abs(threshold*100))
 			end
-			str = str .. " (deadzone %s%%)"):format(math.abs(threshold*100))
+			str = str .. (" (deadzone %s%%)"):format(math.abs(threshold*100))
 
 			table.insert(ret, str)
 		else
@@ -336,7 +336,7 @@ input.axisName = function(...)
 			else
 				str = str .. (" axis %s (deadzone %s%%)"):format(axis, math.abs(threshold*100))
 			end
-			str = str .. " (deadzone %s%%)"):format(math.abs(threshold*100))
+			str = str .. (" (deadzone %s%%)"):format(math.abs(threshold*100))
 
 			table.insert(ret, str)
 		else
