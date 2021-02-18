@@ -17,11 +17,11 @@ function signal.registerEvents()
 				local old = love[callback]
 				love[callback] = function(dt)
 					old(dt)
-					event:emit(callback, dt*1000)
+					event:emit(callback, dt)
 				end
 			else
 				love[callback] = function(dt)
-					event:emit(callback, dt*1000)
+					event:emit(callback, dt)
 				end
 			end
 		else

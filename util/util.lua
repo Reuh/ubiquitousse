@@ -140,6 +140,7 @@ util = {
 
 	--- Perform a deep copy of a table.
 	-- The copied table will keep the share the same metatable as the original table.
+	-- If a key is a table, it will be reused and not copied.
 	-- Note this uses pairs() to perform the copy, which will honor the __pairs methamethod if present.
 	-- @tparam table t the table
 	-- @treturn table the copied table

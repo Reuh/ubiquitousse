@@ -164,6 +164,7 @@ local axis_mt = {
 	clone = function(self)
 		return input.axis(unpack(self.detectors))
 		       :threshold(self.threshold)
+		       :triggeringThreshold(self.triggeringThreshold)
 	end,
 
 	--- Bind new AxisDetector(s) to this input.
