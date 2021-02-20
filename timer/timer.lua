@@ -1,9 +1,7 @@
 --- ubiquitousse.timer
--- Optional dependencies: ubiquitousse.signal (to bind to update signal in signal.event)
-local loaded, signal = pcall(require, (...):match("^(.-)timer").."signal")
-if not loaded then signal = nil end
-
 local ease = require((...):match("^.-timer")..".easing")
+
+local timer_module
 
 --- Returns true if all the values in the list are true ; functions in the list will be called and the test will be performed on their return value.
 -- Returns default if the list is empty.
@@ -120,17 +118,90 @@ local timer_mt = {
 	end,
 
 	--- Chaining ---
-	--- Creates another TimedFunction which will be initialized immediately when the current one ends.
+	--- Creates another TimedFunction which will be replace the current one when it ends.
 	-- Returns the new TimedFunction.
 	chain = function(self, func)
-		local done = false
-		local fn = self:run(func)
-			:initWhen(function() return done end)
+		local fn = timer_module.run(func)
 		self:onEnd(function(self, lag)
-			done = true
 			fn:skip(lag)
+			self.t = fn.t
 		end)
 		return fn
+	end,
+
+	--- Management ---
+	--- Update the timer.
+	-- Should be called at every game update.
+	-- @tparam number dt the delta-time (time spent since last time the function was called) (miliseconds)
+	-- @impl ubiquitousse
+	update = function(self, dt)
+		local t = self.t
+		if not t.dead then
+			if t.abort then
+				t.dead = true
+			elseif all(t.initWhen, true) then
+				t.initWhen = {}
+				local co = t.coroutine
+				-- skip
+				local cdt = dt
+				if t.skip then cdt = cdt + t.skip end
+				-- start
+				if t.after then t.after = t.after - cdt end
+				if t.forceStart or ((not t.after or t.after <= 0) and all(t.startWhen, true)) then
+					local startLag = 0
+					if t.after then
+						startLag = -t.after
+					elseif t.skip then
+						startLag = t.skip
+					end
+					t.after, t.skip = nil, nil
+					t.startWhen = {}
+					t.dead = true -- niling here cause the next pair iteration to error
+					if not co then
+						co = coroutine.create(t.func)
+						t.coroutine = co
+						if t.times > 0 then t.times = t.times - 1 end
+						for _, f in ipairs(t.onStart) do f(self, startLag) end
+					end
+					-- update
+					assert(coroutine.resume(co, self, cdt, 0, function(delay)
+						t.after = delay - startLag
+						t.dead = false
+						local _, _, cdt, lag = coroutine.yield()
+						return cdt, lag
+					end))
+					for _, f in ipairs(t.onUpdate) do f(t.object, startLag) end
+					if t.during then t.during = t.during - startLag - cdt end
+					-- stopping / repeat
+					if all(t.stopWhen, false) then t.forceStop = true end
+					if t.forceStop or coroutine.status(co) == "dead" then
+						if t.forceStop
+							or (t.during and t.during <= 0)
+							or (t.times == 0)
+							or (not all(t.repeatWhile, true))
+							or (t.every == nil and t.times == -1 and t.during == nil and #t.repeatWhile == 0) -- no repeat
+						then
+							local endLag = t.during and -t.during or 0
+							for _, f in ipairs(t.onEnd) do f(self, endLag) end
+						else
+							if t.times > 0 then t.times = t.times - 1 end
+							if t.every then t.after = t.every - startLag end
+							t.coroutine = coroutine.create(t.func)
+							t.dead = false
+						end
+					end
+				end
+			end
+		end
+	end,
+
+	--- Check if the timer is dead.
+	-- You shouldn't need to worry about this if your timer belongs to a registry?
+	-- If you don't use registries, you probably should purge dead timers to free up some memory (dead timers don't do anything otherwise).
+	-- @treturn bool true if the timer can be discarded, false if it's still active.
+	-- @impl ubiquitousse
+	dead = function(self)
+		return self.t.dead
 	end
 }
 timer_mt.__index = timer_mt
@@ -142,87 +213,72 @@ local registry_mt = {
 	-- @tparam number dt the delta-time (time spent since last time the function was called) (miliseconds)
 	-- @impl ubiquitousse
 	update = function(self, dt)
-		self.dt = dt
-
 		-- process timers
-		for _, timer in ipairs(self.delayed) do
-			local t = timer.t
-			if not t.dead then
-				if t.abort then
-					t.dead = true
-				elseif all(t.initWhen, true) then
-					t.initWhen = {}
-					local co = t.coroutine
-					-- skip
-					dt = self.dt
-					if t.skip then dt = dt + t.skip end
-					-- start
-					if t.after then t.after = t.after - dt end
-					if t.forceStart or ((not t.after or t.after <= 0) and all(t.startWhen, true)) then
-						local startLag = 0
-						if t.after then
-							startLag = -t.after
-						elseif t.skip then
-							startLag = t.skip
-						end
-						t.after, t.skip = nil, nil
-						t.startWhen = {}
-						t.dead = true -- niling here cause the next pair iteration to error
-						if not co then
-							co = coroutine.create(t.func)
-							t.coroutine = co
-							if t.times > 0 then t.times = t.times - 1 end
-							for _, f in ipairs(t.onStart) do f(timer, startLag) end
-						end
-						-- update
-						assert(coroutine.resume(co, timer, dt, 0, function(delay)
-							t.after = delay - startLag
-							t.dead = false
-							local _, _, dt, lag = coroutine.yield()
-							return dt, lag
-						end))
-						for _, f in ipairs(t.onUpdate) do f(t.object, startLag) end
-						if t.during then t.during = t.during - startLag - dt end
-						-- stopping / repeat
-						if all(t.stopWhen, false) then t.forceStop = true end
-						if t.forceStop or coroutine.status(co) == "dead" then
-							if t.forceStop
-								or (t.during and t.during <= 0)
-								or (t.times == 0)
-								or (not all(t.repeatWhile, true))
-								or (t.every == nil and t.times == -1 and t.during == nil and #t.repeatWhile == 0) -- no repeat
-							then
-								local endLag = t.during and -t.during or 0
-								for _, f in ipairs(t.onEnd) do f(timer, endLag) end
-							else
-								if t.times > 0 then t.times = t.times - 1 end
-								if t.every then t.after = t.every - startLag end
-								t.coroutine = coroutine.create(t.func)
-								t.dead = false
-							end
-						end
-					end
-				end
-			end
+		for _, timer in ipairs(self.timers) do
+			timer:update(dt)
 		end
 
 		-- remove dead timers
-		for i=#self.delayed, 1, -1 do
-			if self.delayed[i].t.dead then
-				table.remove(self.delayed, i)
+		for i=#self.timers, 1, -1 do
+			if self.timers[i]:dead() then
+				table.remove(self.timers, i)
 			end
 		end
 	end,
 
-	--- Schedule a function to run.
-	-- The function will receive as first parameter the TimedFunction object.
+	--- Create a new timer and add it to the registry.
+	-- Same as timer_module.run, but add it to the registry.
+	-- @impl ubiquitousse
+	run = function(self, func)
+		local r = timer_module.run(func)
+		table.insert(self.timers, r)
+		return r
+	end,
+
+	--- Create a new tween timer and add it to the registry.
+	-- Same as timer_module.tween, but add it to the registry.
+	-- @impl ubiquitousse
+	tween = function(self, duration, tbl, to, method)
+		local r = timer_module.tween(duration, tbl, to, method)
+		table.insert(self.timers, r)
+		return r
+	end,
+
+	--- Cancels all the running TimedFunctions.
+	-- @impl ubiquitousse
+	clear = function(self)
+		self.timers = {}
+	end
+}
+registry_mt.__index = registry_mt
+
+--- Time related functions
+timer_module = {
+	--- Creates and return a new timer registry.
+	-- A timer registry provides an easy way to handle your timers; it will keep track of them,
+	-- updating and removing them as needed. If you use the scene system, a scene-specific
+	-- timer registry is available at ubiquitousse.scene.current.timer.
+	-- @impl ubiquitousse
+	new = function()
+		return setmetatable({
+			--- Used to store all the functions delayed with ubiquitousse.time.delay
+			-- The default implementation use the structure {<key: function> = <value: data table>, ...}
+			-- This table is for internal use and shouldn't be used from an external script.
+			timers = {}
+		}, registry_mt)
+	end,
+
+	--- Create a new timer that will run a function.
+	-- The function will receive as first parameter the timer object.
 	-- As a second parameter, the function will receive the delta time (dt).
 	-- As a third parameter, the function will receive the lag time (difference between the time when the function was run and when it should have been run).
 	-- As a fourth parameter, the function will receive as first parameter the wait(time) function, which will pause the function execution for time miliseconds.
+	-- You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
+	-- don't want to handle your timers manually.
 	-- @tparam[opt] function func the function to schedule
 	-- @treturn timer the object
 	-- @impl ubiquitousse
-	run = function(self, func)
+	run = function(func)
 		local r = setmetatable({
 			t = {
 				dead = false,
@@ -249,19 +305,19 @@ local registry_mt = {
 			}
 		}, timer_mt)
 
-		table.insert(self.delayed, r)
-
 		return r
 	end,
 
-	--- Tween some numeric values.
+	--- Create a timer that will tween some numeric values.
+	-- You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
+	-- don't want to handle your timers manually.
 	-- @tparam number duration tween duration (miliseconds)
 	-- @tparam table tbl the table containing the values to tween
 	-- @tparam table to the new values
 	-- @tparam[opt="linear"] string/function method tweening method (string name or the actual function(time, start, change, duration))
-	-- @treturn TimedFunction the object. A duration is already defined, and the :chain methods takes the same arguments as tween (and creates a tween).
+	-- @treturn timer the object. A duration is already defined, and the :chain methods takes the same arguments as tween (and creates a tween).
 	-- @impl ubiquitousse
-	tween = function(self, duration, tbl, to, method)
+	tween = function(duration, tbl, to, method)
 		method = method or "linear"
 		method = type(method) == "string" and ease[method] or method
 
@@ -282,7 +338,7 @@ local registry_mt = {
 			end
 		end
 
-		local r = self:run(function(self, dt)
+		local r = timer_module.run(function(self, dt)
 			time = time + dt
 			update(tbl, from, to)
 		end):during(duration)
@@ -314,71 +370,16 @@ local registry_mt = {
 				tbl_, to_, method_ = tbl, tbl_, method
 			end
 
-			local done = false
-			local fn = self:tween(duration_, tbl_, to_, method_)
-				:initWhen(function() return done end)
+			local fn = timer_module.tween(duration_, tbl_, to_, method_)
 			r:onEnd(function(self, lag)
-				done = true
 				fn:skip(lag)
+				self.t = fn.t
 			end)
 			return fn
 		end
 
 		return r
-	end,
-
-	--- Cancels all the running TimedFunctions.
-	-- @impl ubiquitousse
-	clear = function(self)
-		self.delayed = {}
-	end
-}
-registry_mt.__index = registry_mt
-
---- Time related functions
-local timer
-timer = {
-	--- Creates and return a new TimerRegistry.
-	-- A TimerRegistry is a separate ubiquitousse.time instance: its TimedFunctions will be independant
-	-- from the one registered using ubiquitousse.time.run (the global TimerRegistry). If you use the scene
-	-- system, a scene-specific TimerRegistry is available at ubiquitousse.scene.current.time.
-	-- @impl ubiquitousse
-	new = function()
-		return setmetatable({
-			--- Used to store all the functions delayed with ubiquitousse.time.delay
-			-- The default implementation use the structure {<key: function> = <value: data table>, ...}
-			-- This table is for internal use and shouldn't be used from an external script.
-			delayed = {},
-
-			--- Time since last timer update (miliseconds).
-			dt = 0
-		}, registry_mt)
-	end,
-
-	--- Time since last update (miliseconds).
-	-- @impl ubiquitousse
-	dt = 0,
-
-	--- Global TimerRegistry.
-	-- @impl ubiquitousse
-	delayed = {},
-	update = function(...) -- If ubiquitousse.signal is available, will be bound to the "update" signal in signal.event.
-		return registry_mt.update(timer, ...)
-	end,
-	run = function(...)
-		return registry_mt.run(timer, ...)
-	end,
-	tween = function(...)
-		return registry_mt.tween(timer, ...)
-	end,
-	clear = function(...)
-		return registry_mt.clear(timer, ...)
 	end
 }
 
--- Bind signals
-if signal then
-	signal.event:bind("update", timer.update)
-end
-
-return timer
+return timer_module
