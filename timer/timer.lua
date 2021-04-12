@@ -44,7 +44,7 @@ local timer_mt = {
 		self.t.times = count or -1
 		return self
 	end,
-	--- The TimedFunction will be active for a time duration.
+	--- The timer will be active for a time duration.
 	-- Specify no time to remove condition.
 	during = function(self, time)
 		self.t.during = time
@@ -118,8 +118,8 @@ local timer_mt = {
 	end,
 
 	--- Chaining ---
-	--- Creates another TimedFunction which will be replace the current one when it ends.
-	-- Returns the new TimedFunction.
+	--- Creates another timer which will be replace the current one when it ends.
+	-- Returns the new timer (and not the original one!).
 	chain = function(self, func)
 		local fn = timer_module.run(func)
 		self:onEnd(function(self, lag)
@@ -170,7 +170,7 @@ local timer_mt = {
 						local _, _, cdt, lag = coroutine.yield()
 						return cdt, lag
 					end))
-					for _, f in ipairs(t.onUpdate) do f(t.object, startLag) end
+					for _, f in ipairs(t.onUpdate) do f(self, startLag) end
 					if t.during then t.during = t.during - startLag - cdt end
 					-- stopping / repeat
 					if all(t.stopWhen, false) then t.forceStop = true end
@@ -196,7 +196,7 @@ local timer_mt = {
 	end,
 
 	--- Check if the timer is dead.
-	-- You shouldn't need to worry about this if your timer belongs to a registry?
+	-- You shouldn't need to worry about this if your timer belongs to a registry.
 	-- If you don't use registries, you probably should purge dead timers to free up some memory (dead timers don't do anything otherwise).
 	-- @treturn bool true if the timer can be discarded, false if it's still active.
 	-- @impl ubiquitousse
@@ -244,7 +244,7 @@ local registry_mt = {
 		return r
 	end,
 
-	--- Cancels all the running TimedFunctions.
+	--- Cancels all the running timers in this registry.
 	-- @impl ubiquitousse
 	clear = function(self)
 		self.timers = {}
