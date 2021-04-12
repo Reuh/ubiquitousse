@@ -243,28 +243,32 @@ let system_mt = {
 	-- Returns all removed entities.
 	-- Complexity: O(1) per system.
 	remove = :(e, ...)
-		if e ~= nil and @_previous[e] then
-			-- remove from subsystems
-			for _, s in ipairs(@systems) do
-				s:remove(e)
-			end
-			-- remove from linked list
-			let prev = @_previous[e]
-			if prev == true then
-				@_first = @_first[2]
-				if @_first then
-					@_previous[@_first[1]] = true
-				end
-			else
-				prev[2] = prev[2][2]
-				if prev[2] then
-					@_previous[prev[2][1]] = prev
+		if e ~= nil then
+			if @_previous[e] then
+				-- remove from subsystems
+				for _, s in ipairs(@systems) do
+					s:remove(e)
 				end
 			end
-			-- notify removal
-			@_previous[e] = nil
-			@entityCount -= 1
-			@onRemove(e[@name])
+			if @_previous[e] then -- recheck in case it was removed already from a subsystem onRemove callback
+				-- remove from linked list
+				let prev = @_previous[e]
+				if prev == true then
+					@_first = @_first[2]
+					if @_first then
+						@_previous[@_first[1]] = true
+					end
+				else
+					prev[2] = prev[2][2]
+					if prev[2] then
+						@_previous[prev[2][1]] = prev
+					end
+				end
+				-- notify removal
+				@_previous[e] = nil
+				@entityCount -= 1
+				@onRemove(e[@name])
+			end
 		end
 		if ... then
 			return e, @remove(...)
