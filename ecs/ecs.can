@@ -36,17 +36,6 @@ let recCallOnRemoveFromWorld = (world, systems)
 	end
 end
 
---- Recursively get a list of systems with a certain method.
-let recGetSystemsWithMethod = (method, systems, l={})
-	for _, s in ipairs(systems) do
-		if s[method] then
-			table.insert(l, s)
-		end
-		recGetSystemsWithMethod(method, s.systems, l)
-	end
-	return l
-end
-
 --- Iterate through the next entity, based on state s: { previousLinkedListItem }
 let nextEntity = (s)
 	if s[1] then
@@ -58,7 +47,7 @@ let nextEntity = (s)
 	end
 end
 
---- Recursively content of a into b if it isn't already present. No cycle detection.
+--- Recursively copy content of a into b if it isn't already present. No cycle detection.
 let copy = (a, b)
 	for k, v in pairs(a) do
 		if type(v) == "table" then
@@ -78,31 +67,36 @@ end
 -- When they are added to a world, a new, per-world self table is created and used for every method call (which we call "instancied system").
 -- Instancied systems can be retrieved in system.s or system.systems.
 -- Oh, the "world" is just the top-level system, behaving in exactly the same way as other systems.
+-- Every field defined below is optional.
 let system_mt = {
 	--- Read-only after creation system options ---
 	-- I mean, you can try to change them afterwards. But, heh.
 
 	--- Name of the system (optional).
-	-- Used to create a field with the system's name in world.s.
+	-- Used to create a field with the system's name in world.s and into each entity (the "entity's system table").
 	name = nil,
 
 	--- List of subsystems.
 	-- On a instancied system, this is a list of the same subsystems, but instancied for this world.
 	systems = nil,
 
+	--- Modifiable system options ---
+
 	--- Returns true if the entity should be added to this system (and therefore its subsystems).
-	-- If this is a string or a table, it will be converted to a filter function on instanciation using ecs.all.
+	-- If this is a string or a table, it will be converted to a filter function on instanciation using ecs.any.
+	-- If this true, will accept every entity; if false, reject every entity.
+	-- Will only test entities when they are added; changing this after system creation will not affect entities already in the system.
 	-- By default, rejects everything.
 	filter = :(e) return false end,
 	--- Returns true if e1 <= e2.
+	-- Used to place the entity in the sorted entity list when it is added; changing this after system creation
+	-- will not change the order of entities already in the system.
 	compare = :(e1, e2) return true end,
 
-	--- Modifiable system options ---
-
 	--- Called when adding an entity to the system.
-	onAdd = :(s, e) end,
+	onAdd = :(s) end,
 	--- Called when removing an entity from the system.
-	onRemove = :(s, e) end,
+	onRemove = :(s) end,
 	--- Called when the system is instancied, before any call to :onnAddToWorld (including other systems in the world).
 	onInstance = :() end,
 	--- Called when the system is added to a world.
@@ -116,9 +110,9 @@ let system_mt = {
 	--- Called when drawing the system.
 	onDraw = :() end,
 	--- Called when updating the system, for every entity the system contains. Called after :onUpdate was called on the system.
-	process = :(s, e, dt) end,
+	process = :(s, dt) end,
 	--- Called when drawing the system, for every entity the system contains. Called after :onDraw was called on the system.
-	render = :(s, e) end,
+	render = :(s) end,
 
 	--- If not false, the system will only update every interval seconds.
 	interval = false,
@@ -128,7 +122,14 @@ let system_mt = {
 	visible = true,
 
 	--- Defaults value to put into the entities's system table when they are added. Will recursively fill missing values.
+	-- When an entity is added to a system, a .entity field is created in the system table, referring to the full entity table.
+	-- Changing this will not affect entities already in the system.
 	default = nil,
+	--- Defaults methods to assign to the entities's system table when they are added.
+	-- When calling the methods with entity.systemName:method(...), the method will actually receive the
+	-- arguments method(system, entity system table, ...). Methamethods are accepted. New methods can be
+	-- created anytime.
+	methods = nil,
 
 	--- Read-only system options ---
 
@@ -148,8 +149,10 @@ let system_mt = {
 	_previous = nil,
 	--- Amount of time waited since last update (if interval is set).
 	_waited = 0,
-	--- Metatable of entities' m method table. Same for every system from the same world.
-	_entity_m_mt = nil,
+	--- Metatable of entities' system table.
+	-- Contains the methods defined in the methods field, wrapped to be called with the correct arguments, as well as a
+	-- __index field (if not redefined in methods).
+	_methods_mt = nil,
 
 	--- Methods ---
 
@@ -159,11 +162,15 @@ let system_mt = {
 	-- If this is called on a subsystem instead of the world, be warned that this will bypass all the parent's systems filters.
 	-- Since :remove will not search for entities in systems where they should have been filtered out, the added entities will not be removed
 	-- when calling :remove on a parent system or the world. The entity can be removed by calling :remove on the system :add was called on.
+	-- Complexity: O(1) per unordered system, O(entityCount) per ordered system.
 	add = :(e, ...)
 		if e ~= nil and not @_previous[e] and @filter(e) then
 			-- setup entity
-			if not e.m then
-				e.m = setmetatable({ _entity = e }, @_entity_m_mt)
+			if @name then
+				if not e[@name] e[@name] = {}
+				if @default copy(@default, e[@name])
+				if @methods setmetatable(e[@name], @_methods_mt)
+				e[@name].entity = e
 			end
 			-- add to linked list
 			if @_first == nil then
@@ -193,8 +200,7 @@ let system_mt = {
 			end
 			-- notify addition
 			@entityCount += 1
-			if (@default and e[@name]) copy(@default, e[@name])
-			@onAdd(e[@name], e)
+			@onAdd(e[@name])
 			-- add to subsystems
 			for _, s in ipairs(@systems) do
 				s:add(e)
@@ -209,6 +215,7 @@ let system_mt = {
 	--- Refresh an entity's systems.
 	-- Behave similarly to :add, but if the entity is already in the system, instead of skipping it, it
 	-- will check for new and removed components and add and remove from (sub)systems accordingly.
+	-- Complexity: O(1) per system + add/remove complexity.
 	refresh = :(e, ...)
 		if e ~= nil then
 			if not @_previous[e] then
@@ -234,6 +241,7 @@ let system_mt = {
 	-- Entities are removed from subsystems before they are removed from their parent system.
 	-- If you intend to call this on a subsystem instead of the world, please read the warning in :add.
 	-- Returns all removed entities.
+	-- Complexity: O(1) per system.
 	remove = :(e, ...)
 		if e ~= nil and @_previous[e] then
 			-- remove from subsystems
@@ -256,7 +264,7 @@ let system_mt = {
 			-- notify removal
 			@_previous[e] = nil
 			@entityCount -= 1
-			@onRemove(e[@name], e)
+			@onRemove(e[@name])
 		end
 		if ... then
 			return e, @remove(...)
@@ -265,6 +273,7 @@ let system_mt = {
 		end
 	end,
 	--- Returns true if every entity is in the system.
+	-- Complexity: O(1).
 	has = :(e, ...)
 		let has = e == nil or not not @_previous[e]
 		if ... then
@@ -299,14 +308,14 @@ let system_mt = {
 			@onUpdate(dt)
 			if @process ~= system_mt.process then
 				for e in @iter() do
-					@process(e[@name], e, dt)
+					@process(e[@name], dt)
 				end
 			end
 			for _, s in ipairs(@systems) do
 				s:update(dt)
 			end
 			if @interval then
-				@_waited = 0
+				@_waited -= @interval
 			end
 		end
 	end,
@@ -317,7 +326,7 @@ let system_mt = {
 			@onDraw()
 			if @render ~= system_mt.render then
 				for e in @iter() do
-					@render(e[@name], e)
+					@render(e[@name])
 				end
 			end
 			for _, s in ipairs(@systems) do
@@ -332,18 +341,42 @@ let system_mt = {
 	end
 }
 
+--- Self descriptive
+let alwaysTrue = () return true end
+let alwaysFalse = () return true end
+
 --- Recursively instanciate a list of systems for a world:
 -- * create their self table with instance fields set
 -- * create a field with their name in world.s (if name defined)
 let recInstanciateSystems = (world, systems)
 	let t = {}
 	for _, s in ipairs(systems) do
-		table.insert(t, setmetatable({
+		let system
+		-- setup method table
+		let methods_mt = {}
+		if s.methods then
+			methods_mt.__index = methods_mt
+			for k, v in pairs(s.methods) do
+				methods_mt[k] = :(...)
+					return v(system, @, ...)
+				end
+			end
+			setmetatable(s.methods, {
+				__newindex = :(k, v)
+					rawset(@, k, v)
+					methods_mt[k] = :(...)
+						return v(system, @, ...)
+					end
+				end
+			})
+		end
+		-- instanciate system
+		system = setmetatable({
 			systems = recInstanciateSystems(world, s.systems or {}),
 			world = world,
 			s = world.s,
 			_previous = {},
-			_entity_m_mt = world._entity_m_mt
+			_methods_mt = methods_mt
 		}, {
 			__index = :(k)
 				if s[k] ~= nil then
@@ -352,13 +385,20 @@ let recInstanciateSystems = (world, systems)
 					return system_mt[k]
 				end
 			end
-		}))
-		let system = t[#t]
+		})
 		if type(s.filter) == "string" then
 			system.filter = (_, e) return e[s.filter] ~= nil end
 		elseif type(s.filter) == "table" then
-			system.filter = ecs.all(unpack(s.filter))
+			system.filter = ecs.any(unpack(s.filter))
+		elseif type(s.filter) == "boolean" then
+			if s.filter then
+				system.filter = alwaysTrue
+			else
+				system.filter = alwaysFalse
+			end
 		end
+		-- add system
+		table.insert(t, system)
 		if s.name then
 			world.s[s.name] = system
 		end
@@ -374,10 +414,6 @@ let recCallOnAddToWorld = (world, systems)
 	end
 end
 
---- Self descriptive
-let alwaysTrue = () return true end
-let alwaysFalse = () return true end
-
 --- ECS module.
 ecs = {
 	--- Create and returns a world system based on a list of systems.
@@ -387,30 +423,8 @@ ecs = {
 		let world = setmetatable({
 			filter = ecs.all(),
 			s = {},
-			_previous = {},
-			_entity_m_mt = setmetatable({}, {
-				__index = (_entity_m_mt, k)
-					let s = recGetSystemsWithMethod(k, {world})
-					_entity_m_mt[k] = (m, ...)
-						let e = m._entity
-						let args = {...}
-						for _, sys in ipairs(s) do
-							if sys._previous[e] then
-								let r = { sys[k](sys, e[sys.name], e, unpack(args)) }
-								if r[1] == false then
-									break
-								elseif r[1] == true then
-									args = { select(2, unpack(r)) }
-								end
-							end
-						end
-						return unpack(args)
-					end
-					return _entity_m_mt[k]
-				end
-			})
+			_previous = {}
 		}, { __index = system_mt })
-		world._entity_m_mt.__index = world._entity_m_mt
 		world.world = world
 		world.systems = recInstanciateSystems(world, {...})
 		recCallOnAddToWorld(world, world.systems)
