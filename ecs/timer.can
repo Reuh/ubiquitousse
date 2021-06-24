@@ -1,0 +1,35 @@
+--- Timer system
+-- Handles ubiquitousse timers.
+
+let timer = require((...):match("^(.-)ecs%.timer").."scene")
+
+return {
+	name = "timer",
+	filter = "timer",
+	default = {
+		-- timer object
+	},
+	process = :(t, dt)
+		t:update(dt)
+		if t:dead() then
+			@world:remove(t.entity)
+		end
+	end,
+	--- System methods ---
+	--- Add a new timer
+	run = :(func)
+		local t = timer.run(func)
+		@world:add {
+			timer = t
+		}
+		return t
+	end,
+	--- Add a new tween
+	tween = :(duration, tbl, to, method)
+		local t = timer.tween(duration, tbl, to, method)
+		@world:add {
+			timer = t
+		}
+		return t
+	end
+}

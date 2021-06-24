@@ -1,0 +1,49 @@
+--- Children system
+-- Allow to build a hierarchy between entities.
+-- Children are stored directly in the .children entity table: they are added when their parent is added, and removed when it is removed from the world.
+
+return {
+	name = "children",
+	filter = true,
+	default = {
+		parent = nil, -- reference to parent entity, if any
+		-- ... list of children
+	},
+	methods = {
+		--- Add a new entity to the world, using this entity as a parent.
+		add = :(c, o)
+			if not o.children then
+				o.children = {}
+			end
+			o.children.parent = c.entity
+			table.insert(c, o)
+			@world:add(o)
+		end,
+		--- Remove an entity from the world and from this entity's children.
+		remove = :(c, o)
+			@world:remove(o)
+			for i=#c, 1, -1 do
+				if c[i] == o then
+					table.remove(c, i)
+					break
+				end
+			end
+			o.children.parent = nil
+		end
+	},
+	onAdd = :(c)
+		for _, o in ipairs(c) do
+			o.children.parent = c.entity
+			@world:add(o)
+		end
+	end,
+	onRemove = :(c)
+		for _, o in ipairs(c) do
+			@world:remove(o)
+			o.children.parent = nil
+		end
+		if c.parent then
+			c.parent.children:remove(c.entity)
+		end
+	end
+}
