@@ -1,4 +1,4 @@
-local input = require((...):match("^(.-%.)backend").."input")
+local input = require((...):gsub("love$", "input"))
 
 local loaded, signal = pcall(require, (...):match("^(.-)input").."signal")
 if not loaded then signal = nil end

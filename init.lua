@@ -9,13 +9,8 @@
 -- However, some modules may provide more feature when other modules are available.
 -- These dependencies are written at the top of every main module file.
 --
--- Ubiquitousse's goal is to run everywhere with the least porting effort possible, so Ubiquitousse tries to only use features that
--- are almost sure to be available everywhere.
---
--- Some Ubiquitousse modules require functions that are not in the Lua standard library, and must therefore be implemented in a backend,
--- such as ubiquitousse.love. When required, modules will try to autodetect the engine it is running on, and load a correct backend.
---
--- Most Ubiquitousse module backends require a few things to be fully implemented:
+-- Ubiquitousse's goal is to run everywhere with the least porting effort possible, so while the current version mainly focus LÖVE, it
+-- should be easily modifiable to work with something else. Ubiquitousse should only require:
 -- * The backend needs to have access to some kind of main loop, or at least a function called very often (may or may not be the
 --   same as the redraw screen callback).
 -- * Some way of measuring time (preferably with millisecond-precision).
@@ -23,9 +18,12 @@
 -- * Lua 5.1, 5.2, 5.3 or LuaJit.
 -- * Other requirement for specific modules should be described in the module's documentation.
 --
+-- Functions that depends on LÖVE or anything that's not in the Lua standard libraries (and therefore the one you may want to port to
+-- another framework) are indicated by a "-- @impl love" annotation.
+--
 -- Units used in the API documentation:
 -- * All distances are expressed in pixels (px)
--- * All durations are expressed in milliseconds (ms)
+-- * All durations are expressed in seconds (ms)
 -- These units are only used to make writing documentation easier; you can use other units if you want, as long as you're consistent.
 --
 -- Style:
@@ -34,18 +32,6 @@
 -- * UPPERCASE for constants (or maybe not).
 -- * CamelCase for class names.
 -- * lowerCamelCase is expected for everything else.
---
--- Implementation levels:
--- * backend: nothing defined in Ubiquitousse, must be implemented in backend
--- * mixed: partly implemented in Ubiquitousse but must be complemeted in backend.
--- * ubiquitousse: fully-working version in Ubiquitousse, may or may not be redefined in backend
--- The implementation level is indicated using the "@impl level" annotation.
---
--- For backend writers:
--- If a function defined here already contains some code, this means this code is mandatory and you must put/call
--- it in your implementation (except if the backend provides a more efficient implementation).
--- Also, a backend file shouldn't redefine the ubiquitousse table itself but only redefine the backend-dependant fields.
--- Lua 5.3: The API doesn't make the difference between numbers and integers, so convert to integers when needed.
 --
 -- For game writer:
 -- Ubiquitousse works with Lua 5.1 to 5.3, including LuaJit, but doesn't provide any version checking or compatibility layer
@@ -63,9 +49,22 @@ local ubiquitousse
 
 ubiquitousse = {
 	--- Ubiquitousse version.
-	-- @impl ubiquitousse
-	version = "0.0.1"
+	version = "0.1.0"
 }
+
+-- Check LÖVE version
+local madeForLove = { 11, "x", "x" }
+
+local actualLove = { love.getVersion() }
+for i, v in ipairs(madeForLove) do
+	if v ~= "x" and actualLove[i] ~= v then
+		local txt = ("Ubiquitousse was made for LÖVE %s.%s.%s but %s.%s.%s is used!\nThings may not work as expected.")
+			:format(madeForLove[1], madeForLove[2], madeForLove[3], actualLove[1], actualLove[2], actualLove[3])
+		print(txt)
+		love.window.showMessageBox("Compatibility warning", txt, "warning")
+		break
+	end
+end
 
 -- We're going to require modules requiring Ubiquitousse, so to avoid stack overflows we already register the ubiquitousse package
 package.loaded[p] = ubiquitousse
@@ -78,15 +77,6 @@ for _, m in ipairs{"signal", "asset", "ecs", "input", "scene", "timer", "util"} 
 	elseif not t:match("^module [^n]+ not found") then
 		error(t)
 	end
-end
-
--- Backend engine autodetect and load
-if love then
-	require(p..".backend.love")
-elseif package.loaded["ctr"] then
-	require(p..".backend.ctrulua")
-elseif package.loaded["libretro"] then
-	error("NYI")
 end
 
 return ubiquitousse

@@ -22,28 +22,22 @@ if not loaded then timer = nil end
 local scene
 scene = {
 	--- The current scene table.
-	-- @impl ubiquitousse
 	current = nil,
 
 	--- Shortcut for scene.current.timer.
-	-- @impl ubiquitousse
 	timer = nil,
 	--- Shortcut for scene.current.signal.
-	-- @impl ubiquitousse
 	signal = nil,
 
 	--- The scene stack: list of scene, from the farest one to the nearest.
-	-- @impl ubiquitousse
 	stack = {},
 
 	--- A prefix for scene modules names.
 	-- Will search in the "scene" directory by default. Redefine it to fit your own ridiculous filesystem.
-	-- @impl ubiquitousse
 	prefix = "scene.",
 
 	--- Creates and returns a new Scene object.
 	-- @tparam[opt="unamed"] string name the new scene name
-	-- @impl ubiquitousse
 	new = function(name)
 		return {
 			name = name or "unamed", -- The scene name.
@@ -68,7 +62,6 @@ scene = {
 	-- Then the stack is changed to replace the old scene with the new one.
 	-- @tparam string/table scenePath the new scene module name, or the scene table directly
 	-- @param ... arguments to pass to the scene's enter function
-	-- @impl ubiquitousse
 	switch = function(scenePath, ...)
 		local previous = scene.current
 		scene.current = type(scenePath) == "string" and require(scene.prefix..scenePath) or scenePath
@@ -89,7 +82,6 @@ scene = {
 	-- will be reused.
 	-- @tparam string/table scenePath the new scene module name, or the scene table directly
 	-- @param ... arguments to pass to the scene's enter function
-	-- @impl ubiquitousse
 	push = function(scenePath, ...)
 		local previous = scene.current
 		scene.current = type(scenePath) == "string" and require(scene.prefix..scenePath) or scenePath
@@ -104,7 +96,6 @@ scene = {
 	--- Pop the current scene from the scene stack.
 	-- The previous scene will be set as the current scene, then the current scene exit function will be called,
 	-- then the previous scene resume function will be called, and then the current scene will be removed from the stack.
-	-- @impl ubiquitousse
 	pop = function()
 		local previous = scene.current
 		scene.current = scene.stack[#scene.stack-1]
@@ -119,7 +110,6 @@ scene = {
 	end,
 
 	--- Pop all scenes.
-	-- @impl ubiquitousse
 	popAll = function()
 		while scene.current do
 			scene.pop()
@@ -130,7 +120,6 @@ scene = {
 	-- Should be called at every game update. If ubiquitousse.signal is available, will be bound to the "update" signal in signal.event.
 	-- @tparam number dt the delta-time (milisecond)
 	-- @param ... arguments to pass to the scene's update function after dt
-	-- @impl ubiquitousse
 	update = function(dt, ...)
 		if scene.current then
 			if timer then scene.current.timer:update(dt) end
@@ -141,7 +130,6 @@ scene = {
 	--- Draw the current scene.
 	-- Should be called every time the game is draw. If ubiquitousse.signal is available, will be bound to the "draw" signal in signal.event.
 	-- @param ... arguments to pass to the scene's draw function
-	-- @impl ubiquitousse
 	draw = function(...)
 		if scene.current then scene.current:draw(...) end
 	end

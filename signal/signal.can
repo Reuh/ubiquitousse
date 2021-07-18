@@ -2,11 +2,9 @@
 
 let registry_mt = {
 	--- Map of signals to list of listeners.
-	-- @impl ubiquitousse
 	signals = {},
 
 	--- Bind one or several functions to a signal name.
-	-- @impl ubiquitousse
 	bind = :(name, fn, ...)
 		if not @signals[name] then
 			@signals[name] = {}
@@ -18,7 +16,6 @@ let registry_mt = {
 	end,
 
 	--- Unbind one or several functions to a signal name.
-	-- @impl ubiquitousse
 	unbind = :(name, fn, ...)
 		if not @signals[name] then
 			return
@@ -34,13 +31,11 @@ let registry_mt = {
 	end,
 
 	--- Remove every bound function to a signal name.
-	-- @impl ubiquitousse
 	unbindAll = :(name)
 		@signals[name] = nil
 	end,
 
 	--- Replace a bound function with another function.
-	-- @impl ubiquitousse
 	replace = :(name, sourceFn, destFn)
 		if not @signals[name] then
 			@signals[name] = {}
@@ -54,13 +49,11 @@ let registry_mt = {
 	end,
 
 	--- Remove every bound function to every signal.
-	-- @impl ubiquitousse
 	clear = :()
 		@signals = {}
 	end,
 
 	--- Emit a signal, i.e. call every function bound to it, with the given arguments.
-	-- @impl ubiquitousse
 	emit = :(name, ...)
 		if @signals[name] then
 			for _, fn in ipairs(@signals[name]) do
@@ -74,13 +67,11 @@ registry_mt.__index = registry_mt
 let signal = {
 	--- Creates and return a new SignalRegistry.
 	-- A SignalRegistry is a separate ubiquitousse.signal instance: its signals will be independant from other registries.
-	-- @impl ubiquitousse
 	new = ()
 		return setmetatable({ signals = {} }, registry_mt)
 	end,
-	
+
 	--- Global SignalRegistry.
-	-- @impl ubiquitousse
 	signals = {},
 	bind = (...)
 		return registry_mt.bind(signal, ...)
@@ -102,13 +93,50 @@ let signal = {
 	-- * update(dt), should be called on every game update
 	-- * draw, should be called on every game draw
 	-- * for LÖVE, there are callbacks for every LÖVE callback function that need to be called on their corresponding LÖVE callback
-	-- @impl mixed
 	event = nil,
 
 	--- Call this function to hook signal.event signals to the current backend.
 	-- For LÖVE, this means overriding every existing LÖVE callback. If a callback is already defined, the new one will call the old function along with the signal:emit.
-	-- @impl backend
-	registerEvents = () end
+	-- @impl love
+	registerEvents = ()
+		local callbacks = { -- everything except run, errorhandler, threaderror
+			"displayrotated", "draw", "load", "lowmemory", "quit", "update",
+			"directorydropped", "filedropped", "focus", "mousefocus", "resize", "visible",
+			"keypressed", "keyreleased", "textedited", "textinput",
+			"mousemoved", "mousepressed", "mousereleased", "wheelmoved",
+			"gamepadaxis", "gamepadpressed", "gamepadreleased",
+			"joystickadded", "joystickaxis", "joystickhat", "joystickpressed", "joystickreleased", "joystickremoved",
+			"touchmoved", "touchpressed", "touchreleased"
+		}
+		local event = signal.event
+		for _, callback in ipairs(callbacks) do
+			if callback == "update" then
+				if love[callback] then
+					local old = love[callback]
+					love[callback] = function(dt)
+						old(dt)
+						event:emit(callback, dt)
+					end
+				else
+					love[callback] = function(dt)
+						event:emit(callback, dt)
+					end
+				end
+			else
+				if love[callback] then
+					local old = love[callback]
+					love[callback] = function(...)
+						old(...)
+						event:emit(callback, ...)
+					end
+				else
+					love[callback] = function(...)
+						event:emit(callback, ...)
+					end
+				end
+			end
+		end
+	end
 }
 
 signal.event = signal.new()

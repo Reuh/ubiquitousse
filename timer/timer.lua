@@ -133,7 +133,6 @@ local timer_mt = {
 	--- Update the timer.
 	-- Should be called at every game update.
 	-- @tparam number dt the delta-time (time spent since last time the function was called) (miliseconds)
-	-- @impl ubiquitousse
 	update = function(self, dt)
 		local t = self.t
 		if not t.dead then
@@ -199,7 +198,6 @@ local timer_mt = {
 	-- You shouldn't need to worry about this if your timer belongs to a registry.
 	-- If you don't use registries, you probably should purge dead timers to free up some memory (dead timers don't do anything otherwise).
 	-- @treturn bool true if the timer can be discarded, false if it's still active.
-	-- @impl ubiquitousse
 	dead = function(self)
 		return self.t.dead
 	end
@@ -211,7 +209,6 @@ local registry_mt = {
 	--- Update all the timers in the registry.
 	-- Should be called at every game update; called by ubiquitousse.update.
 	-- @tparam number dt the delta-time (time spent since last time the function was called) (miliseconds)
-	-- @impl ubiquitousse
 	update = function(self, dt)
 		-- process timers
 		for _, timer in ipairs(self.timers) do
@@ -228,7 +225,6 @@ local registry_mt = {
 
 	--- Create a new timer and add it to the registry.
 	-- Same as timer_module.run, but add it to the registry.
-	-- @impl ubiquitousse
 	run = function(self, func)
 		local r = timer_module.run(func)
 		table.insert(self.timers, r)
@@ -237,7 +233,6 @@ local registry_mt = {
 
 	--- Create a new tween timer and add it to the registry.
 	-- Same as timer_module.tween, but add it to the registry.
-	-- @impl ubiquitousse
 	tween = function(self, duration, tbl, to, method)
 		local r = timer_module.tween(duration, tbl, to, method)
 		table.insert(self.timers, r)
@@ -245,7 +240,6 @@ local registry_mt = {
 	end,
 
 	--- Cancels all the running timers in this registry.
-	-- @impl ubiquitousse
 	clear = function(self)
 		self.timers = {}
 	end
@@ -258,7 +252,6 @@ timer_module = {
 	-- A timer registry provides an easy way to handle your timers; it will keep track of them,
 	-- updating and removing them as needed. If you use the scene system, a scene-specific
 	-- timer registry is available at ubiquitousse.scene.current.timer.
-	-- @impl ubiquitousse
 	new = function()
 		return setmetatable({
 			--- Used to store all the functions delayed with ubiquitousse.time.delay
@@ -277,7 +270,6 @@ timer_module = {
 	-- don't want to handle your timers manually.
 	-- @tparam[opt] function func the function to schedule
 	-- @treturn timer the object
-	-- @impl ubiquitousse
 	run = function(func)
 		local r = setmetatable({
 			t = {
@@ -316,7 +308,6 @@ timer_module = {
 	-- @tparam table to the new values
 	-- @tparam[opt="linear"] string/function method tweening method (string name or the actual function(time, start, change, duration))
 	-- @treturn timer the object. A duration is already defined, and the :chain methods takes the same arguments as tween (and creates a tween).
-	-- @impl ubiquitousse
 	tween = function(duration, tbl, to, method)
 		method = method or "linear"
 		method = type(method) == "string" and ease[method] or method

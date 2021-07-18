@@ -422,7 +422,6 @@ end
 ecs = {
 	--- Create and returns a world system based on a list of systems.
 	-- The systems will be instancied for this world.
-	-- @impl ubiquitousse
 	world = (...)
 		let world = setmetatable({
 			filter = ecs.all(),
@@ -436,7 +435,6 @@ ecs = {
 	end,
 
 	--- Returns a filter that returns true if, for every argument, a field with the same name exists in the entity.
-	-- @impl ubiquitousse
 	all = (...)
 		if ... then
 			let l = {...}
@@ -454,7 +452,6 @@ ecs = {
 	end,
 
 	--- Returns a filter that returns true if one of the arguments if the name of a field in the entity.
-	-- @impl ubiquitousse
 	any = (...)
 		if ... then
 			let l = {...}
@@ -472,7 +469,6 @@ ecs = {
 	end,
 
 	--- If uqt.scene is available, returns a new scene that will consist of a ECS world with the specified systems and entities.
-	-- @impl ubiquitousse
 	scene = (name, systems={}, entities={})
 		assert(scene, "ubiquitousse.scene unavailable")
 		let s = scene.new(name)

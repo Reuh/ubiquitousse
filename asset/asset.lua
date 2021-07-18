@@ -16,7 +16,6 @@ local asset_mt = {
 	-- @tparam assetName string the asset's full name
 	-- @tparam ... number/string other arguments for the asset loader
 	-- @return the asset
-	-- @impl ubiquitousse
 	__call = function(self, assetName, ...)
 		local cache = self.cache
 		local hash = table.concat({assetName, ...}, ".")
@@ -37,7 +36,6 @@ local asset_mt = {
 	end,
 
 	--- Preload a list of assets.
-	-- @impl ubiquitousse
 	load = function(self, list)
 		for _, asset in ipairs(list) do
 			self(asset)
@@ -46,7 +44,6 @@ local asset_mt = {
 
 	--- Allow loaded assets to be garbage collected.
 	-- Only useful if the caching mode is set to "manual" duritng creation.
-	-- @impl ubiquitousse
 	clear = function(self)
 		self.cache = {}
 	end
@@ -61,7 +58,6 @@ local asset = {
 	-- @tparam directory string the directory in which the assets will be loaded
 	-- @tparam loaders table loaders table: {prefix = function, ...}
 	-- @tparam mode string[opt="auto"] caching mode
-	-- @impl ubiquitousse
 	new = function(dir, loaders, mode)
 		local cache = {}
 		if mode == nil or mode == "auto" then
@@ -69,15 +65,12 @@ local asset = {
 		end
 		return setmetatable({
 			--- A prefix for asset names
-			-- @impl ubiquitousse
 			prefix = dir..".",
 
 			--- The asset cache. Each cached asset is indexed with a string key "type.assetName".
-			-- @impl ubiquitousse
 			cache = cache,
 
 			--- The loaders table.
-			-- @impl ubiquitousse
 			loaders = loaders
 		}, asset_mt)
 	end
