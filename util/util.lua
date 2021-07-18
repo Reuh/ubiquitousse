@@ -31,6 +31,17 @@ util = {
 	--- List operations ---
 	-----------------------
 
+	--- Check if the list contains a value.
+	-- @tparam table t the list
+	-- @param v value to search
+	-- @treturn bool true if is in list, false otherwise
+	has = function(t, v)
+		for _, x in ipairs(t) do
+			if x == v then return true end
+		end
+		return false
+	end,
+
 	--- Remove the first occurence of an element in a list.
 	-- @tparam table t the list
 	-- @param x the element to remove
@@ -59,6 +70,32 @@ util = {
 			r[i] = t[i][k]
 		end
 		return r
+	end,
+
+	--- Chainable ipairs.
+	-- Same as ipairs, but can take several tables, which will be chained, in order.
+	ipairs = function(a, b, ...)
+		if b == nil then
+			return ipairs(a)
+		else
+			local tables = {a, b, ...}
+			local itable = 1
+			local f, s, var = ipairs(tables[itable])
+			return function()
+				local i, v = f(s, var)
+				if i == nil then
+					itable = itable + 1
+					if tables[itable] then
+						f, s, var = ipairs(tables[itable])
+						i, v = f(s, var)
+					else
+						return nil
+					end
+				end
+				var = i
+				return i, v
+			end
+		end
 	end,
 
 	--- Applies a function to every item in list t.
