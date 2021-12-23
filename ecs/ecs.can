@@ -13,7 +13,6 @@ let ecs
 -- TODO: Implement a skip list for faster search.
 -- better control over system order: process, draw, methods? (for lag reasons and dependencies)
 -- more generic events?
--- populate component?
 
 --- Recursively remove subsystems from a system.
 let recDestroySystems = (system)
@@ -67,13 +66,14 @@ end
 -- When they are added to a world, a new, per-world self table is created and used for every method call (which we call "instancied system").
 -- Instancied systems can be retrieved in system.s or system.systems.
 -- Oh, the "world" is just the top-level system, behaving in exactly the same way as other systems.
--- Every field defined below is optional.
+-- Every field defined below is optional unless written otherwise.
 let system_mt = {
 	--- Read-only after creation system options ---
 	-- I mean, you can try to change them afterwards. But, heh.
 
-	--- Name of the system (optional).
+	--- Name of the system.
 	-- Used to create a field with the system's name in world.s and into each entity (the "entity's system table").
+	-- If not set, the entity will not have a system table.
 	name = nil,
 
 	--- List of subsystems.
@@ -88,16 +88,16 @@ let system_mt = {
 	-- Will only test entities when they are added; changing this after system creation will not affect entities already in the system.
 	-- By default, rejects everything.
 	filter = :(e) return false end,
-	--- Returns true if e1 <= e2.
+	--- Returns true if e1 <= e2. e1 and e2 are two entities.
 	-- Used to place the entity in the sorted entity list when it is added; changing this after system creation
 	-- will not change the order of entities already in the system.
 	compare = :(e1, e2) return true end,
 
-	--- Called when adding an entity to the system.
+	--- Called when adding an entity to the system. s is the entity's system table.
 	onAdd = :(s) end,
-	--- Called when removing an entity from the system.
+	--- Called when removing an entity from the system. s is the entity's system table.
 	onRemove = :(s) end,
-	--- Called when the system is instancied, before any call to :onnAddToWorld (including other systems in the world).
+	--- Called when the system is instancied, before any call to :onAddToWorld (including other systems in the world).
 	onInstance = :() end,
 	--- Called when the system is added to a world.
 	onAddToWorld = :(world) end,
@@ -109,9 +109,9 @@ let system_mt = {
 	onUpdate = :(dt) end,
 	--- Called when drawing the system.
 	onDraw = :() end,
-	--- Called when updating the system, for every entity the system contains. Called after :onUpdate was called on the system.
+	--- Called when updating the system, for every entity the system contains. Called after :onUpdate was called on the system. s is the entity's system table.
 	process = :(s, dt) end,
-	--- Called when drawing the system, for every entity the system contains. Called after :onDraw was called on the system.
+	--- Called when drawing the system, for every entity the system contains. Called after :onDraw was called on the system. s is the entity's system table.
 	render = :(s) end,
 
 	--- If not false, the system will only update every interval seconds.
@@ -122,12 +122,12 @@ let system_mt = {
 	visible = true,
 
 	--- Defaults value to put into the entities's system table when they are added. Will recursively fill missing values.
-	-- When an entity is added to a system, a .entity field is created in the system table, referring to the full entity table.
+	-- When an entity is added to a system, a .entity field is always set in the system table, referring to the full entity table.
 	-- Changing this will not affect entities already in the system.
 	default = nil,
 	--- Defaults methods to assign to the entities's system table when they are added.
 	-- When calling the methods with entity.systemName:method(...), the method will actually receive the
-	-- arguments method(system, entity system table, ...). Methamethods are accepted. New methods can be
+	-- arguments method(system, system table, ...). Methamethods are accepted. New methods can be
 	-- created anytime.
 	methods = nil,
 
