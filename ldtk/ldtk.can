@@ -1,0 +1,596 @@
+--- [LDtk](https://ldtk.io/) level importer for LÖVE.
+-- Support most LDtk features, and allow easy usage in LÖVE projects.
+--
+-- Every unit is in pixel in the API unless written otherwise.
+--
+-- This modules returns a single function @{LDtk}(path).
+--
+-- Requires LÖVE `love.graphics` (drawing Image, SpriteBatch, Quad).
+--
+-- @module ldtk
+-- @require love
+-- @usage
+-- local ldtk = require("ubiquitousse.ldtk")
+--
+-- local project = ltdk("example.ldtk")
+--
+-- local callbacks = {
+-- 	onAddEntity = function(entity)
+-- 		-- handle entity...
+-- 	end
+-- }
+--
+-- -- load every level
+-- for _, lvl in ipairs(project.levels) do lvl:load() end
+--
+-- function love.draw()
+-- 	-- draw every level
+-- 	for _, lvl in ipairs(project.levels) do lvl:draw() end
+-- end
+
+-- TODO: give associated tile & color with enum values, also give enum info
+
+let lg = love.graphics
+
+--- json helpers
+let json_decode = require("json").decode
+let readJson = (file)
+	let f = assert(io.open(file, "r"))
+	local t = json_decode(f:read("*a"))
+	f:close()
+	return t
+end
+
+--- color helpers
+let parseColor = (str)
+	local r, g, b = str:match("^#(..)(..)(..)")
+	r, g, b = tonumber(r, 16), tonumber(g, 16), tonumber(b, 16)
+	return { r/255, g/255, b/255 }
+end
+let white = {1,1,1}
+
+--- returns a lua table from some fieldInstances
+let toLua = (type, val)
+	if val == nil then return val end
+	if type:match("^Array%<") then
+		local itype = type:match("^Array%<(.*)%>$")
+		for i, v in ipairs(val) do
+			val[i] = toLua(itype, v)
+		end
+	elseif type == "Color" then
+		return parseColor(val)
+	elseif type == "Point" then
+		return { x = val.cx, y = val.cy }
+	end
+	return val
+end
+let getFields = (f)
+	local t = {}
+	for _, v in ipairs(f) do
+		t[v.__identifier] = toLua(v.__type, v.__value)
+	end
+	return t
+end
+
+let tileset_mt
+
+let make_cache = (new_fn)
+	return setmetatable({}, {
+		__mode = "v",
+		__call = (cache, id)
+			if not cache[id] then
+				cache[id] = new_fn(id)
+			end
+			return cache[id]
+		end
+	})
+end
+let cache = {
+	tileset = make_cache((tilesetDef)
+		return tileset_mt._init(tilesetDef)
+	end),
+	image = make_cache((path)
+		return lg.newImage(path)
+	end),
+}
+
+--- Tileset object.
+-- Stores the image associated with the tileset; can be shared among several layers and levels.
+-- @type Tileset
+-- @require love
+tileset_mt = {
+	_newQuad = :(x, y, width, height)
+		return lg.newQuad(x, y, width, height, @image)
+	end,
+	_getTileQuad = :(tileid, x, y, size)
+		if not @_tileQuads[tileid] then
+			@_tileQuads[tileid] = @_newQuad(x, y, size, size)
+		end
+		return @_tileQuads[tileid]
+	end,
+	_init = (tilesetDef)
+		local t = {
+			--- The tileset LÖVE image object.
+			image = cache.image(tilesetDef.path),
+
+			_tileQuads = {}
+		}
+		return setmetatable(t, tileset_mt)
+	end
+}
+tileset_mt.__index = tileset_mt
+
+--- Layer object.
+--
+-- Part of a @{Level}.
+--
+-- @type Layer
+-- @require love
+let layer_mt = {
+	--- Draw the current layer.
+	-- Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
+	-- @require love
+	draw = :()
+		if @visible then
+			lg.push()
+				lg.translate(@offsetX, @offsetY)
+				if @spritebatch then
+					lg.setColor(1, 1, 1, @opacity)
+					lg.draw(@spritebatch)
+				elseif @intTiles then
+					for _, t in ipairs(@intTiles) do
+						lg.setColor(t.color)
+						lg.rectangle("fill", t.x, t.y, t.layer.gridSize, t.layer.gridSize)
+					end
+				elseif @entities then
+					for _, e in ipairs(@entities) do
+						if e.draw then e:draw() end
+					end
+				end
+			lg.pop()
+		end
+	end,
+
+	_unloadCallbacks = :(callbacks)
+		local onRemoveTile = callbacks.onRemoveTile
+		if @tiles and onRemoveTile then
+			for _, t in ipairs(@tiles) do
+				onRemoveTile(t)
+			end
+		end
+		local onRemoveIntTile = callbacks.onRemoveIntTile
+		if @intTiles and onRemoveIntTile then
+			for _, t in ipairs(@intTiles) do
+				onRemoveIntTile(t)
+			end
+		end
+		local onRemoveEntity = callbacks.onRemoveEntity
+		if @entities and onRemoveEntity then
+			for _, e in ipairs(@entities) do
+				onRemoveEntity(e)
+			end
+		end
+	end,
+	_init = (layer, level, order, callbacks)
+		let gridSize = layer.__gridSize
+		let t = {
+			--- @{Level} this layer belongs to.
+			level = level,
+			--- The layer name.
+			identifier = layer.__identifier,
+			--- Type of layer: IntGrid, Entities, Tiles or AutoLayer (string).
+			type = layer.__type,
+			--- Whether the layer is visible or not.
+			visible = layer.visible,
+			--- The layer opacity (0-1).
+			opacity = layer.opacity,
+			--- The layer order: smaller order means it is on top.
+			order = order,
+			--- X position of the layer relative to the level.
+			offsetX = layer.__pxTotalOffsetX,
+			--- Y position of the layer relative to the level.
+			offsetY = layer.__pxTotalOffsetY,
+			--- Size of the grid on this layer.
+			gridSize = gridSize,
+			--- Width of the layer, in grid units.
+			gridWidth = layer.__cWid,
+			--- Height of the layer, in grid units.
+			gridHeight = layer.__cHei,
+			--- _(Entities layer only)_ List of @{Entity} in the layer.
+			entities = nil,
+			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ List of @{Tile}s in the layer.
+			tiles = nil,
+			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ @{Tileset} object associated with the layer.
+			tileset = nil,
+			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ [LÖVE SpriteBatch](https://love2d.org/wiki/SpriteBatch) containing the layer.
+			spritebatch = nil,
+			--- _(IntGrid without AutoLayer rules layer only)_ list of @{IntTile}s in the layer.
+			intTiles = nil,
+		}
+		-- Layers with an associated tileset (otherwise ignore as there is nothing to draw) (Tiles, AutoLayer & IntGrid with AutoLayer rules)
+		if layer.__tilesetDefUid then
+			t.tiles = {}
+			local tilesetData = level.project._tilesetData[layer.__tilesetDefUid]
+			t.tileset = cache.tileset(tilesetData)
+			local tiles = layer.__type == "Tiles" and layer.gridTiles or layer.autoLayerTiles
+			local onAddTile = callbacks.onAddTile
+			t.spritebatch = lg.newSpriteBatch(t.tileset.image)
+			for _, tl in ipairs(tiles) do
+				let quad = t.tileset:_getTileQuad(tl.t, tl.src[1], tl.src[2], gridSize)
+				let sx, sy = 1, 1
+				let x, y = tl.px[1], tl.px[2]
+				--- Tile object.
+				--
+				-- This represent the tiles from a Tiles, AutoLayer or IntGrid with AutoLayer rules layer.
+				--
+				-- Can be retrived from the @{tiles} list or `onAddTile` level load callback.
+				--
+				-- @type Tile
+				let tile = {
+					--- Layer the tile belongs to.
+					layer = t,
+					--- X position of the tile relative to the layer.
+					x = x,
+					--- Y position of the tile relative to the layer.
+					y = y,
+					--- Whether the tile is flipped horizontally.
+					flipX = false,
+					--- Whether the tile is flipped vertically.
+					flipY = false,
+					--- Tags associated with the tile: can be used either as a list of tags or a map of activated tags tags[name] == true.
+					tags = tilesetData[tl.t].tags,
+					--- Custom data associated with the tile, if any.
+					data = tilesetData[tl.t].data,
+					--- Quad associated with the tile (relative to the layer's tileset).
+					quad = quad
+				}
+				if tl.f == 1 or tl.f == 3 then
+					sx = -1
+					x += gridSize
+					tile.flipX = true
+				end
+				if tl.f == 2 or tl.f == 3 then
+					sy = -1
+					y += gridSize
+					tile.flipY = true
+				end
+				t.spritebatch:add(quad, x, y, 0, sx, sy)
+				table.insert(t.tiles, tile)
+				if onAddTile then onAddTile(tile) end
+			end
+		-- IntGrid
+		elseif layer.__type == "IntGrid" then
+			t.intTiles = {}
+			local onAddIntTile = callbacks.onAddIntTile
+			local values = level.project._layerDef[layer.layerDefUid].intGridValues
+			for i, tl in ipairs(layer.intGridCsv) do
+				if tl > 0 then
+					let y = math.floor((i-1) / t.gridWidth) * gridSize
+					let x = ((i-1) % t.gridWidth) * gridSize
+					--- IntTile object.
+					--
+					-- This represent the tiles from a IntGrid without AutoLayer rules layer.
+					--
+					-- Can be retrived from the @{intTiles} list or `onAddIntTile` level load callback.
+					--
+					-- @type IntTile
+					let tile = {
+						--- Layer the IntTile belongs to.
+						layer = t,
+						--- X position of the IntTile relative to the layer.
+						x = x,
+						--- Y position of the IntTile relative to the layer.
+						y = y,
+						--- Name of the IntTile.
+						identifier = values[tl].identifier,
+						--- Integer value of the IntTile.
+						value = tl,
+						--- Color of the IntTile.
+						color = values[tl].color
+					}
+					table.insert(t.intTiles, tile)
+					if onAddIntTile then onAddIntTile(tile) end
+				end
+			end
+		end
+		-- Entities layers
+		if layer.__type == "Entities" then
+			t.entities = {}
+			local onAddEntity = callbacks.onAddEntity
+			for _, e in ipairs(layer.entityInstances) do
+				let entityDef = level.project._entityData[e.defUid]
+				--- Entity object.
+				--
+				-- This represent an entity from an Entities layer.
+				--
+				-- Can be retrived from the @{entities} list or `onAddEntity` level load callback.
+				--
+				-- @type Entity
+				let entity = {
+					--- @{Layer} this entity belongs to.
+					layer = t,
+					--- The entity name.
+					identifier = e.__identifier,
+					--- X position of the entity relative to the layer.
+					x = e.px[1],
+					--- Y position of the entity relative to the layer.
+					y = e.px[2],
+					--- The entity width.
+					width = e.width,
+					--- The entity height.
+					height = e.height,
+					--- Scale factor on x axis relative to original entity size.
+					sx = e.width / entityDef.width,
+					--- Scale factor on y axis relative to original entity size.
+					sy = e.height / entityDef.height,
+					--- The entity pivot point x position relative to the entity.
+					pivotX = e.__pivot[1] * e.width,
+					--- The entity pivot point x position relative to the entity.
+					pivotY = e.__pivot[2] * e.height,
+					--- Entity color.
+					color = entityDef.color,
+					--- Entity tile, if any. Is a table { tileset = associated tileset object, quad = associated quad }.
+					tile = nil,
+					--- Map of custom fields of the entity.
+					fields = getFields(e.fieldInstances),
+					--- Called for the entity when drawing the associated entity layer (you will likely want to redefine it).
+					--
+					-- By default, this draws the tile associated with the entity if there is one, or a rectangle around the entity position otherwise.
+					-- @require love
+					draw = :() 
+						if @tile then
+							let _, _, w, h = @tile.quad:getViewport()
+							lg.setColor(white)
+							lg.draw(@tile.tileset.image, @tile.quad, @x-@pivotX, @y-@pivotY, 0, @width / w, @height / h)
+						else
+							lg.setColor(@color)
+							lg.rectangle("line", @x-@pivotX, @y-@pivotY, @width, @height)
+						end
+					end
+				}
+				if e.__tile then
+					local tileset = cache.tileset(level.project._tilesetData[e.__tile.tilesetUid])
+					local srcRect = e.__tile.srcRect
+					local quad = tileset:_newQuad(srcRect[1], srcRect[2], srcRect[3], srcRect[4])
+					entity.tile = {
+						tileset = tileset,
+						quad = quad
+					}
+				end
+				table.insert(t.entities, entity)
+				if onAddEntity then onAddEntity(entity) end
+			end
+		end
+		return setmetatable(t, layer_mt)
+	end
+}
+layer_mt.__index = layer_mt
+
+--- Level object.
+--
+-- Levels are not automatically loaded in order to not waste ressources if your project is large; so before drawing or operating on a level, you will need to call its @{Level:load} method.
+--
+-- Part of a @{Project}.
+--
+-- @type Level
+-- @require love
+let level_mt = {
+	--- Draw this level.
+	-- Assumes we are currently in world coordinates (i.e. world top-left is at 0,0).
+	-- The level must be loaded.
+	-- Will draw the eventual backgrounds and all the layers in the level.
+	-- @require love
+	draw = :()
+		assert(@loaded == true, "level not loaded")
+		lg.push()
+			lg.translate(@x, @y)
+			-- background color
+			lg.setColor(@_bgColor)
+			lg.rectangle("fill", 0, 0, @width, @height)
+			-- background image
+			lg.setColor(white)
+			if @_bgImage then
+				lg.draw(@_bgImage.image, @_bgImage.quad, @_bgImage.x, @_bgImage.y, 0, @_bgImage.sx, @_bgImage.sy)
+			end
+			-- layers
+			for _, l in ipairs(@layers) do
+				l:draw()
+			end
+		lg.pop()
+	end,
+
+	--- Load the level.
+	-- Will load every layer in the level and the associated images.
+	--
+	-- You can optionally specify some callbacks for the loading process:
+	--
+	-- * `onAddLayer(layer)` will be called for every new layer loaded, with the @{Layer} as sole argument
+	-- * `onAddTile(tile)` will be called for every new tile loaded, with the @{Tile} as sole argument
+	-- * `onAddIntTile(tile)` will be called for every new IntGrid tile loaded, with the @{IntTile} as sole argument
+	-- * `onAddEntity(entity)` will be called for every new entity loaded, with the @{Entity} as sole argument
+	--
+	-- These callbacks should allow you to capture all the important elements needed to use the level, so you can hopefully
+	-- integrate it into your current game engine easily.
+	--
+	-- @tab[opt] callbacks
+	-- @require love
+	load = :(callbacks={})
+		assert(@loaded == false, "level already loaded")
+		if @_json.bgRelPath then
+			let pos = @_json.__bgPos
+			let cropRect = pos.cropRect
+			let image = cache.image(@project._directory..@_json.bgRelPath)
+			@_bgImage = {
+				image = image,
+				quad = lg.newQuad(cropRect[1], cropRect[2], cropRect[3], cropRect[4], image),
+				x = pos.topLeftPx[1],
+				y = pos.topLeftPx[2],
+				sx = pos.scale[1],
+				sy = pos.scale[1]
+			}
+		end
+		let layerInstances
+		if @_json.externalRelPath then
+			layerInstances = readJson(@project._directory..@_json.externalRelPath).layerInstances
+		else
+			layerInstances = @_json.layerInstances
+		end
+		@layers = {}
+		let onAddLayer = callbacks.onAddLayer
+		for i=#layerInstances, 1, -1 do
+			local layer = layer_mt._init(layerInstances[i], @, i, callbacks)
+			table.insert(@layers, layer)
+			if onAddLayer then onAddLayer(layer) end
+		end
+		@loaded = true
+	end,
+	--- Unload the level.
+	-- Images loaded by the level will be freed on the next garbage collection cycle.
+	--
+	-- You can optionally specify some callbacks for the unloading process:
+	--
+	-- * `onAddLayer(layer)` will be called for every new layer unloaded, with the @{Layer} as sole argument
+	-- * `onAddTile(tile)` will be called for every new tile unloaded, with the @{Tile} as sole argument
+	-- * `onAddIntTile(tile)` will be called for every new IntGrid tile unloaded, with the @{IntTile} as sole argument
+	-- * `onAddEntity(entity)` will be called for every new entity unloaded, with the @{Entity} as sole argument
+	--
+	-- @tab[opt] callbacks
+	unload = :(callbacks={})
+		assert(@loaded == true, "level not loaded")
+		let onRemoveLayer = callbacks.onRemoveLayer
+		for _, l in ipairs(@layers) do
+			l:_unloadCallbacks(callbacks)
+			if onRemoveLayer then onRemoveLayer(l) end
+		end
+		@loaded = false
+		@_bgImage = nil
+		@_bgImageQuads = nil
+		@layers = nil
+	end,
+
+	_init = (level, project)
+		let t = {
+			--- @{Project} this level belongs to.
+			project = project,
+			--- Whether this level is currently loaded or not (boolean).
+			loaded = false,
+			--- The level name (string).
+			identifier = level.identifier,
+			--- The level x position (number).
+			x = level.worldX,
+			--- The level y position (number).
+			y = level.worldY,
+			--- The level width (number).
+			width = level.pxWid,
+			--- The level height (number).
+			height = level.pxHei,
+			--- Map of custom fields of the level (table).
+			fields = getFields(level.fieldInstances),
+			--- List of @{Layer}s in the level (table).
+			layers = nil,
+
+			-- private
+			_json = level,
+			_bgColor = parseColor(level.__bgColor),
+			_bgImage = nil
+		}
+		return setmetatable(t, level_mt)
+	end
+}
+level_mt.__index = level_mt
+
+--- Project object.
+--
+-- Returned by @{LDtk}.
+--
+-- @type Project
+let project_mt = {
+	_init = (project, directory)
+		assert(project.jsonVersion == "0.9.3", "map made for LDtk version %s":format(project.jsonVersion))
+		let t = {
+			--- List of @{Level}s in this project.
+			levels = nil,
+
+			-- private
+			_directory = directory,
+			_layerDef = nil,
+			_tilesetData = nil,
+			_entityData = nil,
+		}
+		t.levels = [
+			for _, lvl in ipairs(project.levels) do
+				push level_mt._init(lvl, t)
+			end
+		]
+		t._tilesetData = [
+			for _, ts in ipairs(project.defs.tilesets) do
+				@[ts.uid] = {
+					path = directory..ts.relPath
+				}
+				local tilesetData = @[ts.uid]
+				for gridx=0, ts.__cWid-1 do
+					for gridy=0, ts.__cHei-1 do
+						tilesetData[gridx + gridy * ts.__cWid] = {
+							tags = {},
+							data = nil
+						}
+					end
+				end
+				for _, custom in ipairs(ts.customData) do
+					tilesetData[custom.tileId].data = custom.data
+				end
+				for _, tag in ipairs(ts.enumTags) do
+					local value = tag.enumValueId
+					for _, tileId in ipairs(tag.tileIds) do
+						table.insert(tilesetData[tileId].tags, value)
+						tilesetData[tileId].tags[value] = true
+					end
+				end
+			end
+		]
+		t._layerDef = [
+			for _, lay in ipairs(project.defs.layers) do
+				@[lay.uid] = {
+					intGridValues = nil
+				}
+				local layerDef = @[lay.uid]
+				if lay.__type == "IntGrid" then
+					layerDef.intGridValues = [
+						for _, v in ipairs(lay.intGridValues) do
+							@[v.value] = {
+								color = parseColor(v.color),
+								identifier = v.identifier
+							}
+						end
+					]
+				end
+			end
+		]
+		t._entityData = [
+			for _, ent in ipairs(project.defs.entities) do
+				@[ent.uid] = {
+					color = parseColor(ent.color),
+					width = ent.width,
+					height = ent.height
+				}
+			end
+		]
+		return setmetatable(t, project_mt)
+	end
+}
+project_mt.__index = project_mt
+
+--- Custom fields.
+-- @section fields
+
+--- Module.
+-- `ubiquitousse.ldtk` returns a single function, @{LDtk}.
+-- @section module
+
+--- Load a LDtk project.
+-- @string path to LDtk project file (.ldtk)
+-- @treturn Project the loaded LDtk project
+-- @function LDtk
+return (file)
+	return project_mt._init(readJson(file), file:match("^(.-)[^%/%\\]+$"))
+end

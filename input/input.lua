@@ -47,7 +47,7 @@ input = {
 	-- The function may error if the identifier is incorrect.
 	-- @tparam string button identifier, depends on the platform Ubiquitousse is running on
 	-- @treturn the new button detector
-	-- @impl love
+	-- @require love
 	basicButtonDetector = function(str) end,
 
 	--- Make a new button detector from a detector function, string, or list of buttons.
@@ -85,7 +85,7 @@ input = {
 	-- The function may error if the identifier is incorrect.
 	-- @tparam string axis identifier, depends on the platform Ubiquitousse is running on
 	-- @treturn the new axis detector
-	-- @impl love
+	-- @require love
 	basicAxisDetector = function(str) end,
 
 	--- Make a new axis detector from a detector function, string, or a couple of buttons.
@@ -117,13 +117,13 @@ input = {
 	-- This may also returns "axis threshold" buttons if an axis passes the threshold.
 	-- @tparam[opt=0.5] number threshold the threshold to detect axes as button
 	-- @treturn string,... buttons identifiers list
-	-- @impl love
+	-- @require love
 	buttonUsed = function(threshold) end,
 
 	--- Returns a list of the axes currently in use, identified by their string axis identifier
 	-- @tparam[opt=0.5] number threshold the threshold to detect axes
 	-- @treturn string,... axes identifiers list
-	-- @impl love
+	-- @require love
 	axisUsed = function(threshold) end,
 
 	--- Returns a nice name for the button identifier.
@@ -131,7 +131,7 @@ input = {
 	-- May returns the raw identifier if you're lazy.
 	-- @tparam string... button identifier string(s)
 	-- @treturn string... the displayable names
-	-- @impl love
+	-- @require love
 	buttonName = function(...) end,
 
 	--- Returns a nice name for the axis identifier.
@@ -139,7 +139,7 @@ input = {
 	-- May returns the raw identifier if you're lazy.
 	-- @tparam string... axis identifier string(s)
 	-- @treturn string... the displayable names
-	-- @impl love
+	-- @require love
 	axisName = function(...) end,
 
 	-------------------
@@ -152,7 +152,7 @@ input = {
 	-- any platform without having to configure the keys.
 	-- If some key function in your game match one of theses defaults, using it instead of creating a new
 	-- input would be a good idea.
-	-- @impl love
+	-- @require love
 	default = {
 		pointer = nil, -- Pointer: used to move and select. Example binds: arrow keys, WASD, stick.
 		confirm = nil, -- Button: used to confirm something. Example binds: Enter, A button.
@@ -161,7 +161,7 @@ input = {
 
 	--- Get draw area dimensions.
 	-- Used for pointers.
-	-- @impl love
+	-- @require love
 	getDrawWidth = function() return 1 end,
 	getDrawHeight = function() return 1 end,
 

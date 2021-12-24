@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Ubiquitousse reference</title>
+    <link rel="stylesheet" href="../ldoc_fixed.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Ubiquitousse</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+
+
+<h2>Fields</h2>
+<ul class="nowrap">
+    <li><a href="#version">version</a></li>
+    <li><a href="#asset">asset</a></li>
+    <li><a href="#ecs">ecs</a></li>
+    <li><a href="#input">input</a></li>
+    <li><a href="#ldtk">ldtk</a></li>
+    <li><a href="#scene">scene</a></li>
+    <li><a href="#signal">signal</a></li>
+    <li><a href="#timer">timer</a></li>
+    <li><a href="#util">util</a></li>
+</ul>
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><strong>init</strong></li>
+  <li><a href="../modules/ldtk.html">ldtk</a></li>
+</ul>
+<h2>Topics</h2>
+<ul class="">
+  <li><a href="../topics/README.md.html">README</a></li>
+  <li><a href="../topics/LICENSE.html">LICENSE</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>init</code></h1>
+<p>Ubiquitousse main module.</p>
+<p> Set of various Lua libraries to make game development easier, mainly made to be used alongside the <a href="https://love2d.org/">LÖVE</a> game framework.
+ Nothing that hasn&rsquo;t been done before, but these are tailored to what I need. They can be used independently too, and are relatively portable, even without LÖVE.</p>
+
+<p> This is the main module, which will try to load every other Ubiquitousse module when required and may even provide a few convenience functions.</p>
+
+<p> This also perform a quick LÖVE version check and show a warning in case of potential incompatibility.</p>
+
+<p> <strong>Regarding Ubiquitousse&rsquo;s organization</strong></p>
+
+<p> Ubiquitousse may or may not be used in its totality. You can delete the modules directories you don&rsquo;t need and Ubiquitousse
+ should adapt accordingly. You can also simply copy the modules directories you need and use them directly, without using this
+ file at all.
+ However, some modules may provide more feature when other modules are available.
+ These dependencies are written at the top of every main module file.</p>
+
+<p> Ubiquitousse&rsquo;s original goal was to run everywhere with the least porting effort possible, so while the current version now mainly focus LÖVE, it
+ should still be easily modifiable to work with something else. Ubiquitousse is mainly tested on LuaJIT and Lua 5.3 but should also support Lua 5.1 and 5.2.
+ In order to keep a good idea of how portable this all is, other dependencies, including LÖVE, are explicited at the top of every module file and in specific
+ functions definition using the <code>@require</code> tag (e.g., <code>&mdash; @require love</code> for LÖVE).</p>
+
+<p> Some modules are developped in <a href="https://github.com/Reuh/candran">Candran</a> (.can files), but can easily be compiled into regular Lua code.</p>
+
+<p> Units used in the API documentation, unless written otherwise:</p>
+
+<ul>
+<li>All distances are expressed in pixels (px)</li>
+<li>All durations are expressed in seconds (ms)</li>
+</ul>
+
+
+<p> These units are only used to make writing documentation easier; you can use other units if you want, as long as you're consistent.</p>
+
+<p> Style:</p>
+
+<ul>
+<li>tabs for indentation, spaces for esthetic whitespace (notably in comments)</li>
+<li>no globals</li>
+<li>UPPERCASE for constants (or maybe not).</li>
+<li>CamelCase for class names.</li>
+<li>lowerCamelCase is expected for everything else.</li>
+</ul>
+
+
+<p> Regarding the documentation: Ubiquitousse used LDoc/LuaDoc styled-comments, but since LDoc hates me and my code, the
+ generated result is complete garbage, so please read the documentation directly in the comments here until fix this.
+ Stuff you're interested in starts with triple &ndash; (e.g., &ldquo;&mdash;&ndash; This functions saves the world&rdquo;).</p>
+
+<p> <em>UPDATE</em>: I give up, currently in the process of admitting defat to LDoc and progressively porting all my documentation to it.
+ Though I had to modify a few things to get LDoc to like me, so the documentation is generated using <a href="https://github.com/Reuh/LDoc">my LDoc fork</a>.</p>
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">local ubiquitousse = require(&quot;ubiquitousse&quot;)
+</pre>
+    </ul>
+
+
+
+    <h2 class="section-header "><a name="Fields"></a>Fields</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "version"></a>
+    <strong>version</strong>
+    </dt>
+    <dd>
+    Ubiquitousse version string (currently <code>&quot;0.1.0&quot;</code>).
+
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "asset"></a>
+    <strong>asset</strong>
+    </dt>
+    <dd>
+    Asset manager module, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/init.html#asset">asset</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "ecs"></a>
+    <strong>ecs</strong>
+    </dt>
+    <dd>
+    Entity Component System, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/init.html#ecs">ecs</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "input"></a>
+    <strong>input</strong>
+    </dt>
+    <dd>
+    Input management, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/init.html#input">input</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "ldtk"></a>
+    <strong>ldtk</strong>
+    </dt>
+    <dd>
+    LDtk level import, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/ldtk.html#">ldtk</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "scene"></a>
+    <strong>scene</strong>
+    </dt>
+    <dd>
+    Scene management, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/init.html#scene">scene</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "signal"></a>
+    <strong>signal</strong>
+    </dt>
+    <dd>
+    Signal management, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/init.html#signal">signal</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "timer"></a>
+    <strong>timer</strong>
+    </dt>
+    <dd>
+    Timer utilities, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/init.html#timer">timer</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "util"></a>
+    <strong>util</strong>
+    </dt>
+    <dd>
+    Various useful functions, if available.
+
+    </ul>
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/init.html#util">util</a>
+    </ul>
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2021-12-24 23:49:41 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

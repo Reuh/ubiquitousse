@@ -1,12 +1,18 @@
 project = "Ubiquitousse"
-description = "Ubiquitousse Game Engine"
-full_description = "A simple Lua game framework, made to run everywhere. See the Ubiquitousse module for more information."
+title = "Ubiquitousse reference"
+description = "Ubiquitousse game development tools"
+full_description = [[Set of Lua libraries to make game development easier using the [LÖVE](https://love2d.org/) game framework.
 
-title = "Ubiquitousse Reference"
-package = "ubiquitousse"
+See [main module](modules/init.html) for more information, or the [GitHub page](https://github.com/Reuh/ubiquitousse) for the source.
+]]
+--package = "ubiquitousse"
 
-file = "./"
-format = "markdown"
+format = "discount"
 style = "!fixed"
-
+no_summary = true
 not_luadoc = true
+
+custom_tags = { { "require", title="Requires" } }
+
+topics = { "README.md", "LICENSE" }
+file = { "init.lua", "ldtk/ldtk.can" }

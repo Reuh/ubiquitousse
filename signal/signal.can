@@ -97,7 +97,7 @@ let signal = {
 
 	--- Call this function to hook signal.event signals to the current backend.
 	-- For LÖVE, this means overriding every existing LÖVE callback. If a callback is already defined, the new one will call the old function along with the signal:emit.
-	-- @impl love
+	-- @require love
 	registerEvents = ()
 		local callbacks = { -- everything except run, errorhandler, threaderror
 			"displayrotated", "draw", "load", "lowmemory", "quit", "update",
