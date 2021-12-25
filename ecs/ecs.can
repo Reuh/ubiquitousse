@@ -70,15 +70,22 @@ let nextEntity = (s)
 	end
 end
 
---- Recursively copy content of a into b if it isn't already present. No cycle detection.
-let copy = (a, b)
+--- Recursively copy content of a into b if it isn't already present.
+-- Don't copy keys, will preserve metatable but not copy them.
+let copy = (a, b, cache={})
 	for k, v in pairs(a) do
 		if type(v) == "table" then
 			if b[k] == nil then
-				b[k] = {}
-				copy(v, b[k])
+				if cache[v] then
+					b[k] = cache[v]
+				else
+					cache[v] = {}
+					b[k] = cache[v]
+					copy(v, b[k], cache)
+					setmetatable(b[k], getmetatable(v))
+				end
 			elseif b[k] == "table" then
-				copy(v, b[k])
+				copy(v, b[k], cache)
 			end
 		elseif b[k] == nil then
 			b[k] = v
@@ -132,6 +139,7 @@ let system_mt = {
 	visible = true,
 
 	--- Defaults value to put into the entities's system table when they are added. Will recursively fill missing values.
+	-- Metatables will be preserved during the copy but not copied themselves.
 	--
 	-- When an entity is added to a system, a `.entity` field is always set in the system table, referring to the full entity table.
 	--
