@@ -1,6 +1,6 @@
 # ubiquitousse.ldtk
 
-[LDtk](https://ldtk.io/) level importer for LÖVE.
+[LDtk](https://ldtk.io/) level importer for Lua, and associated drawing functions for LÖVE.
 
 You can read the documentation [here](https://reuh.github.io/ubiquitousse/modules/ldtk.html).
 

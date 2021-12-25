@@ -1,11 +1,13 @@
---- [LDtk](https://ldtk.io/) level importer for LÖVE.
+--- [LDtk](https://ldtk.io/) level importer for Lua and drawing using LÖVE.
 -- Support most LDtk features, and allow easy usage in LÖVE projects.
 --
 -- Every unit is in pixel in the API unless written otherwise.
+-- Colors are reprsented as a table `{r,g,b}` where `r`,`b`,`g` in [0-1].
 --
 -- This modules returns a single function, @{LDtk}(path).
 --
--- Requires LÖVE `love.graphics` (drawing Image, SpriteBatch, Quad).
+-- No mandatory dependency.
+-- Requires LÖVE `love.graphics` (drawing Image, SpriteBatch, Quad) for drawing only.
 --
 -- @module ldtk
 -- @require love
@@ -13,7 +15,7 @@
 -- local ldtk = require("ubiquitousse.ldtk")
 --
 -- -- load ldtk project file
--- local project = ltdk("example.ldtk")
+-- local project = ldtk("example.ldtk")
 --
 -- -- can define callbacks when loading: for example to setup entities defined in LDtk
 -- local callbacks = {
@@ -32,7 +34,16 @@
 
 -- TODO: give associated tile & color with enum values, also give enum info
 
-let lg = love.graphics
+--- LÖVE wrappers/placeholder
+let lg = (love or {}).graphics
+let newQuad
+if lg then
+	newQuad = lg.newQuad
+else
+	newQuad = (x, y, w , h, image)
+		return { x, y, w, h }
+	end
+end
 
 --- json helpers
 let json_decode = require((...):gsub("ldtk$", "json")).decode
@@ -76,6 +87,7 @@ end
 
 let tileset_mt
 
+--- cached values
 let make_cache = (new_fn)
 	return setmetatable({}, {
 		__mode = "v",
@@ -92,17 +104,20 @@ let cache = {
 		return tileset_mt._init(tilesetDef)
 	end),
 	image = make_cache((path)
-		return lg.newImage(path)
+		if lg then
+			return lg.newImage(path)
+		else
+			return path
+		end
 	end),
 }
 
 --- Tileset object.
 -- Stores the image associated with the tileset; can be shared among several layers and levels.
 -- @type Tileset
--- @require love
 tileset_mt = {
 	_newQuad = :(x, y, width, height)
-		return lg.newQuad(x, y, width, height, @image)
+		return newQuad(x, y, width, height, @image)
 	end,
 	_getTileQuad = :(tileid, x, y, size)
 		if not @_tileQuads[tileid] then
@@ -113,6 +128,7 @@ tileset_mt = {
 	_init = (tilesetDef)
 		local t = {
 			--- The tileset LÖVE image object.
+			-- If LÖVE is not available, this is the path to the image (string).
 			image = cache.image(tilesetDef.path),
 
 			_tileQuads = {}
@@ -127,7 +143,6 @@ tileset_mt.__index = tileset_mt
 -- Part of a @{Level}.
 --
 -- @type Layer
--- @require love
 let layer_mt = {
 	--- Draw the current layer.
 	-- Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
@@ -205,6 +220,8 @@ let layer_mt = {
 			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ @{Tileset} object associated with the layer.
 			tileset = nil,
 			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ [LÖVE SpriteBatch](https://love2d.org/wiki/SpriteBatch) containing the layer.
+			-- nil if LÖVE not available.
+			-- @require love
 			spritebatch = nil,
 			--- _(IntGrid without AutoLayer rules layer only)_ list of @{IntTile}s in the layer.
 			intTiles = nil,
@@ -216,7 +233,7 @@ let layer_mt = {
 			t.tileset = cache.tileset(tilesetData)
 			local tiles = layer.__type == "Tiles" and layer.gridTiles or layer.autoLayerTiles
 			local onAddTile = callbacks.onAddTile
-			t.spritebatch = lg.newSpriteBatch(t.tileset.image)
+			if lg then t.spritebatch = lg.newSpriteBatch(t.tileset.image) end
 			for _, tl in ipairs(tiles) do
 				let quad = t.tileset:_getTileQuad(tl.t, tl.src[1], tl.src[2], gridSize)
 				let sx, sy = 1, 1
@@ -244,6 +261,7 @@ let layer_mt = {
 					--- Custom data associated with the tile, if any.
 					data = tilesetData[tl.t].data,
 					--- Quad associated with the tile (relative to the layer's tileset).
+					-- LÖVE Quad if LÖVE is available, otherwise a table `{ x, y, width, height }`.
 					quad = quad
 				}
 				if tl.f == 1 or tl.f == 3 then
@@ -256,7 +274,7 @@ let layer_mt = {
 					y += gridSize
 					tile.flipY = true
 				end
-				t.spritebatch:add(quad, x, y, 0, sx, sy)
+				if t.spritebatch then t.spritebatch:add(quad, x, y, 0, sx, sy) end
 				table.insert(t.tiles, tile)
 				if onAddTile then onAddTile(tile) end
 			end
@@ -331,7 +349,8 @@ let layer_mt = {
 					pivotY = e.__pivot[2] * e.height,
 					--- Entity color.
 					color = entityDef.color,
-					--- Entity tile, if any. Is a table { tileset = associated tileset object, quad = associated quad }.
+					--- Tile associated with the entity, if any. Is a table { tileset = associated tileset object, quad = associated quad }.
+					-- `quad` is a LÖVE Quad if LÖVE is available, otherwise a table `{ x, y, width, height }`.
 					tile = nil,
 					--- Map of custom fields of the entity.
 					fields = getFields(e.fieldInstances),
@@ -375,7 +394,6 @@ layer_mt.__index = layer_mt
 -- Part of a @{Project}.
 --
 -- @type Level
--- @require love
 let level_mt = {
 	--- Draw this level.
 	-- Assumes we are currently in world coordinates (i.e. world top-left is at 0,0).
@@ -387,12 +405,13 @@ let level_mt = {
 		lg.push()
 			lg.translate(@x, @y)
 			-- background color
-			lg.setColor(@_bgColor)
+			lg.setColor(@background.color)
 			lg.rectangle("fill", 0, 0, @width, @height)
 			-- background image
 			lg.setColor(white)
-			if @_bgImage then
-				lg.draw(@_bgImage.image, @_bgImage.quad, @_bgImage.x, @_bgImage.y, 0, @_bgImage.sx, @_bgImage.sy)
+			let bgImage = @background.image
+			if bgImage then
+				lg.draw(bgImage.image, bgImage.quad, bgImage.x, bgImage.y, 0, bgImage.sx, bgImage.sy)
 			end
 			-- layers
 			for _, l in ipairs(@layers) do
@@ -415,16 +434,15 @@ let level_mt = {
 	-- integrate it into your current game engine easily.
 	--
 	-- @tparam[opt] table callbacks
-	-- @require love
 	load = :(callbacks={})
 		assert(@loaded == false, "level already loaded")
 		if @_json.bgRelPath then
 			let pos = @_json.__bgPos
 			let cropRect = pos.cropRect
 			let image = cache.image(@project._directory..@_json.bgRelPath)
-			@_bgImage = {
+			@background.image = {
 				image = image,
-				quad = lg.newQuad(cropRect[1], cropRect[2], cropRect[3], cropRect[4], image),
+				quad = newQuad(cropRect[1], cropRect[2], cropRect[3], cropRect[4], image),
 				x = pos.topLeftPx[1],
 				y = pos.topLeftPx[2],
 				sx = pos.scale[1],
@@ -465,8 +483,7 @@ let level_mt = {
 			if onRemoveLayer then onRemoveLayer(l) end
 		end
 		@loaded = false
-		@_bgImage = nil
-		@_bgImageQuads = nil
+		@background.image = nil
 		@layers = nil
 	end,
 
@@ -490,11 +507,20 @@ let level_mt = {
 			fields = getFields(level.fieldInstances),
 			--- List of @{Layer}s in the level (table).
 			layers = nil,
+			--- Level background.
+			--
+			-- If there is a background image, `background.image` contains a table `{image=image, x=number, y=number, sx=number, sy=number}`
+			-- where `image` is the LÖVE image (or image filepath if LÖVE not available) `x` and `y` are the top-left position,
+			-- and `sx` and `sy` the horizontal and vertical scale factors.
+			-- @field color backrgound color
+			-- @field image backrgound image information, if any
+			background = {
+				color = parseColor(level.__bgColor),
+				image = nil,
+			},
 
 			-- private
 			_json = level,
-			_bgColor = parseColor(level.__bgColor),
-			_bgImage = nil
 		}
 		return setmetatable(t, level_mt)
 	end
