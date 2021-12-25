@@ -26,7 +26,7 @@
 -- Units used in the API documentation, unless written otherwise:
 --
 -- * All distances are expressed in pixels (px)
--- * All durations are expressed in seconds (ms)
+-- * All durations are expressed in seconds (s)
 --
 -- These units are only used to make writing documentation easier; you can use other units if you want, as long as you're consistent.
 --

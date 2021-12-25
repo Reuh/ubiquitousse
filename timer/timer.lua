@@ -31,7 +31,7 @@ local timer_mt = {
 	-- @local
 	t = nil,
 
-	--- Wait time milliseconds before running the function.
+	--- Wait time seconds before running the function.
 	-- Specify no time to remove condition.
 	after = function(self, time)
 		self.t.after = time
@@ -148,7 +148,7 @@ local timer_mt = {
 
 	--- Update the timer.
 	-- Should be called at every game update.
-	-- @tparam number dt the delta-time (time spent since last time the function was called) (miliseconds)
+	-- @tparam number dt the delta-time (time spent since last time the function was called) (seconds)
 	update = function(self, dt)
 		local t = self.t
 		if not t.dead then
@@ -225,7 +225,7 @@ timer_mt.__index = timer_mt
 local registry_mt = {
 	--- Update all the timers in the registry.
 	-- Should be called at every game update; called by ubiquitousse.update.
-	-- @tparam number dt the delta-time (time spent since last time the function was called) (miliseconds)
+	-- @tparam number dt the delta-time (time spent since last time the function was called) (seconds)
 	update = function(self, dt)
 		-- process timers
 		for _, timer in ipairs(self.timers) do
@@ -285,7 +285,7 @@ timer_module = {
 	-- The function will receive as first parameter the timer object.
 	-- As a second parameter, the function will receive the delta time (dt).
 	-- As a third parameter, the function will receive the lag time (difference between the time when the function was run and when it should have been run).
-	-- As a fourth parameter, the function will receive as first parameter the wait(time) function, which will pause the function execution for time miliseconds.
+	-- As a fourth parameter, the function will receive as first parameter the wait(time) function, which will pause the function execution for time seconds.
 	-- You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
 	-- don't want to handle your timers manually.
 	-- @tparam[opt] function func the function to schedule
@@ -325,7 +325,7 @@ timer_module = {
 	-- don't want to handle your timers manually.
 	--
 	--
-	-- @tparam number duration tween duration (miliseconds)
+	-- @tparam number duration tween duration (seconds)
 	-- @tparam table tbl the table containing the values to tween
 	-- @tparam table to the new values
 	-- @tparam[opt="linear"] string/function method tweening method (string name or the actual function(time, start, change, duration))
