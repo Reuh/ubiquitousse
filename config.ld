@@ -7,6 +7,7 @@ See [main module](modules/init.html) for more information, or the [GitHub page](
 ]]
 --package = "ubiquitousse"
 
+dir="docs"
 format = "discount"
 style = "!new"
 not_luadoc = true
