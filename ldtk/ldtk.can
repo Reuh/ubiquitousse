@@ -33,7 +33,7 @@
 let lg = love.graphics
 
 --- json helpers
-let json_decode = require("json").decode
+let json_decode = require((...):gsub("ldtk$", "json")).decode
 let readJson = (file)
 	let f = assert(io.open(file, "r"))
 	local t = json_decode(f:read("*a"))
