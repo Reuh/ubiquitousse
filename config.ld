@@ -8,11 +8,26 @@ See [main module](modules/init.html) for more information, or the [GitHub page](
 --package = "ubiquitousse"
 
 format = "discount"
-style = "!fixed"
-no_summary = true
+style = "!new"
 not_luadoc = true
 
-custom_tags = { { "require", title="Requires" } }
+custom_tags = {
+	{ "require", title="Requires" },
+	{ "ftype", title="Type", format = function(x)
+		local firstWord, rest = x:match("^([^%s]*)(.*)$")
+		return ('<code>%s</code>%s'):format(firstWord, rest)
+	end },
+	{ "ro", hidden=true },
+	{ "callback", hidden=true },
+}
+custom_display_name_handler = function(item, default_handler)
+	if item.tags.callback then
+		return default_handler(item) .. ' <sup><em>[callback]</em></sup>'
+	elseif item.tags.ro then
+		return default_handler(item) .. ' <sup><em>[read-only]</em></sup>'
+	end
+	return default_handler(item)
+end
 
 topics = { "README.md", "LICENSE" }
-file = { "init.lua", "ldtk/ldtk.can" }
+file = { "init.lua", "ldtk/ldtk.can", "ecs/ecs.can", "asset/asset.lua" }

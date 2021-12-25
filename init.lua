@@ -45,6 +45,7 @@
 -- *UPDATE*: I give up, currently in the process of admitting defat to LDoc and progressively porting all my documentation to it.
 -- Though I had to modify a few things to get LDoc to like me, so the documentation is generated using [my LDoc fork](https://github.com/Reuh/LDoc).
 --
+-- @module ubiquitousse
 -- @usage local ubiquitousse = require("ubiquitousse")
 
 local p = ... -- require path

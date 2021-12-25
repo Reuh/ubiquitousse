@@ -1,0 +1,332 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Ubiquitousse reference</title>
+    <link rel="stylesheet" href="../ldoc_new.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Ubiquitousse</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Asset_objects">Asset objects </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ubiquitousse.html">ubiquitousse</a></li>
+  <li><a href="../modules/ldtk.html">ldtk</a></li>
+  <li><a href="../modules/ecs.html">ecs</a></li>
+  <li><strong>asset</strong></li>
+</ul>
+<h2>Topics</h2>
+<ul class="">
+  <li><a href="../topics/README.md.html">README</a></li>
+  <li><a href="../topics/LICENSE.html">LICENSE</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>asset</code></h1>
+<p>Asset manager.</p>
+<p> Loads asset and cache them.</p>
+
+<p> This only provides a streamlined way to handle asset, and doesn&rsquo;t handle the actual file loading/object creation itself; you are expected to provide your own asset loaders.</p>
+
+<p> See the <a href="../modules/asset.html#Asset:__call">Asset:__call</a> method for more details on how assets are loaded. Hopefully this will allow you to use asset which are more game-specific than &ldquo;image&rdquo; or &ldquo;audio&rdquo;.</p>
+
+<p> No dependencies.</p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#new">new (directory, loaders[, mode="auto"])</a></td>
+    <td class="summary">Create a new asset manager.</td>
+    </tr>
+</table>
+<h2><a href="#Asset_objects">Asset objects </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Asset.prefix">Asset.prefix</a></td>
+    <td class="summary">A prefix for asset names.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Asset.cache">Asset.cache</a></td>
+    <td class="summary">The asset cache.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Asset.loaders">Asset.loaders</a></td>
+    <td class="summary">The loaders table.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Asset:__call">Asset:__call (assetName, ...)</a></td>
+    <td class="summary">Load (and cache) an asset.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Asset:load">Asset:load (list)</a></td>
+    <td class="summary">Preload a list of assets.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Asset:clear">Asset:clear ()</a></td>
+    <td class="summary">Allow loaded assets to be garbage collected.</td>
+    </tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "new"></a>
+    <strong>new (directory, loaders[, mode="auto"])</strong>
+    </dt>
+    <dd>
+    Create a new asset manager. </p>
+
+<p> If the caching &ldquo;mode&rdquo; is set to auto (default), the asset manager will allow assets to be automaticaly garbage collected by Lua.</p>
+
+<p> If set to &ldquo;manual&rdquo;, the assets will not be garbage collected unless the clear method is called.
+ &ldquo;manual&rdquo; mode is useful if you have assets that are particularly slow to load and you want full control on when they are loaded and unloaded (typically a loading screen).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">directory</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+           the directory in which the assets will be loaded
+          </li>
+          <li><span class="parameter">loaders</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           loaders table: {prefix = function, &hellip;}
+          </li>
+          <li><span class="parameter">mode</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+           caching mode
+           (<em>default</em> "auto")
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/asset.html#Asset_objects">Asset</a></span>
+        the new asset manager
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Asset_objects"></a>Asset objects </h2>
+
+          <div class="section-description">
+          Asset manager.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Asset.prefix"></a>
+    <strong>Asset.prefix</strong>
+    </dt>
+    <dd>
+    A prefix for asset names.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Asset.cache"></a>
+    <strong>Asset.cache</strong>
+    </dt>
+    <dd>
+    The asset cache.  Each cached asset is indexed with a string key &ldquo;type.assetName&rdquo;.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>table</code> {["assetName"]=asset}
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Asset.loaders"></a>
+    <strong>Asset.loaders</strong>
+    </dt>
+    <dd>
+    The loaders table.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>table</code> {["prefix"]=function, ...}
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Asset:__call"></a>
+    <strong>Asset:__call (assetName, ...)</strong>
+    </dt>
+    <dd>
+    <p>Load (and cache) an asset. </p>
+
+<p> Asset name are similar to Lua module names (directory separator is the dot . and no extention should be specified).
+ To load an asset, ubiquitousse will try every loaders in the loader list with a name that prefix the asset name.
+ The first value returned will be used as the asset value.</p>
+
+<p> Loaders are called with the arguments:</p>
+
+<ul>
+<li>path: the asset full path, except extension</li>
+<li>&hellip;: other arguments given after the asset name. Can only be number and strings.</li>
+</ul>
+
+
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">assetName</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+           string the asset&rsquo;s full name
+          </li>
+          <li><span class="parameter">...</span>
+              <span class="types"><span class="type">number/string</span></span>
+           other arguments for the asset loader
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the asset
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> image = asset(<span class="string">"image.example"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Asset:load"></a>
+    <strong>Asset:load (list)</strong>
+    </dt>
+    <dd>
+    Preload a list of assets.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">list</span>
+              <span class="types"><span class="type">{"asset1",...}</span></span>
+           list of assets to load
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Asset:clear"></a>
+    <strong>Asset:clear ()</strong>
+    </dt>
+    <dd>
+    Allow loaded assets to be garbage collected.
+ Only useful if the caching mode is set to &ldquo;manual&rdquo; duritng creation.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2021-12-25 17:06:47 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

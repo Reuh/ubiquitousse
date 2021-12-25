@@ -3,7 +3,7 @@
 --
 -- Every unit is in pixel in the API unless written otherwise.
 --
--- This modules returns a single function @{LDtk}(path).
+-- This modules returns a single function, @{LDtk}(path).
 --
 -- Requires LÖVE `love.graphics` (drawing Image, SpriteBatch, Quad).
 --
@@ -12,16 +12,18 @@
 -- @usage
 -- local ldtk = require("ubiquitousse.ldtk")
 --
+-- -- load ldtk project file
 -- local project = ltdk("example.ldtk")
 --
+-- -- can define callbacks when loading: for example to setup entities defined in LDtk
 -- local callbacks = {
 -- 	onAddEntity = function(entity)
 -- 		-- handle entity...
 -- 	end
 -- }
 --
--- -- load every level
--- for _, lvl in ipairs(project.levels) do lvl:load() end
+-- -- load every level, with callbacks
+-- for _, lvl in ipairs(project.levels) do lvl:load(callbacks) end
 --
 -- function love.draw()
 -- 	-- draw every level
@@ -412,7 +414,7 @@ let level_mt = {
 	-- These callbacks should allow you to capture all the important elements needed to use the level, so you can hopefully
 	-- integrate it into your current game engine easily.
 	--
-	-- @tab[opt] callbacks
+	-- @tparam[opt] table callbacks
 	-- @require love
 	load = :(callbacks={})
 		assert(@loaded == false, "level already loaded")
@@ -454,7 +456,7 @@ let level_mt = {
 	-- * `onAddIntTile(tile)` will be called for every new IntGrid tile unloaded, with the @{IntTile} as sole argument
 	-- * `onAddEntity(entity)` will be called for every new entity unloaded, with the @{Entity} as sole argument
 	--
-	-- @tab[opt] callbacks
+	-- @tparam[opt] table callbacks
 	unload = :(callbacks={})
 		assert(@loaded == true, "level not loaded")
 		let onRemoveLayer = callbacks.onRemoveLayer
@@ -581,11 +583,12 @@ let project_mt = {
 project_mt.__index = project_mt
 
 --- Custom fields.
+-- TODO
 -- @section fields
 
---- Module.
+--- LDtk module.
 -- `ubiquitousse.ldtk` returns a single function, @{LDtk}.
--- @section module
+-- @section end
 
 --- Load a LDtk project.
 -- @string path to LDtk project file (.ldtk)
