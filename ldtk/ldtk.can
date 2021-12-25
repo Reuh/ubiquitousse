@@ -7,7 +7,7 @@
 -- This modules returns a single function, @{LDtk}(path).
 --
 -- No mandatory dependency.
--- Requires LÖVE `love.graphics` (drawing Image, SpriteBatch, Quad) for drawing only.
+-- Optionally requires LÖVE `love.graphics` (drawing Image, SpriteBatch, Quad) for drawing only.
 --
 -- @module ldtk
 -- @require love

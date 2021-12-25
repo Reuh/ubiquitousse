@@ -1,0 +1,786 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Ubiquitousse reference</title>
+    <link rel="stylesheet" href="../ldoc_new.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Ubiquitousse</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ubiquitousse.html">ubiquitousse</a></li>
+  <li><a href="../modules/asset.html">asset</a></li>
+  <li><a href="../modules/ecs.html">ecs</a></li>
+  <li><a href="../modules/ldtk.html">ldtk</a></li>
+  <li><a href="../modules/scene.html">scene</a></li>
+  <li><a href="../modules/signal.html">signal</a></li>
+  <li><a href="../modules/timer.html">timer</a></li>
+  <li><strong>util</strong></li>
+</ul>
+<h2>Topics</h2>
+<ul class="">
+  <li><a href="../topics/README.md.html">README</a></li>
+  <li><a href="../topics/LICENSE.html">LICENSE</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>util</code></h1>
+<p>Various functions useful for game developement.</p>
+<p> No dependency.</p>
+
+
+<h2><a href="#Functions">Functions </a></h2>
+<table class="function_list">
+    </table>
+    <h3 class="doc-title"><a href="#math">Basic maths</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#aabb">aabb (x1, y1, w1, h1, x2, y2, w2, h2)</a></td>
+    <td class="summary">AABB collision check.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#list">List operations</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#has">has (t, v)</a></td>
+    <td class="summary">Check if the list contains a value.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#remove">remove (t, x[, n=#t])</a></td>
+    <td class="summary">Remove the first occurence of an element in a list.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#extract">extract (t, k[, n=#t])</a></td>
+    <td class="summary">Extract the list of elements with a specific key from a list of tables</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#ipairs">ipairs (a, b[, ...])</a></td>
+    <td class="summary">Chainable ipairs.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#each">each (t, fn[, n=#t])</a></td>
+    <td class="summary">Applies a function to every item in list t.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#map">map (t, fn[, n=#t])</a></td>
+    <td class="summary">Applies a function to every item in list t and returns the associated new list.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#all">all (t, fn[, n=#t])</a></td>
+    <td class="summary">Test if all the values in the list are true.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#any">any (t, fn[, n=#t])</a></td>
+    <td class="summary">Test if at least one value in the list is true.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#dict">Dictionary operations</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#invert">invert (t)</a></td>
+    <td class="summary">Returns a new table where the keys and values have been inverted.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#copy">copy (t)</a></td>
+    <td class="summary">Perform a deep copy of a table.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#requirer">requirer ([prefix=""])</a></td>
+    <td class="summary">Returns a table which, when indexed, will require() the module with the index as a name (and a optional prefix).</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#random">Random and UUID</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#uuid4">uuid4 ()</a></td>
+    <td class="summary">Generate a UUID v4.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#grouping">Object grouping</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#group">group (list[, n=#t[, p=nil]])</a></td>
+    <td class="summary">Groups objects in a meta-object-proxy-thingy.</td>
+    </tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions </h2>
+
+    <dl class="function">
+    </dl>
+    <h3 class="doc-title"><a name = "math"></a>Basic maths</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "aabb"></a>
+    <strong>aabb (x1, y1, w1, h1, x2, y2, w2, h2)</strong>
+    </dt>
+    <dd>
+    AABB collision check.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x1</span>
+              <span class="types"><span class="type">number</span></span>
+           first rectangle top-left x coordinate
+          </li>
+          <li><span class="parameter">y1</span>
+              <span class="types"><span class="type">number</span></span>
+           first rectangle top-left y coordinate
+          </li>
+          <li><span class="parameter">w1</span>
+              <span class="types"><span class="type">number</span></span>
+           first rectangle width
+          </li>
+          <li><span class="parameter">h1</span>
+              <span class="types"><span class="type">number</span></span>
+           first rectangle height
+          </li>
+          <li><span class="parameter">x2</span>
+              <span class="types"><span class="type">number</span></span>
+           second rectangle top-left x coordinate
+          </li>
+          <li><span class="parameter">y2</span>
+              <span class="types"><span class="type">number</span></span>
+           second rectangle top-left y coordinate
+          </li>
+          <li><span class="parameter">w2</span>
+              <span class="types"><span class="type">number</span></span>
+           second rectangle width
+          </li>
+          <li><span class="parameter">h2</span>
+              <span class="types"><span class="type">number</span></span>
+           second rectangle height
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">true</span></span>
+        if the objects collide, false otherwise
+    </ol>
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "list"></a>List operations</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "has"></a>
+    <strong>has (t, v)</strong>
+    </dt>
+    <dd>
+    Check if the list contains a value.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           the list
+          </li>
+          <li><span class="parameter">v</span>
+           value to search
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        true if is in list, false otherwise
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "remove"></a>
+    <strong>remove (t, x[, n=#t])</strong>
+    </dt>
+    <dd>
+    Remove the first occurence of an element in a list.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           the list
+          </li>
+          <li><span class="parameter">x</span>
+           the element to remove
+          </li>
+          <li><span class="parameter">n</span>
+              <span class="types"><span class="type">number</span></span>
+           the number of expected elements in the list, including nil values
+           (<em>default</em> #t)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        x the removed element
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "extract"></a>
+    <strong>extract (t, k[, n=#t])</strong>
+    </dt>
+    <dd>
+    Extract the list of elements with a specific key from a list of tables
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           the list of tables
+          </li>
+          <li><span class="parameter">k</span>
+           the chosen key
+          </li>
+          <li><span class="parameter">n</span>
+              <span class="types"><span class="type">number</span></span>
+           the number of expected elements in the list, including nil values
+           (<em>default</em> #t)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        the extracted table
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "ipairs"></a>
+    <strong>ipairs (a, b[, ...])</strong>
+    </dt>
+    <dd>
+    Chainable ipairs.
+ Same as ipairs, but can take several tables, which will be chained, in order.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">a</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           first list to iterate over
+          </li>
+          <li><span class="parameter">b</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           second list to iterate over after the first one
+          </li>
+          <li><span class="parameter">...</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table,...</a></span>
+           next tables to iterate over
+           (<em>optional</em>)
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "each"></a>
+    <strong>each (t, fn[, n=#t])</strong>
+    </dt>
+    <dd>
+    Applies a function to every item in list t.
+ The function receive two argument: the value and then the key.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           initial list
+          </li>
+          <li><span class="parameter">fn</span>
+              <span class="types"><span class="type">function</span></span>
+           the function to apply
+          </li>
+          <li><span class="parameter">n</span>
+              <span class="types"><span class="type">number</span></span>
+           the number of expected elements in the list, including nil values
+           (<em>default</em> #t)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        the initial list
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "map"></a>
+    <strong>map (t, fn[, n=#t])</strong>
+    </dt>
+    <dd>
+    Applies a function to every item in list t and returns the associated new list.
+ The function receive two argument: the value and then the key.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           initial list
+          </li>
+          <li><span class="parameter">fn</span>
+              <span class="types"><span class="type">function</span></span>
+           the function to apply
+          </li>
+          <li><span class="parameter">n</span>
+              <span class="types"><span class="type">number</span></span>
+           the number of expected elements in the list, including nil values
+           (<em>default</em> #t)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        the new list
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "all"></a>
+    <strong>all (t, fn[, n=#t])</strong>
+    </dt>
+    <dd>
+    Test if all the values in the list are true.  Optionnaly applies a function to get the truthness.
+ The function receive two argument: the value and then the key.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           initial list
+          </li>
+          <li><span class="parameter">fn</span>
+              <span class="types"><span class="type">function</span></span>
+           the function to apply
+          </li>
+          <li><span class="parameter">n</span>
+              <span class="types"><span class="type">number</span></span>
+           the number of expected elements in the list, including nil values
+           (<em>default</em> #t)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        result
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "any"></a>
+    <strong>any (t, fn[, n=#t])</strong>
+    </dt>
+    <dd>
+    Test if at least one value in the list is true.  Optionnaly applies a function to get the truthness.
+ The function receive two argument: the value and then the key.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           initial list
+          </li>
+          <li><span class="parameter">fn</span>
+              <span class="types"><span class="type">function</span></span>
+           the function to apply
+          </li>
+          <li><span class="parameter">n</span>
+              <span class="types"><span class="type">number</span></span>
+           the number of expected elements in the list, including nil values
+           (<em>default</em> #t)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        result
+    </ol>
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "dict"></a>Dictionary operations</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "invert"></a>
+    <strong>invert (t)</strong>
+    </dt>
+    <dd>
+    Returns a new table where the keys and values have been inverted.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           the table
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        the inverted table
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "copy"></a>
+    <strong>copy (t)</strong>
+    </dt>
+    <dd>
+    Perform a deep copy of a table.
+ The copied table will keep the share the same metatable as the original table.
+ If a key is a table, it will be reused and not copied.
+ Note this uses pairs() to perform the copy, which will honor the __pairs methamethod if present.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">t</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           the table
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        the copied table
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "requirer"></a>
+    <strong>requirer ([prefix=""])</strong>
+    </dt>
+    <dd>
+    Returns a table which, when indexed, will require() the module with the index as a name (and a optional prefix).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">prefix</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+           that will prefix modules names when calling require()
+           (<em>default</em> "")
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        the requirer table
+    </ol>
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "random"></a>Random and UUID</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "uuid4"></a>
+    <strong>uuid4 ()</strong>
+    </dt>
+    <dd>
+    Generate a UUID v4.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+        the UUID in its canonical representation
+    </ol>
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "grouping"></a>Object grouping</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "group"></a>
+    <strong>group (list[, n=#t[, p=nil]])</strong>
+    </dt>
+    <dd>
+    Groups objects in a meta-object-proxy-thingy.
+ Works great with Lua 5.2+. LuaJit requires to be built with Lua 5.2 compatibility enabled to support group comparaison.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">list</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           of objects
+          </li>
+          <li><span class="parameter">n</span>
+              <span class="types"><span class="type">number</span></span>
+           the number of expected elements in the list, including nil values
+           (<em>default</em> #t)
+          </li>
+          <li><span class="parameter">p</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           list of parents. Used to find the first arguments of method calls.
+           (<em>default</em> nil)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">Group</span></span>
+        object
+    </ol>
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2021-12-25 20:46:24 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

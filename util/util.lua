@@ -1,12 +1,15 @@
---- ubiquitousse.util
--- No dependency.
-
 --- Various functions useful for game developement.
+--
+-- No dependency.
+-- @module util
+
+--- Functions
+-- @section Functions
+
 local util, group_mt
 util = {
-	-------------------
-	--- Basic maths ---
-	-------------------
+	--- Basic maths
+	-- @doc math
 
 	--- AABB collision check.
 	-- @tparam number x1 first rectangle top-left x coordinate
@@ -27,9 +30,8 @@ util = {
 		       y1 + h1 >= y2 and y1 <= y2 + h2
 	end,
 
-	-----------------------
-	--- List operations ---
-	-----------------------
+	--- List operations
+	-- @doc list
 
 	--- Check if the list contains a value.
 	-- @tparam table t the list
@@ -46,7 +48,7 @@ util = {
 	-- @tparam table t the list
 	-- @param x the element to remove
 	-- @tparam[opt=#t] number n the number of expected elements in the list, including nil values
-	-- @return x
+	-- @return x the removed element
 	remove = function(t, x, n)
 		n = n or #t
 		for i=1, n do
@@ -62,7 +64,7 @@ util = {
 	-- @tparam table t the list of tables
 	-- @param k the chosen key
 	-- @tparam[opt=#t] number n the number of expected elements in the list, including nil values
-	-- @treturn the extracted table
+	-- @treturn table the extracted table
 	extract = function(t, k, n)
 		n = n or #t
 		local r = {}
@@ -74,6 +76,9 @@ util = {
 
 	--- Chainable ipairs.
 	-- Same as ipairs, but can take several tables, which will be chained, in order.
+	-- @tparam table a first list to iterate over
+	-- @tparam table b second list to iterate over after the first one
+	-- @tparam[opt] table,... ... next tables to iterate over
 	ipairs = function(a, b, ...)
 		if b == nil then
 			return ipairs(a)
@@ -160,9 +165,8 @@ util = {
 		return false
 	end,
 
-	-----------------------------
-	--- Dictionary operations ---
-	-----------------------------
+	--- Dictionary operations
+	-- @doc dict
 
 	--- Returns a new table where the keys and values have been inverted.
 	-- @tparam table t the table
@@ -196,7 +200,7 @@ util = {
 	end,
 
 	--- Returns a table which, when indexed, will require() the module with the index as a name (and a optional prefix).
-	-- @tparam string[opt=""] string that will prefix modules names when calling require()
+	-- @tparam[opt=""] string prefix that will prefix modules names when calling require()
 	-- @treturn table the requirer table
 	requirer = function(prefix)
 		prefix = prefix and tostring(prefix) or ""
@@ -208,9 +212,8 @@ util = {
 		})
 	end,
 
-	-----------------------
-	--- Random and UUID ---
-	-----------------------
+	--- Random and UUID
+	-- @doc random
 
 	--- Generate a UUID v4.
 	-- @treturn string the UUID in its canonical representation
@@ -220,24 +223,23 @@ util = {
 			:gsub("x", function() return ("%x"):format(math.random(0x0, 0xf)) end) -- random hexadecimal digit
 	end,
 
-	-----------------------
-	--- Object grouping ---
-	-----------------------
+	--- Object grouping
+	-- @doc grouping
 
 	--- Groups objects in a meta-object-proxy-thingy.
 	-- Works great with Lua 5.2+. LuaJit requires to be built with Lua 5.2 compatibility enabled to support group comparaison.
 	-- @tparam table list of objects
 	-- @tparam[opt=#t] number n the number of expected elements in the list, including nil values
 	-- @tparam[opt=nil] table p list of parents. Used to find the first arguments of method calls.
-	-- @treturn group object
-	group = function(t, n, p)
-		n = n or #t
-		return setmetatable({ _n = n, _t = t, _p = p or false }, group_mt)
+	-- @treturn Group object
+	group = function(list, n, p)
+		n = n or #list
+		return setmetatable({ _n = n, _t = list, _p = p or false }, group_mt)
 	end
 }
 
 group_mt = {
-	--- Everything but comparaison: returns a new group
+	-- Everything but comparaison: returns a new group
 	__add = function(self, other)
 		if getmetatable(other) == group_mt then
 			if getmetatable(self) == group_mt then
@@ -325,7 +327,7 @@ group_mt = {
 		return util.group(util.extract(self._t, k, self._n), self._n, self._t)
 	end,
 
-	--- Comparaison: returns true if true for every object of the group
+	-- Comparaison: returns true if true for every object of the group
 	__eq = function(self, other)
 		if getmetatable(other) == group_mt then
 			if getmetatable(self) == group_mt then
@@ -360,7 +362,7 @@ group_mt = {
 		end
 	end,
 
-	--- Special cases
+	-- Special cases
 	__newindex = function(self, k, v)
 		if getmetatable(v) == group_mt then -- unpack
 			util.each(self._t, function(t, i) t[k] = v._t[i] end, self._n)
@@ -378,7 +380,7 @@ group_mt = {
 		end
 	end,
 
-	--- Full-blown debugger
+	-- Full-blown debugger
 	__tostring = function(self)
 		return ("group{%s}"):format(table.concat(util.map(self._t, tostring, self._n), ", "))
 	end

@@ -3,7 +3,7 @@ title = "Ubiquitousse reference"
 description = "Ubiquitousse game development tools"
 full_description = [[Set of Lua libraries to make game development easier using the [LÖVE](https://love2d.org/) game framework.
 
-See [main module](modules/init.html) for more information, or the [GitHub page](https://github.com/Reuh/ubiquitousse) for the source.
+See [main module](modules/ubiquitousse.html) for more information, or the [GitHub page](https://github.com/Reuh/ubiquitousse) for the source.
 ]]
 --package = "ubiquitousse"
 
@@ -31,4 +31,14 @@ custom_display_name_handler = function(item, default_handler)
 end
 
 topics = { "README.md", "LICENSE" }
-file = { "init.lua", "ldtk/ldtk.can", "ecs/ecs.can", "asset/asset.lua" }
+file = {
+	"init.lua",
+	"asset/asset.lua",
+	"ecs/ecs.can",
+	-- TODO: input
+	"ldtk/ldtk.can",
+	"scene/scene.lua",
+	"signal/signal.can",
+	"timer/timer.lua",
+	"util/util.lua"
+}

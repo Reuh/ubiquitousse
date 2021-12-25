@@ -1,4 +1,7 @@
---- ubiquitousse.timer
+--- Time related functions.
+--
+-- No dependency.
+-- @module timer
 local ease = require((...):match("^.-timer")..".easing")
 
 local timer_module
@@ -21,9 +24,11 @@ local function all(list, default)
 	end
 end
 
--- Timer methods.
+--- Timer methods.
+-- @type Timer
 local timer_mt = {
 	--- timer data table
+	-- @local
 	t = nil,
 
 	--- Wait time milliseconds before running the function.
@@ -51,7 +56,9 @@ local timer_mt = {
 		return self
 	end,
 
-	--- Function conditions ---
+	--- Function conditions
+	-- @doc conditions
+
 	--- Starts the function execution when func() returns true. Checked before the "after" condition,
 	-- meaning the "after" countdown starts when func() returns true.
 	-- If multiple init functions are added, init will trigger only when all of them returns true.
@@ -79,7 +86,9 @@ local timer_mt = {
 		return self
 	end,
 
-	--- Conditions override ---
+	--- Conditions override
+	-- @doc conditionoverride
+
 	--- Force the function to start its execution.
 	start = function(self)
 		self.t.forceStart = true
@@ -100,26 +109,31 @@ local timer_mt = {
 		self.t.skip = (self.t.skip or 0) + time
 	end,
 
-	--- Callbacks functions ---
-	--- Will execute func(self, lag) when the function execution start.
+	--- Callbacks functions
+	-- @doc callbacks
+
+	--- Add a function to the start callback: will execute func(self, lag) when the function execution start.
 	onStart = function(self, func)
 		table.insert(self.t.onStart, func)
 		return self
 	end,
-	--- Will execute func(self, lag) each frame the main function is run.
+	--- Add a function to the update callback: will execute func(self, lag) each frame the main function is run.
 	onUpdate = function(self, func)
 		table.insert(self.t.onUpdate, func)
 		return self
 	end,
-	--- Will execute func(self, lag) when the function execution end.
+	--- Add a function to the end callback: will execute func(self, lag) when the function execution end.
 	onEnd = function(self, func)
 		table.insert(self.t.onEnd, func)
 		return self
 	end,
 
-	--- Chaining ---
+	--- Chaining
+	-- @doc chaining
+
 	--- Creates another timer which will be replace the current one when it ends.
 	-- Returns the new timer (and not the original one!).
+	-- @treturn Timer
 	chain = function(self, func)
 		local fn = timer_module.run(func)
 		self:onEnd(function(self, lag)
@@ -129,7 +143,9 @@ local timer_mt = {
 		return fn
 	end,
 
-	--- Management ---
+	--- Management
+	-- @doc management
+
 	--- Update the timer.
 	-- Should be called at every game update.
 	-- @tparam number dt the delta-time (time spent since last time the function was called) (miliseconds)
@@ -205,6 +221,7 @@ local timer_mt = {
 timer_mt.__index = timer_mt
 
 --- Registry methods.
+-- @type TimerRegistry
 local registry_mt = {
 	--- Update all the timers in the registry.
 	-- Should be called at every game update; called by ubiquitousse.update.
@@ -246,17 +263,20 @@ local registry_mt = {
 }
 registry_mt.__index = registry_mt
 
---- Time related functions
+--- Module.
+-- @section module
 timer_module = {
 	--- Creates and return a new timer registry.
 	-- A timer registry provides an easy way to handle your timers; it will keep track of them,
 	-- updating and removing them as needed. If you use the scene system, a scene-specific
 	-- timer registry is available at ubiquitousse.scene.current.timer.
+	-- @treturn TimerRegistry
 	new = function()
 		return setmetatable({
 			--- Used to store all the functions delayed with ubiquitousse.time.delay
 			-- The default implementation use the structure {<key: function> = <value: data table>, ...}
 			-- This table is for internal use and shouldn't be used from an external script.
+			-- @local
 			timers = {}
 		}, registry_mt)
 	end,
@@ -269,7 +289,7 @@ timer_module = {
 	-- You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
 	-- don't want to handle your timers manually.
 	-- @tparam[opt] function func the function to schedule
-	-- @treturn timer the object
+	-- @treturn Timer the object
 	run = function(func)
 		local r = setmetatable({
 			t = {
@@ -303,11 +323,13 @@ timer_module = {
 	--- Create a timer that will tween some numeric values.
 	-- You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
 	-- don't want to handle your timers manually.
+	--
+	--
 	-- @tparam number duration tween duration (miliseconds)
 	-- @tparam table tbl the table containing the values to tween
 	-- @tparam table to the new values
 	-- @tparam[opt="linear"] string/function method tweening method (string name or the actual function(time, start, change, duration))
-	-- @treturn timer the object. A duration is already defined, and the :chain methods takes the same arguments as tween (and creates a tween).
+	-- @treturn TweenTimer the object. A duration is already defined, and the :chain methods takes the same arguments as tween (and creates a tween).
 	tween = function(duration, tbl, to, method)
 		method = method or "linear"
 		method = type(method) == "string" and ease[method] or method
@@ -347,9 +369,13 @@ timer_module = {
 				copy(to, tbl, from)
 			end)
 
+		--- Tween timer: inherit all fields and methods from `Timer` and change a few to make them easier to use in a tweening context.
+		-- @type TweenTimer
+
 		--- Creates another tween which will be initialized when the current one ends.
 		-- If tbl_ and/or method_ are not specified, the values from the current tween will be used.
 		-- Returns the new tween.
+		-- @treturn TweenTimer
 		r.chain = function(_, duration_, tbl_, to_, method_)
 			if not method_ and to_ then
 				if type(to_) == "string" then

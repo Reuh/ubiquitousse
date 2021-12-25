@@ -1,0 +1,1054 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Ubiquitousse reference</title>
+    <link rel="stylesheet" href="../ldoc_new.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Ubiquitousse</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Module">Module </a></li>
+<li><a href="#Timer_objects">Timer objects </a></li>
+<li><a href="#TimerRegistry_objects">TimerRegistry objects </a></li>
+<li><a href="#TweenTimer_objects">TweenTimer objects </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ubiquitousse.html">ubiquitousse</a></li>
+  <li><a href="../modules/asset.html">asset</a></li>
+  <li><a href="../modules/ecs.html">ecs</a></li>
+  <li><a href="../modules/ldtk.html">ldtk</a></li>
+  <li><a href="../modules/scene.html">scene</a></li>
+  <li><a href="../modules/signal.html">signal</a></li>
+  <li><strong>timer</strong></li>
+  <li><a href="../modules/util.html">util</a></li>
+</ul>
+<h2>Topics</h2>
+<ul class="">
+  <li><a href="../topics/README.md.html">README</a></li>
+  <li><a href="../topics/LICENSE.html">LICENSE</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>timer</code></h1>
+<p>Time related functions.</p>
+<p> No dependency.</p>
+
+
+<h2><a href="#Module">Module </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#new">new ()</a></td>
+    <td class="summary">Creates and return a new timer registry.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#run">run ([func])</a></td>
+    <td class="summary">Create a new timer that will run a function.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#tween">tween (duration, tbl, to[, method="linear"])</a></td>
+    <td class="summary">Create a timer that will tween some numeric values.</td>
+    </tr>
+</table>
+<h2><a href="#Timer_objects">Timer objects </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Timer:after">Timer:after (time)</a></td>
+    <td class="summary">Wait time milliseconds before running the function.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:every">Timer:every (time)</a></td>
+    <td class="summary">Run the function every time millisecond.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:times">Timer:times (count)</a></td>
+    <td class="summary">The function will not execute more than count times.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:during">Timer:during (time)</a></td>
+    <td class="summary">The timer will be active for a time duration.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#Timer.conditions">Function conditions</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Timer:initWhen">Timer:initWhen (func)</a></td>
+    <td class="summary">Starts the function execution when func() returns true.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:startWhen">Timer:startWhen (func)</a></td>
+    <td class="summary">Starts the function execution when func() returns true.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:repeatWhile">Timer:repeatWhile (func)</a></td>
+    <td class="summary">When the functions ends, the execution won&rsquo;t stop and will repeat as long as func() returns true.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:stopWhen">Timer:stopWhen (func)</a></td>
+    <td class="summary">Stops the function execution when func() returns true.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#Timer.conditionoverride">Conditions override</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Timer:start">Timer:start ()</a></td>
+    <td class="summary">Force the function to start its execution.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:stop">Timer:stop ()</a></td>
+    <td class="summary">Force the function to stop its execution.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:abort">Timer:abort ()</a></td>
+    <td class="summary">Force the function to stop immediately.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:skip">Timer:skip (time)</a></td>
+    <td class="summary">Skip some amount of time.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#Timer.callbacks">Callbacks functions</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Timer:onStart">Timer:onStart (func)</a></td>
+    <td class="summary">Add a function to the start callback: will execute func(self, lag) when the function execution start.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:onUpdate">Timer:onUpdate (func)</a></td>
+    <td class="summary">Add a function to the update callback: will execute func(self, lag) each frame the main function is run.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:onEnd">Timer:onEnd (func)</a></td>
+    <td class="summary">Add a function to the end callback: will execute func(self, lag) when the function execution end.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#Timer.chaining">Chaining</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Timer:chain">Timer:chain (func)</a></td>
+    <td class="summary">Creates another timer which will be replace the current one when it ends.</td>
+    </tr>
+    </table>
+    <h3 class="doc-title"><a href="#Timer.management">Management</a></h3>
+    <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Timer:update">Timer:update (dt)</a></td>
+    <td class="summary">Update the timer.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Timer:dead">Timer:dead ()</a></td>
+    <td class="summary">Check if the timer is dead.</td>
+    </tr>
+</table>
+<h2><a href="#TimerRegistry_objects">TimerRegistry objects </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#TimerRegistry:update">TimerRegistry:update (dt)</a></td>
+    <td class="summary">Update all the timers in the registry.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#TimerRegistry:run">TimerRegistry:run (func)</a></td>
+    <td class="summary">Create a new timer and add it to the registry.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#TimerRegistry:tween">TimerRegistry:tween (duration, tbl, to, method)</a></td>
+    <td class="summary">Create a new tween timer and add it to the registry.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#TimerRegistry:clear">TimerRegistry:clear ()</a></td>
+    <td class="summary">Cancels all the running timers in this registry.</td>
+    </tr>
+</table>
+<h2><a href="#TweenTimer_objects">TweenTimer objects </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#r.chain">r.chain (_, duration_, tbl_, to_, method_)</a></td>
+    <td class="summary">Creates another tween which will be initialized when the current one ends.</td>
+    </tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Module"></a>Module </h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "new"></a>
+    <strong>new ()</strong>
+    </dt>
+    <dd>
+    Creates and return a new timer registry.
+ A timer registry provides an easy way to handle your timers; it will keep track of them,
+ updating and removing them as needed. If you use the scene system, a scene-specific
+ timer registry is available at ubiquitousse.scene.current.timer.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/timer.html#TimerRegistry_objects">TimerRegistry</a></span>
+
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "run"></a>
+    <strong>run ([func])</strong>
+    </dt>
+    <dd>
+    Create a new timer that will run a function.
+ The function will receive as first parameter the timer object.
+ As a second parameter, the function will receive the delta time (dt).
+ As a third parameter, the function will receive the lag time (difference between the time when the function was run and when it should have been run).
+ As a fourth parameter, the function will receive as first parameter the wait(time) function, which will pause the function execution for time miliseconds.
+ You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
+ don&rsquo;t want to handle your timers manually.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+              <span class="types"><span class="type">function</span></span>
+           the function to schedule
+           (<em>optional</em>)
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/timer.html#Timer_objects">Timer</a></span>
+        the object
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tween"></a>
+    <strong>tween (duration, tbl, to[, method="linear"])</strong>
+    </dt>
+    <dd>
+    Create a timer that will tween some numeric values.
+ You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
+ don&rsquo;t want to handle your timers manually.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">duration</span>
+              <span class="types"><span class="type">number</span></span>
+           tween duration (miliseconds)
+          </li>
+          <li><span class="parameter">tbl</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           the table containing the values to tween
+          </li>
+          <li><span class="parameter">to</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           the new values
+          </li>
+          <li><span class="parameter">method</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string/function</a></span>
+           tweening method (string name or the actual function(time, start, change, duration))
+           (<em>default</em> "linear")
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/timer.html#TweenTimer_objects">TweenTimer</a></span>
+        the object. A duration is already defined, and the :chain methods takes the same arguments as tween (and creates a tween).
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Timer_objects"></a>Timer objects </h2>
+
+          <div class="section-description">
+          Timer methods.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Timer:after"></a>
+    <strong>Timer:after (time)</strong>
+    </dt>
+    <dd>
+    Wait time milliseconds before running the function.
+ Specify no time to remove condition.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">time</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:every"></a>
+    <strong>Timer:every (time)</strong>
+    </dt>
+    <dd>
+    Run the function every time millisecond.
+ Specify no time to remove condition.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">time</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:times"></a>
+    <strong>Timer:times (count)</strong>
+    </dt>
+    <dd>
+    The function will not execute more than count times.
+ Specify no time to remove condition.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">count</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:during"></a>
+    <strong>Timer:during (time)</strong>
+    </dt>
+    <dd>
+    The timer will be active for a time duration.
+ Specify no time to remove condition.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">time</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "Timer.conditions"></a>Function conditions</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:initWhen"></a>
+    <strong>Timer:initWhen (func)</strong>
+    </dt>
+    <dd>
+    Starts the function execution when func() returns true.  Checked before the &ldquo;after&rdquo; condition,
+ meaning the &ldquo;after&rdquo; countdown starts when func() returns true.
+ If multiple init functions are added, init will trigger only when all of them returns true.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:startWhen"></a>
+    <strong>Timer:startWhen (func)</strong>
+    </dt>
+    <dd>
+    Starts the function execution when func() returns true.  Checked after the &ldquo;after&rdquo; condition.
+ If multiple start functions are added, start will trigger only when all of them returns true.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:repeatWhile"></a>
+    <strong>Timer:repeatWhile (func)</strong>
+    </dt>
+    <dd>
+    When the functions ends, the execution won&rsquo;t stop and will repeat as long as func() returns true.
+ Will cancel timed repeat conditions if false but needs other timed repeat conditions to be true to create a new repeat.
+ If multiple repeat functions are added, a repeat will trigger only when all of them returns true.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:stopWhen"></a>
+    <strong>Timer:stopWhen (func)</strong>
+    </dt>
+    <dd>
+    Stops the function execution when func() returns true.  Checked before all timed conditions.
+ If multiple stop functions are added, stop will trigger only when all of them returns true.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "Timer.conditionoverride"></a>Conditions override</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:start"></a>
+    <strong>Timer:start ()</strong>
+    </dt>
+    <dd>
+    Force the function to start its execution.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:stop"></a>
+    <strong>Timer:stop ()</strong>
+    </dt>
+    <dd>
+    Force the function to stop its execution.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:abort"></a>
+    <strong>Timer:abort ()</strong>
+    </dt>
+    <dd>
+    Force the function to stop immediately.  Won&rsquo;t trigger onEnd or other callbacks.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:skip"></a>
+    <strong>Timer:skip (time)</strong>
+    </dt>
+    <dd>
+    Skip some amount of time.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">time</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "Timer.callbacks"></a>Callbacks functions</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:onStart"></a>
+    <strong>Timer:onStart (func)</strong>
+    </dt>
+    <dd>
+    Add a function to the start callback: will execute func(self, lag) when the function execution start.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:onUpdate"></a>
+    <strong>Timer:onUpdate (func)</strong>
+    </dt>
+    <dd>
+    Add a function to the update callback: will execute func(self, lag) each frame the main function is run.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:onEnd"></a>
+    <strong>Timer:onEnd (func)</strong>
+    </dt>
+    <dd>
+    Add a function to the end callback: will execute func(self, lag) when the function execution end.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "Timer.chaining"></a>Chaining</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:chain"></a>
+    <strong>Timer:chain (func)</strong>
+    </dt>
+    <dd>
+    Creates another timer which will be replace the current one when it ends.
+ Returns the new timer (and not the original one!).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/timer.html#Timer_objects">Timer</a></span>
+
+
+    </ol>
+
+
+
+
+</dd>
+    </dl>
+    <h3 class="doc-title"><a name = "Timer.management"></a>Management</h3>
+    <div class="doc-description">
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:update"></a>
+    <strong>Timer:update (dt)</strong>
+    </dt>
+    <dd>
+    Update the timer.
+ Should be called at every game update.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">dt</span>
+              <span class="types"><span class="type">number</span></span>
+           the delta-time (time spent since last time the function was called) (miliseconds)
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Timer:dead"></a>
+    <strong>Timer:dead ()</strong>
+    </dt>
+    <dd>
+    Check if the timer is dead.
+ You shouldn&rsquo;t need to worry about this if your timer belongs to a registry.
+ If you don&rsquo;t use registries, you probably should purge dead timers to free up some memory (dead timers don&rsquo;t do anything otherwise).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        true if the timer can be discarded, false if it&rsquo;s still active.
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="TimerRegistry_objects"></a>TimerRegistry objects </h2>
+
+          <div class="section-description">
+          Registry methods.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "TimerRegistry:update"></a>
+    <strong>TimerRegistry:update (dt)</strong>
+    </dt>
+    <dd>
+    Update all the timers in the registry.
+ Should be called at every game update; called by ubiquitousse.update.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">dt</span>
+              <span class="types"><span class="type">number</span></span>
+           the delta-time (time spent since last time the function was called) (miliseconds)
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "TimerRegistry:run"></a>
+    <strong>TimerRegistry:run (func)</strong>
+    </dt>
+    <dd>
+    Create a new timer and add it to the registry.
+ Same as timer_module.run, but add it to the registry.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">func</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "TimerRegistry:tween"></a>
+    <strong>TimerRegistry:tween (duration, tbl, to, method)</strong>
+    </dt>
+    <dd>
+    Create a new tween timer and add it to the registry.
+ Same as timer_module.tween, but add it to the registry.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">duration</span>
+
+
+          </li>
+          <li><span class="parameter">tbl</span>
+
+
+          </li>
+          <li><span class="parameter">to</span>
+
+
+          </li>
+          <li><span class="parameter">method</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "TimerRegistry:clear"></a>
+    <strong>TimerRegistry:clear ()</strong>
+    </dt>
+    <dd>
+    Cancels all the running timers in this registry.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="TweenTimer_objects"></a>TweenTimer objects </h2>
+
+          <div class="section-description">
+          Tween timer: inherit all fields and methods from <a href="../modules/timer.html#Timer_objects">Timer</a> and change a few to make them easier to use in a tweening context.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "r.chain"></a>
+    <strong>r.chain (_, duration_, tbl_, to_, method_)</strong>
+    </dt>
+    <dd>
+    Creates another tween which will be initialized when the current one ends.
+ If tbl<em> and/or method</em> are not specified, the values from the current tween will be used.
+ Returns the new tween.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">_</span>
+
+
+          </li>
+          <li><span class="parameter">duration_</span>
+
+
+          </li>
+          <li><span class="parameter">tbl_</span>
+
+
+          </li>
+          <li><span class="parameter">to_</span>
+
+
+          </li>
+          <li><span class="parameter">method_</span>
+
+
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/timer.html#TweenTimer_objects">TweenTimer</a></span>
+
+
+    </ol>
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2021-12-25 20:46:24 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

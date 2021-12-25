@@ -1,0 +1,679 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Ubiquitousse reference</title>
+    <link rel="stylesheet" href="../ldoc_new.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Ubiquitousse</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Scene_objects">Scene objects </a></li>
+<li><a href="#Module">Module </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ubiquitousse.html">ubiquitousse</a></li>
+  <li><a href="../modules/asset.html">asset</a></li>
+  <li><a href="../modules/ecs.html">ecs</a></li>
+  <li><a href="../modules/ldtk.html">ldtk</a></li>
+  <li><strong>scene</strong></li>
+  <li><a href="../modules/signal.html">signal</a></li>
+  <li><a href="../modules/timer.html">timer</a></li>
+  <li><a href="../modules/util.html">util</a></li>
+</ul>
+<h2>Topics</h2>
+<ul class="">
+  <li><a href="../topics/README.md.html">README</a></li>
+  <li><a href="../topics/LICENSE.html">LICENSE</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>scene</code></h1>
+<p>Scene management.</p>
+<p><p> You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
+ This module is fully implemented in Ubiquitousse and is mostly a &ldquo;recommended way&rdquo; of organising an Ubiquitousse-based game.
+ However, you don&rsquo;t have to use this if you don&rsquo;t want to. ubiquitousse.scene handles all the differents Ubiquitousse-states and
+ make them scene-independent, for example by creating a scene-specific TimerRegistry (TimedFunctions that are keept accross
+ states are generally a bad idea). Theses scene-specific states should be created and available in the table returned by
+ ubiquitousse.scene.new.</p>
+
+<p> The expected code-organisation is:</p>
+
+<ul>
+<li>each scene is in a file, identified by its module name (scenes will be loaded using require(&ldquo;modulename&rdquo;))</li>
+<li>each scene file create a new scene table using ubiquitousse.scene.new and returns it at the end of the file</li>
+</ul>
+
+
+<p> Order of callbacks:</p>
+
+<ul>
+<li>all scene change callbacks are called after setting scene.current to the new scene but before changing scene.stack</li>
+<li>all scene exit/suspend callbacks are called before scene enter/resume callbacks</li>
+</ul>
+
+
+<p> No mendatory dependency.
+ Optional dependencies:</p>
+
+<ul>
+<li>ubiquitousse.timer (to provide each scene a timer registry).</li>
+<li>ubiquitousse.signal (to bind to update and draw signal in signal.event).</li>
+</ul>
+
+</p>
+
+
+<h2><a href="#Scene_objects">Scene objects </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Scene.name">Scene.name</a></td>
+    <td class="summary">The scene name.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene.timer">Scene.timer</a></td>
+    <td class="summary">Scene-specific TimerRegistry, if uqt.time is available.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene.signal">Scene.signal</a></td>
+    <td class="summary">Scene-specific SignalRegistry, if uqt.signal is available.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene:enter">Scene:enter (...) <sup><em>[callback]</em></sup></a></td>
+    <td class="summary">Called when entering a scene.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene:exit">Scene:exit () <sup><em>[callback]</em></sup></a></td>
+    <td class="summary">Called when exiting a scene, and not expecting to come back (scene may be unloaded).</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene:suspend">Scene:suspend () <sup><em>[callback]</em></sup></a></td>
+    <td class="summary">Called when suspending a scene, and expecting to come back (scene won&rsquo;t be unloaded).</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene:resume">Scene:resume () <sup><em>[callback]</em></sup></a></td>
+    <td class="summary">Called when resuming a suspended scene (after calling suspend).</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene:update">Scene:update (dt, ...) <sup><em>[callback]</em></sup></a></td>
+    <td class="summary">Called on each update on the current scene.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Scene:draw">Scene:draw (...) <sup><em>[callback]</em></sup></a></td>
+    <td class="summary">Called on each draw on the current scene.</td>
+    </tr>
+</table>
+<h2><a href="#Module">Module </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#current">current</a></td>
+    <td class="summary">The current scene object.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#timer">timer</a></td>
+    <td class="summary">Shortcut for scene.current.timer.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#signal">signal</a></td>
+    <td class="summary">Shortcut for scene.current.signal.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#stack">stack</a></td>
+    <td class="summary">The scene stack: list of scene, from the farest one to the nearest.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#prefix">prefix</a></td>
+    <td class="summary">A prefix for scene modules names.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#new">new ([name="unamed"])</a></td>
+    <td class="summary">Creates and returns a new Scene object.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#switch">switch (scenePath, ...)</a></td>
+    <td class="summary">Switch to a new scene.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#push">push (scenePath, ...)</a></td>
+    <td class="summary">Push a new scene to the scene stack.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#pop">pop ()</a></td>
+    <td class="summary">Pop the current scene from the scene stack.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#popAll">popAll ()</a></td>
+    <td class="summary">Pop all scenes.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#update">update (dt, ...)</a></td>
+    <td class="summary">Update the current scene.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#draw">draw (...)</a></td>
+    <td class="summary">Draw the current scene.</td>
+    </tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header has-description"><a name="Scene_objects"></a>Scene objects </h2>
+
+          <div class="section-description">
+          Scene object.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Scene.name"></a>
+    <strong>Scene.name</strong>
+    </dt>
+    <dd>
+    The scene name.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene.timer"></a>
+    <strong>Scene.timer</strong>
+    </dt>
+    <dd>
+    Scene-specific TimerRegistry, if uqt.time is available.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene.signal"></a>
+    <strong>Scene.signal</strong>
+    </dt>
+    <dd>
+    Scene-specific SignalRegistry, if uqt.signal is available.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene:enter"></a>
+    <strong>Scene:enter (...) <sup><em>[callback]</em></sup></strong>
+    </dt>
+    <dd>
+    Called when entering a scene.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">...</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene:exit"></a>
+    <strong>Scene:exit () <sup><em>[callback]</em></sup></strong>
+    </dt>
+    <dd>
+    Called when exiting a scene, and not expecting to come back (scene may be unloaded).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene:suspend"></a>
+    <strong>Scene:suspend () <sup><em>[callback]</em></sup></strong>
+    </dt>
+    <dd>
+    Called when suspending a scene, and expecting to come back (scene won&rsquo;t be unloaded).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene:resume"></a>
+    <strong>Scene:resume () <sup><em>[callback]</em></sup></strong>
+    </dt>
+    <dd>
+    Called when resuming a suspended scene (after calling suspend).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene:update"></a>
+    <strong>Scene:update (dt, ...) <sup><em>[callback]</em></sup></strong>
+    </dt>
+    <dd>
+    Called on each update on the current scene.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">dt</span>
+
+
+          </li>
+          <li><span class="parameter">...</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Scene:draw"></a>
+    <strong>Scene:draw (...) <sup><em>[callback]</em></sup></strong>
+    </dt>
+    <dd>
+    Called on each draw on the current scene.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">...</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Module"></a>Module </h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "current"></a>
+    <strong>current</strong>
+    </dt>
+    <dd>
+    The current scene object.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "timer"></a>
+    <strong>timer</strong>
+    </dt>
+    <dd>
+    Shortcut for scene.current.timer.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "signal"></a>
+    <strong>signal</strong>
+    </dt>
+    <dd>
+    Shortcut for scene.current.signal.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "stack"></a>
+    <strong>stack</strong>
+    </dt>
+    <dd>
+    The scene stack: list of scene, from the farest one to the nearest.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "prefix"></a>
+    <strong>prefix</strong>
+    </dt>
+    <dd>
+    A prefix for scene modules names.
+ Will search in the &ldquo;scene&rdquo; directory by default (<code>prefix=&quot;scene.&quot;</code>). Redefine it to fit your own ridiculous filesystem.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "new"></a>
+    <strong>new ([name="unamed"])</strong>
+    </dt>
+    <dd>
+    Creates and returns a new Scene object.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">name</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+           the new scene name
+           (<em>default</em> "unamed")
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/scene.html#Scene_objects">Scene</a></span>
+
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "switch"></a>
+    <strong>switch (scenePath, ...)</strong>
+    </dt>
+    <dd>
+    Switch to a new scene.
+ The new scene will be required() and the current scene will be replaced by the new one,
+ then the previous scene exit function will be called, then the enter callback is called on the new scence.
+ Then the stack is changed to replace the old scene with the new one.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">scenePath</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string/table</a></span>
+           the new scene module name, or the scene table directly
+          </li>
+          <li><span class="parameter">...</span>
+           arguments to pass to the scene&rsquo;s enter function
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "push"></a>
+    <strong>push (scenePath, ...)</strong>
+    </dt>
+    <dd>
+    Push a new scene to the scene stack.
+ Similar to ubiquitousse.scene.switch, except suspend is called on the current scene instead of exit,
+ and the current scene is not replaced: when the new scene call ubiquitousse.scene.pop, the old scene
+ will be reused.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">scenePath</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string/table</a></span>
+           the new scene module name, or the scene table directly
+          </li>
+          <li><span class="parameter">...</span>
+           arguments to pass to the scene&rsquo;s enter function
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "pop"></a>
+    <strong>pop ()</strong>
+    </dt>
+    <dd>
+    Pop the current scene from the scene stack.
+ The previous scene will be set as the current scene, then the current scene exit function will be called,
+ then the previous scene resume function will be called, and then the current scene will be removed from the stack.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "popAll"></a>
+    <strong>popAll ()</strong>
+    </dt>
+    <dd>
+    Pop all scenes.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "update"></a>
+    <strong>update (dt, ...)</strong>
+    </dt>
+    <dd>
+    Update the current scene.
+ Should be called at every game update. If ubiquitousse.signal is available, will be bound to the &ldquo;update&rdquo; signal in signal.event.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">dt</span>
+              <span class="types"><span class="type">number</span></span>
+           the delta-time (milisecond)
+          </li>
+          <li><span class="parameter">...</span>
+           arguments to pass to the scene&rsquo;s update function after dt
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "draw"></a>
+    <strong>draw (...)</strong>
+    </dt>
+    <dd>
+    Draw the current scene.
+ Should be called every time the game is draw. If ubiquitousse.signal is available, will be bound to the &ldquo;draw&rdquo; signal in signal.event.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">...</span>
+           arguments to pass to the scene&rsquo;s draw function
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2021-12-25 20:46:24 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

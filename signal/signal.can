@@ -1,5 +1,12 @@
---- ubiquitousse.signal
+--- Signal management.
+--
+-- No dependency.
+-- @module signal
 
+--- Signal registry.
+--
+-- A SignalRegistry is a separate ubiquitousse.signal instance: its signals will be independant from other registries.
+-- @type SignalRegistry
 let registry_mt = {
 	--- Map of signals to list of listeners.
 	signals = {},
@@ -64,20 +71,32 @@ let registry_mt = {
 }
 registry_mt.__index = registry_mt
 
+--- Module.
+--
+-- This module also acts as a global `SignalRegistry`, so you can call the `:bind`, `:emit`, etc. methods directly on the module
+-- if you don't need to isolate your signals in separate registries.
+-- @section module
+
 let signal = {
 	--- Creates and return a new SignalRegistry.
-	-- A SignalRegistry is a separate ubiquitousse.signal instance: its signals will be independant from other registries.
+	-- @treturn SignalRegistry
 	new = ()
 		return setmetatable({ signals = {} }, registry_mt)
 	end,
 
-	--- Global SignalRegistry.
+	-- Global SignalRegistry.
 	signals = {},
 	bind = (...)
 		return registry_mt.bind(signal, ...)
 	end,
 	unbind = (...)
 		return registry_mt.unbind(signal, ...)
+	end,
+	unbindAll = (...)
+		return registry_mt.unbindAll(signal, ...)
+	end,
+	replace = (...)
+		return registry_mt.replace(signal, ...)
 	end,
 	clear = (...)
 		return registry_mt.clear(signal, ...)
@@ -86,17 +105,21 @@ let signal = {
 		return registry_mt.emit(signal, ...)
 	end,
 
-	--- SignalRegistry which will be used to bind signals that need to be called on game engine event.
+	--- SignalRegistry which will be used to bind signals that need to be called on game engine event; other ubiquitousse modules may bind to this registry
+	-- if avaible.
+	--
 	-- For example, every ubiquitousse module with a "update" function will bind it to the "update" signal in the registry;
 	-- you can then call this signal on each game update to update every ubiquitousse module easily.
+	--
 	-- Provided signals:
-	-- * update(dt), should be called on every game update
-	-- * draw, should be called on every game draw
+	--
+	-- * `update(dt)`, should be called on every game update
+	-- * `draw()`, should be called on every game draw
 	-- * for LÖVE, there are callbacks for every LÖVE callback function that need to be called on their corresponding LÖVE callback
 	event = nil,
 
-	--- Call this function to hook signal.event signals to the current backend.
-	-- For LÖVE, this means overriding every existing LÖVE callback. If a callback is already defined, the new one will call the old function along with the signal:emit.
+	--- Call this function to hook `signal.event` signals to LÖVE events.
+	-- This means overriding every existing LÖVE callback. If a callback is already defined, the new one will call the old function along with the signal:emit.
 	-- @require love
 	registerEvents = ()
 		local callbacks = { -- everything except run, errorhandler, threaderror

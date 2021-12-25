@@ -1,27 +1,68 @@
---- ubiquitousse.scene
--- Optional dependencies: ubiquitousse.timer (to provide each scene a timer registry)
--- Optional dependencies: ubiquitousse.signal (to bind to update and draw signal in signal.event)
-local loaded, signal = pcall(require, (...):match("^(.-)scene").."signal")
-if not loaded then signal = nil end
-local loaded, timer = pcall(require, (...):match("^(.-)scene").."timer")
-if not loaded then timer = nil end
-
 --- Scene management.
+--
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
 -- This module is fully implemented in Ubiquitousse and is mostly a "recommended way" of organising an Ubiquitousse-based game.
 -- However, you don't have to use this if you don't want to. ubiquitousse.scene handles all the differents Ubiquitousse-states and
 -- make them scene-independent, for example by creating a scene-specific TimerRegistry (TimedFunctions that are keept accross
 -- states are generally a bad idea). Theses scene-specific states should be created and available in the table returned by
 -- ubiquitousse.scene.new.
+--
 -- The expected code-organisation is:
+--
 -- * each scene is in a file, identified by its module name (scenes will be loaded using require("modulename"))
 -- * each scene file create a new scene table using ubiquitousse.scene.new and returns it at the end of the file
+--
 -- Order of callbacks:
+--
 -- * all scene change callbacks are called after setting scene.current to the new scene but before changing scene.stack
 -- * all scene exit/suspend callbacks are called before scene enter/resume callbacks
+--
+-- No mendatory dependency.
+-- Optional dependencies:
+--
+-- * ubiquitousse.timer (to provide each scene a timer registry).
+-- * ubiquitousse.signal (to bind to update and draw signal in signal.event).
+-- @module scene
+local loaded, signal = pcall(require, (...):match("^(.-)scene").."signal")
+if not loaded then signal = nil end
+local loaded, timer = pcall(require, (...):match("^(.-)scene").."timer")
+if not loaded then timer = nil end
+
+--- Scene object.
+-- @type Scene
+local _ = {
+	--- The scene name.
+	name = name or "unamed",
+	--- Scene-specific TimerRegistry, if uqt.time is available.
+	timer = timer and timer.new(),
+	--- Scene-specific SignalRegistry, if uqt.signal is available.
+	signal = signal and signal.new(),
+	--- Called when entering a scene.
+	-- @callback
+	enter = function(self, ...) end,
+	--- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
+	-- @callback
+	exit = function(self) end,
+	--- Called when suspending a scene, and expecting to come back (scene won't be unloaded).
+	-- @callback
+	suspend = function(self) end,
+	--- Called when resuming a suspended scene (after calling suspend).
+	-- @callback
+	resume = function(self) end,
+	--- Called on each update on the current scene.
+	-- @callback
+	update = function(self, dt, ...) end,
+	--- Called on each draw on the current scene.
+	-- @callback
+	draw = function(self, ...) end
+}
+
+--- Module.
+-- @section module
+
 local scene
 scene = {
-	--- The current scene table.
+	--- The current scene object.
 	current = nil,
 
 	--- Shortcut for scene.current.timer.
@@ -33,26 +74,23 @@ scene = {
 	stack = {},
 
 	--- A prefix for scene modules names.
-	-- Will search in the "scene" directory by default. Redefine it to fit your own ridiculous filesystem.
+	-- Will search in the "scene" directory by default (`prefix="scene."`). Redefine it to fit your own ridiculous filesystem.
 	prefix = "scene.",
 
 	--- Creates and returns a new Scene object.
 	-- @tparam[opt="unamed"] string name the new scene name
+	-- @treturn Scene
 	new = function(name)
 		return {
-			name = name or "unamed", -- The scene name.
-
-			timer = timer and timer.new(), -- Scene-specific TimerRegistry, if uqt.time is available.
-			signal = signal and signal.new(), -- Scene-specific SignalRegistry, if uqt.signal is available.
-
-			enter = function(self, ...) end, -- Called when entering a scene.
-			exit = function(self) end, -- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
-
-			suspend = function(self) end, -- Called when suspending a scene, and expecting to come back (scene won't be unloaded).
-			resume = function(self) end, -- Called when resuming a suspended scene (after calling suspend).
-
-			update = function(self, dt, ...) end, -- Called on each update on the current scene.
-			draw = function(self, ...) end -- Called on each draw on the current scene.
+			name = name or "unamed",
+			timer = timer and timer.new(),
+			signal = signal and signal.new(),
+			enter = function(self, ...) end,
+			exit = function(self) end,
+			suspend = function(self) end,
+			resume = function(self) end,
+			update = function(self, dt, ...) end,
+			draw = function(self, ...) end
 		}
 	end,
 
