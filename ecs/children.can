@@ -7,43 +7,34 @@ return {
 	filter = true,
 	default = {
 		parent = nil, -- reference to parent entity, if any
-		-- ... list of children
+		-- ... list of children to add when the entity is added to the world
+		children = {}, -- [children]=true,children... map+list of children currently in the entity children (don't set this yourself)
 	},
-	methods = {
-		--- Add a new entity to the world, using this entity as a parent.
-		add = :(c, o)
-			if not o.children then
-				o.children = {}
-			end
-			o.children.parent = c.entity
-			table.insert(c, o)
-			@world:add(o)
-		end,
-		--- Remove an entity from the world and from this entity's children.
-		remove = :(c, o)
-			@world:remove(o)
-			for i=#c, 1, -1 do
-				if c[i] == o then
-					table.remove(c, i)
-					break
-				end
-			end
-			o.children.parent = nil
+	onAdd = :(c, e)
+		if c.parent then -- add to parent
+			let parentcc = c.parent.children.children
+			table.insert(parentcc, e)
+			parentcc[e] = true
 		end
-	},
-	onAdd = :(c)
-		for _, o in ipairs(c) do
-			o.children.parent = c.entity
+		for _, o in ipairs(c) do -- add children
+			if not o.children then o.children = {} end
+			o.children.parent = e
 			@world:add(o)
 		end
 	end,
-	onRemove = :(c)
-		for _, o in ipairs(c) do
-			@world:remove(o)
-			o.children.parent = nil
+	onRemove = :(c, e)
+		for i=#c.children, 1, -1 do -- remove children
+			@world:remove(c.children[i])
 		end
-		if c.parent then
-			c.parent.children:remove(c.entity)
+		if c.parent then -- remove from parent
+			let parentcc = c.parent.children.children
+			for i=#parentcc, 1, -1 do
+				if parentcc[i] == e then
+					table.remove(parentcc, i)
+					break
+				end
+			end
+			parentcc[e] = nil
 		end
 	end
 }

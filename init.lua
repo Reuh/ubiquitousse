@@ -58,6 +58,7 @@ ubiquitousse = {
 	-- @see ecs
 	ecs = nil,
 	--- Input management, if available.
+	-- TODO: not currently generated with LDoc.
 	-- @see input
 	input = nil,
 	--- LDtk level import, if available.
