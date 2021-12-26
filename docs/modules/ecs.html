@@ -34,7 +34,7 @@
 <h2>Contents</h2>
 <ul>
 <li><a href="#Functions">Functions</a></li>
-<li><a href="#Entity_table">Entity table </a></li>
+<li><a href="#Entity_objects">Entity objects </a></li>
 <li><a href="#System_objects">System objects </a></li>
 </ul>
 
@@ -61,27 +61,56 @@
 <div id="content">
 
 <h1>Module <code>ecs</code></h1>
-<p>ECS (entity compenent system) library</p>
-
-<p> Entity Component System library, inspired by the excellent tiny-ecs.</p>
-<p> Main differences include:</p>
+<p>ECS (<a href="https://en.wikipedia.org/wiki/Entity_component_system">entity compenent system</a>) library for Lua.</p>
+<p>Entity Component System library, inspired by the excellent <a href="https://github.com/bakpakin/tiny-ecs/tree/master">tiny-ecs</a> by bakpakin.
+Main differences include:</p>
 
 <ul>
-<li>ability to nest systems;</li>
-<li>instanciation of systems for each world (no shared state);</li>
-<li>adding and removing entities is done instantaneously</li>
-<li>ability to add and remove components from entities after they were added to the world.</li>
+<li>ability to nest systems (more organisation potential);</li>
+<li>instanciation of systems for each world (no shared state) (several worlds can coexist at the same time easily);</li>
+<li>adding and removing entities is done instantaneously (no going isane over tiny-ecs cache issues);</li>
+<li>ability to add and remove components from entities after they were added to the world (more dynamic entities).</li>
 </ul>
 
 
-<p> No mandatory dependency.
- Optional dependency: <a href="../modules/ubiquitousse.html#scene">ubiquitousse.scene</a>, to allow quick creation of ECS-based scenes.</p>
+<p>And a fair amount of other quality-of-life features.</p>
 
-<p> The module returns a table that contains several functions, <a href="../modules/ecs.html#world">world</a> or <a href="../modules/scene.html#">scene</a> are starting points
- to create your world.</p>
+<p>The goals of this library are similar in spirit to tiny-ecs: simple to use, flexible, and useful.
+The more advanced features it provides relative to tiny-ecs are made so that you can completely ignore them
+if you don&rsquo;t use them.</p>
+
+<p>The module returns a table that contains several functions, <a href="../modules/ecs.html#world">world</a> or <a href="../modules/scene.html#">scene</a> are starting points
+to create your world.</p>
+
+<p>No mandatory dependency.
+Optional dependency: <a href="../modules/ubiquitousse.html#scene">ubiquitousse.scene</a>, to allow quick creation of ECS-based scenes (<a href="../modules/ecs.html#scene">ecs.scene</a>).</p>
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">TODO
+        <pre class="example">-- Same example as tiny-ecs&apos;, for comparaison purposes
+
+local ecs = require(&quot;ubiquitousse.ecs&quot;)
+
+local talkingSystem = {
+	filter = { &quot;name&quot;, &quot;mass&quot;, &quot;phrase&quot; },
+	process = function(self, c, e, dt)
+		e.mass = e.mass + dt * 3
+		print((&quot;%s who weighs %d pounds, says %q.&quot;):format(e.name, e.mass, e.phrase))
+	end
+}
+
+local joe = {
+	name = &quot;Joe&quot;,
+	phrase = &quot;I&apos;m a plumber.&quot;,
+	mass = 150,
+	hairColor = &quot;brown&quot;
+}
+
+local world = ecs.world(talkingSystem)
+world:add(joe)
+
+for i = 1, 20 do
+	world:update(1)
+end
 </pre>
     </ul>
 
@@ -94,32 +123,27 @@
     </tr>
     <tr>
     <td class="name" nowrap><a href="#all">all (...)</a></td>
-    <td class="summary">Returns a filter that returns true if, for every argument, a field with the same name exists in the entity.</td>
+    <td class="summary">Returns a filter that returns <code>true</code> if, for every argument, a field with the same name exists in the entity.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#any">any (...)</a></td>
-    <td class="summary">Returns a filter that returns true if one of the arguments if the name of a field in the entity.</td>
+    <td class="summary">Returns a filter that returns <code>true</code> if one of the arguments if the name of a field in the entity.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#scene">scene (name[, systems={}[, entities={}]])</a></td>
     <td class="summary">If <code>uqt.scene</code> is available, returns a new scene that will consist of a ECS world with the specified systems and entities.</td>
     </tr>
 </table>
-<h2><a href="#Entity_table">Entity table </a></h2>
+<h2><a href="#Entity_objects">Entity objects </a></h2>
 <table class="function_list">
     </table>
-    <h3 class="doc-title"><a href="#entity">Entity system table.</a></h3>
+    <h3 class="doc-title"><a href="#Entity.Component">Components.</a></h3>
     <table class="function_list">
-    <tr>
-    <td class="name" nowrap><a href="#entity">entity</a></td>
-    <td class="summary">
-</td>
-    </tr>
 </table>
 <h2><a href="#System_objects">System objects </a></h2>
 <table class="function_list">
     </table>
-    <h3 class="doc-title"><a href="#System.modifiable">Modifiable fields</a></h3>
+    <h3 class="doc-title"><a href="#System.modifiable">Modifiable fields.</a></h3>
     <table class="function_list">
     <tr>
     <td class="name" nowrap><a href="#System.name">System.name</a></td>
@@ -131,23 +155,19 @@
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System.interval">System.interval</a></td>
-    <td class="summary">If not false, the system will only update every interval seconds.</td>
+    <td class="summary">If not <code>false</code>, the system will only update every interval seconds.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System.active">System.active</a></td>
-    <td class="summary">The system and its susbsystems will only update if this is true.</td>
+    <td class="summary">The system and its susbsystems will only update if this is <code>true</code>.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System.visible">System.visible</a></td>
-    <td class="summary">The system and its subsystems will only draw if this is true.</td>
+    <td class="summary">The system and its subsystems will only draw if this is <code>true</code>.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System.default">System.default</a></td>
-    <td class="summary">Defaults value to put into the entities&rsquo;s system table when they are added.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#System.methods">System.methods</a></td>
-    <td class="summary">Defaults methods to assign to the entities&rsquo;s system table when they are added.</td>
+    <td class="summary">Defaults value to put into the entities&rsquo;s system component when they are added.</td>
     </tr>
     </table>
     <h3 class="doc-title"><a href="#System.callbacks">Callbacks.</a></h3>
@@ -161,11 +181,11 @@
     <td class="summary">Called when adding an entity to this system determining its order.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:onAdd">System:onAdd (s) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:onAdd">System:onAdd (c, e) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when adding an entity to the system.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:onRemove">System:onRemove (s) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:onRemove">System:onRemove (c, e) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when removing an entity from the system.</td>
     </tr>
     <tr>
@@ -193,19 +213,23 @@
     <td class="summary">Called when drawing the system.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:process">System:process (s, dt) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:process">System:process (c, e, dt) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when updating the system, for every entity the system contains.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:render">System:render (s) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:render">System:render (c, e) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when drawing the system, for every entity the system contains.</td>
     </tr>
     </table>
-    <h3 class="doc-title"><a href="#System.ro">Read-only fields</a></h3>
+    <h3 class="doc-title"><a href="#System.ro">Read-only fields.</a></h3>
     <table class="function_list">
     <tr>
     <td class="name" nowrap><a href="#System.world">System.world <sup><em>[read-only]</em></sup></a></td>
     <td class="summary">The world the system belongs to.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#System.w">System.w <sup><em>[read-only]</em></sup></a></td>
+    <td class="summary">Shortcut to <a href="../modules/ecs.html#System.world">System.world</a>.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System.entityCount">System.entityCount <sup><em>[read-only]</em></sup></a></td>
@@ -223,20 +247,24 @@
     <td class="summary">Add entities to the system and its subsystems.</td>
     </tr>
     <tr>
+    <td class="name" nowrap><a href="#System:remove">System:remove (e, ...)</a></td>
+    <td class="summary">Remove entities from the system and its subsystems.</td>
+    </tr>
+    <tr>
     <td class="name" nowrap><a href="#System:refresh">System:refresh (e, ...)</a></td>
     <td class="summary">Refresh an entity&rsquo;s systems.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:remove">System:remove (e, ...)</a></td>
-    <td class="summary">Remove entities to the system and its subsystems.</td>
+    <td class="name" nowrap><a href="#System:reorder">System:reorder (e, ...)</a></td>
+    <td class="summary">Reorder an entity.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System:has">System:has (e, ...)</a></td>
-    <td class="summary">Returns true if every entity is in the system.</td>
+    <td class="summary">Returns <code>true</code> if all these entities are in the system.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System:iter">System:iter ()</a></td>
-    <td class="summary">Returns an iterator that iterate through the entties in this system.</td>
+    <td class="summary">Returns an iterator that iterate through the entties in this system, in order.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System:clear">System:clear ()</a></td>
@@ -249,6 +277,14 @@
     <tr>
     <td class="name" nowrap><a href="#System:draw">System:draw ()</a></td>
     <td class="summary">Try to draw the system and its subsystems.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#System:callback">System:callback (name, e, ...)</a></td>
+    <td class="summary">Trigger a custom callback on a single entity.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#System:emit">System:emit (name, ...)</a></td>
+    <td class="summary">Emit an event on the system.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#System:destroy">System:destroy ()</a></td>
@@ -280,7 +316,7 @@
     <ul>
           <li><span class="parameter">...</span>
               <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table,...</a></span>
-           list of (uninstancied) system tables
+           list of (uninstancied) systems
           </li>
     </ul>
 
@@ -300,7 +336,7 @@
     <strong>all (...)</strong>
     </dt>
     <dd>
-    Returns a filter that returns true if, for every argument, a field with the same name exists in the entity.
+    Returns a filter that returns <code>true</code> if, for every argument, a field with the same name exists in the entity.
 
     </ul>
     </ul>
@@ -319,7 +355,7 @@
     <ol>
 
            <span class="types"><span class="type">function(e)</span></span>
-        that returns true if e has all the fields
+        that returns <code>true</code> if e has all the fields
     </ol>
 
 
@@ -331,7 +367,7 @@
     <strong>any (...)</strong>
     </dt>
     <dd>
-    Returns a filter that returns true if one of the arguments if the name of a field in the entity.
+    Returns a filter that returns <code>true</code> if one of the arguments if the name of a field in the entity.
 
     </ul>
     </ul>
@@ -350,7 +386,7 @@
     <ol>
 
            <span class="types"><span class="type">function(e)</span></span>
-        that returns true if e has at leats one of the fields
+        that returns <code>true</code> if e has at leats one of the fields
     </ol>
 
 
@@ -402,17 +438,28 @@
 
 </dd>
 </dl>
-    <h2 class="section-header has-description"><a name="Entity_table"></a>Entity table </h2>
+    <h2 class="section-header has-description"><a name="Entity_objects"></a>Entity objects </h2>
 
           <div class="section-description">
-           TODO
+          Entities are regular tables that get processed by <a href="../modules/ecs.html#System_objects">System</a>s. </p>
+
+<p> The idea is that entities <em>should</em> only contain data and no code; it&rsquo;s the systems that are responsible for the actual processing
+ (but it&rsquo;s your game, do as you want).</p>
+
+<p> This data is referred to, and organized in, &ldquo;components&rdquo;.
           </div>
     <dl class="function">
     </dl>
-    <h3 class="doc-title"><a name = "entity"></a>Entity system table.</h3>
+    <h3 class="doc-title"><a name = "Entity.Component"></a>Components.</h3>
     <div class="doc-description">
+    Entities are Lua tables, and thus contain key-values pairs: each one of these pairs is called a &ldquo;component&rdquo;. The data can be
+whatever you want, and ideally each component <em>should</em> store the data for one singular aspect of the entity, for example its position, name, etc.</p>
 
+<p>This library does not do any kind of special processing by itself on the entity tables and take them as is (no metatable, no methamethods, etc.),
+so you are free to handle them as you want in your systems or elsewhere.</p>
 
+<p>Since it&rsquo;s relatively common for systems to only operate on a single component, as a shortcut the library often consider what it calls the &ldquo;system component&rdquo;:
+that is, the component in the entity that has the same name as the system (if it exists).
     </div>
     <dl class="function">
 
@@ -425,47 +472,97 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="comment">-- example entity
+</span><span class="keyword">local</span> entity = {
+	position = { x = <span class="number">0</span>, y = <span class="number">52</span> }, <span class="comment">-- a "position" component
+</span>	sprite = newSprite(<span class="string">"awesomeguy.png"</span>) <span class="comment">-- a "sprite" component
+</span>}
 
-</dd>
-    <dt>
-    <a name = "entity"></a>
-    <strong>entity</strong>
-    </dt>
-    <dd>
-
-
-
+<span class="comment">-- example "sprite" system
+</span><span class="keyword">local</span> sprite = {
+	name = <span class="string">"sprite"</span>,
+	filter = <span class="string">"sprite"</span>, <span class="comment">-- process entities that have a "sprite" component
+</span>	<span class="comment">-- systems callbacks that are called per-entity often give you the system component as an argument
+</span>	<span class="comment">-- the system component is the component with the same name as the system, thus here the sprite component
+</span>	render = <span class="keyword">function</span>(self, component, entity)
+		<span class="comment">-- component == entity.sprite
+</span>		component:draw()
+	<span class="keyword">end</span>
+}</pre>
     </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
 
 </dd>
 </dl>
     <h2 class="section-header has-description"><a name="System_objects"></a>System objects </h2>
 
           <div class="section-description">
-          System fields and methods. </p>
+          Systems and Worlds.
+Systems are what do the processing on your entities. A system contains a list of entities; the entities in this list are selected
+using a <a href="../modules/ecs.html#System:filter">filter</a>, and the system will only operate on those filtered entities.</p>
 
-<p> When they are added to a world, a new, per-world self table is created and used for every method call (which we call &ldquo;instancied system&rdquo;).
- Instancied systems can be retrieved in <code>system.s</code> or <code>system.systems</code>.</p>
+<p>A system can also be created that do not accept any entity (<code>filter = false</code>, this is the default): such a system can still be
+used to do processing that don&rsquo;t need to be done per-entity but still behave like other systems (e.g. to do some static calculation each update).</p>
 
-<p> The &ldquo;world&rdquo; is just the top-level system, behaving in exactly the same way as other systems.</p>
+<p>The system also contains <a href="../modules/ecs.html#System.callbacks">callbacks</a>, these define the actual processing done on the system and its entities and you will want to redefine
+at least one of them to make your system actually do something.</p>
 
-<p> Every field defined below is optional and can be accessed or redefined at any time, unless written otherwise. Though you would typically set them
- when creating your system.
+<p>Then you can call <a href="../modules/ecs.html#System:update">System:update</a>, <a href="../modules/ecs.html#System:draw">System:draw</a>, <a href="../modules/ecs.html#System:emit">System:emit</a> or <a href="../modules/ecs.html#System:callback">System:callback</a> at appropriate times and the system will call the
+associated callbacks on itself and its entities, and then pass it to its subsystems. In practise you would likely only call these on
+the world system, so the callbacks are correctly propagated to every single system in the world.</p>
+
+<p>Systems are defined as regular tables with all the fields and methods you need in it. However, when a system is added to
+a world, the table you defined is not used directly, but we use what we call an &ldquo;instancied system&rdquo;: think of it of an instance of your system
+like if it were a class.
+The instancied system will have a metatable set that gives it some methods and fields defined by the library on top of what you defined.
+Modifying the instancied system will only modify this instance and not the original system you defined, so several instances of your system
+can exist in different worlds (note that the original system is not copied on instancing; if you reference a table in the original system it will use the
+original table directly).</p>
+
+<p>Systems can have subsystems; that is a system that behave as an extension of their parent system. They only operates on the entities already
+present in their parent subsystem, only update when their parent system updates, etc. You can thus organize your systems in a hierarchy to
+avoid repeating your filters or allow controlling several system from a single parent system.</p>
+
+<p>The top-level system is called the &ldquo;world&rdquo;; it behaves in exactly the same way as other systems, and accept every entity by default.
           </div>
+            <h3>Usage:</h3>
+            <pre class="example"><span class="keyword">local</span> sprite = {
+	filter = { <span class="string">"sprite"</span>, <span class="string">"position"</span> }, <span class="comment">-- only operate on entities with "sprite" and "position" components
+</span>	systems = { animated }, <span class="comment">-- subsystems: they only operate on entities already filtered by this system (on top of their own filtering)
+</span>
+	<span class="comment">-- Called when an entity is added to this system.
+</span>	onAdd = <span class="keyword">function</span>(self, component, entity)
+		<span class="global">print</span>(<span class="string">"Added an entity, entity count in the system:"</span>, self.entityCount) <span class="comment">-- self refer to the instancied system
+</span>	<span class="keyword">end</span>,
+
+	<span class="comment">-- Called when the system is updated, for every entity the system
+</span>	process = <span class="keyword">function</span>(self, component, entity, dt)
+		<span class="comment">-- processing...
+</span>	<span class="keyword">end</span>
+}
+
+<span class="keyword">local</span> world = ecs.world(system) <span class="comment">-- instanciate a world with the sprite system (and all its subsystems)
+</span>
+<span class="comment">-- Add an entity: doesn't pass the filtering, so nothing happens
+</span>world:add {
+	name = <span class="string">"John"</span>
+}
+
+<span class="comment">-- Added to the sprite system! Call sprite:onAdd, and also try to add it to its subsystems
+</span>world:add {
+	sprite = newSprite(<span class="string">"example.png"</span>),
+	position = { x=<span class="number">5</span>, y=<span class="number">0</span> }
+}
+
+<span class="comment">-- Trigger sprite:onUpdate and sprite:process callbacks
+</span>world:update(dt)</pre>
     <dl class="function">
     </dl>
-    <h3 class="doc-title"><a name = "System.modifiable"></a>Modifiable fields</h3>
+    <h3 class="doc-title"><a name = "System.modifiable"></a>Modifiable fields.</h3>
     <div class="doc-description">
-
-
+     Every field defined below is optional and can be accessed or redefined at any time, unless written otherwise. Though you would typically set them
+ before instanciating your systems.
     </div>
     <dl class="function">
 
@@ -486,8 +583,8 @@
     </dt>
     <dd>
     Name of the system.
- Used to create a field with the system&rsquo;s name in <code>world.s</code> and into each entity (the &ldquo;entity&rsquo;s system table&rdquo;) that&rsquo;s in this system.
- If not set, the entity will not have a system table.</p>
+ Used to create a field with the system&rsquo;s name in <code>world.s</code> and determine the associated system component.
+ If not set, the system will not appear in <code>world.s</code> and gives <code>nil</code> instead of the system component in callbacks.</p>
 
 <p> Do not change after system instanciation.
 
@@ -536,7 +633,7 @@
     <strong>System.interval</strong>
     </dt>
     <dd>
-    If not false, the system will only update every interval seconds.
+    If not <code>false</code>, the system will only update every interval seconds.
  <code>false</code> by default.
 
     </ul>
@@ -559,7 +656,7 @@
     <strong>System.active</strong>
     </dt>
     <dd>
-    The system and its susbsystems will only update if this is true.
+    The system and its susbsystems will only update if this is <code>true</code>.
  <code>true</code> by default.
 
     </ul>
@@ -581,7 +678,7 @@
     <strong>System.visible</strong>
     </dt>
     <dd>
-    The system and its subsystems will only draw if this is true.
+    The system and its subsystems will only draw if this is <code>true</code>.
  <code>true</code> by default.
 
     </ul>
@@ -603,44 +700,19 @@
     <strong>System.default</strong>
     </dt>
     <dd>
-    Defaults value to put into the entities&rsquo;s system table when they are added.  Will recursively fill missing values.
+    Defaults value to put into the entities&rsquo;s system component when they are added. </p>
+
+<p> If this is table, will recursively fill missing values.
  Metatables will be preserved during the copy but not copied themselves.</p>
 
-<p> When an entity is added to a system, a <code>.entity</code> field is always set in the system table, referring to the full entity table.</p>
-
 <p> Changing this will not affect entities already in the system.
+ Doesn&rsquo;t have any effect if the system doesn&rsquo;t have a name.
 
     </ul>
     <h3>Type:</h3>
     <ul>
-         <li><code>table</code></li>
+         <li><code>any</code></li>
          <li><code>nil</code> if no default</li>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "System.methods"></a>
-    <strong>System.methods</strong>
-    </dt>
-    <dd>
-    Defaults methods to assign to the entities&rsquo;s system table when they are added. </p>
-
-<p> When calling the methods with <code>entity.systemName:method(&hellip;)</code>, the method will actually receive the
- arguments method(system, <code>system table, &hellip;)</code>. Methamethods are accepted. New methods can be
- created anytime.
-
-    </ul>
-    <h3>Type:</h3>
-    <ul>
-         <li><code>table</code></li>
-         <li><code>nil</code> if no methods</li>
     </ul>
     </ul>
     </ul>
@@ -676,11 +748,11 @@
     </dt>
     <dd>
     Called when checking if an entity should be added to this system.
- Returns true if the entity should be added to this system (and therefore its subsystems).</p>
+ Returns <code>true</code> if the entity should be added to this system (and therefore its subsystems).</p>
 
 <p> If this is a string or a table, it will be converted to a filter function on instanciation using ecs.any.</p>
 
-<p> If this true, will accept every entity; if false, reject every entity.</p>
+<p> If this <code>true</code>, will accept every entity; if <code>false</code>, reject every entity.</p>
 
 <p> Will only test entities when they are added; changing this after system creation will not affect entities already in the system.</p>
 
@@ -703,7 +775,7 @@
     <ol>
 
            <span class="types"><span class="type">boolean</span></span>
-        true if entity should be added
+        <code>true</code> if entity should be added
     </ol>
 
 
@@ -716,12 +788,12 @@
     </dt>
     <dd>
     Called when adding an entity to this system determining its order.
- Returns true if e1 &lt;= e2. e1 and e2 are two entities.</p>
+ Returns <code>true</code> if <code>e1 &lt;=</code> e2 (i.e., if <code>e1</code> should be processed before <code>e2</code> in this system). e1 and e2 are two entities.</p>
 
 <p> Used to place the entity in the sorted entity list when it is added; changing this after system creation
  will not change the order of entities already in the system.</p>
 
-<p> By default, entities are in the same order they were inserted.
+<p> By default, new entities are added at the start of the list.
 
     </ul>
     </ul>
@@ -731,11 +803,11 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">e1</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            entity table to check for inferiority
           </li>
           <li><span class="parameter">e2</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            entity table to check for superiority
           </li>
     </ul>
@@ -744,7 +816,7 @@
     <ol>
 
            <span class="types"><span class="type">boolean</span></span>
-        true if e1 &lt;= e2
+        <code>true</code> if e1 &lt;= e2
     </ol>
 
 
@@ -753,7 +825,7 @@
 </dd>
     <dt>
     <a name = "System:onAdd"></a>
-    <strong>System:onAdd (s) <sup><em>[callback]</em></sup></strong>
+    <strong>System:onAdd (c, e) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when adding an entity to the system.
@@ -765,9 +837,13 @@
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">s</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-           the entity&rsquo;s system table
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component
+          </li>
+          <li><span class="parameter">e</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
+           the entity table
           </li>
     </ul>
 
@@ -778,7 +854,7 @@
 </dd>
     <dt>
     <a name = "System:onRemove"></a>
-    <strong>System:onRemove (s) <sup><em>[callback]</em></sup></strong>
+    <strong>System:onRemove (c, e) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when removing an entity from the system.
@@ -790,9 +866,13 @@
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">s</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-           the entity&rsquo;s system table
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component
+          </li>
+          <li><span class="parameter">e</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
+           the entity table
           </li>
     </ul>
 
@@ -932,7 +1012,7 @@
 </dd>
     <dt>
     <a name = "System:process"></a>
-    <strong>System:process (s, dt) <sup><em>[callback]</em></sup></strong>
+    <strong>System:process (c, e, dt) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when updating the system, for every entity the system contains.  Called after <a href="../modules/ecs.html#System:onUpdate">System:onUpdate</a> was called on the system.
@@ -944,9 +1024,13 @@
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">s</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-           the entity&rsquo;s system table
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component
+          </li>
+          <li><span class="parameter">e</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
+           the entity table
           </li>
           <li><span class="parameter">dt</span>
               <span class="types"><span class="type">number</span></span>
@@ -961,7 +1045,7 @@
 </dd>
     <dt>
     <a name = "System:render"></a>
-    <strong>System:render (s) <sup><em>[callback]</em></sup></strong>
+    <strong>System:render (c, e) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when drawing the system, for every entity the system contains.  Called after <a href="../modules/ecs.html#System:onDraw">System:onDraw</a> was called on the system.
@@ -973,9 +1057,13 @@
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">s</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-           the entity&rsquo;s system table
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component
+          </li>
+          <li><span class="parameter">e</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
+           the entity table
           </li>
     </ul>
 
@@ -985,10 +1073,9 @@
 
 </dd>
     </dl>
-    <h3 class="doc-title"><a name = "System.ro"></a>Read-only fields</h3>
+    <h3 class="doc-title"><a name = "System.ro"></a>Read-only fields.</h3>
     <div class="doc-description">
-
-
+     Fields available on instancied systems. Don&rsquo;t modify them unless you like broken things.
     </div>
     <dl class="function">
 
@@ -1009,6 +1096,27 @@
     </dt>
     <dd>
     The world the system belongs to.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>System</code> world
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "System.w"></a>
+    <strong>System.w <sup><em>[read-only]</em></sup></strong>
+    </dt>
+    <dd>
+    Shortcut to <a href="../modules/ecs.html#System.world">System.world</a>.
 
     </ul>
     <h3>Type:</h3>
@@ -1069,7 +1177,7 @@
     </dl>
     <h3 class="doc-title"><a name = "System.smethods"></a>Methods.</h3>
     <div class="doc-description">
-     Methods available on instancied system table.
+     Methods available on instancied systems.
     </div>
     <dl class="function">
 
@@ -1095,10 +1203,9 @@
 
 <p> Entities are added to subsystems after they were succesfully added to their parent system.</p>
 
-<p> If this is called on a subsystem instead of the world, be warned that this will bypass all the parent&rsquo;s systems filters.</p>
-
-<p> Since <a href="../modules/ecs.html#System:remove">System:remove</a> will not search for entities in systems where they should have been filtered out, the added entities will not be removed
- when calling :remove on a parent system or the world. The entity can be removed by calling <a href="../modules/ecs.html#System:remove">System:remove</a> on the system <a href="../modules/ecs.html#System:add">System:add</a> was called on.</p>
+<p> If this is called on a subsystem instead of the world, be warned that this will bypass all the parent&rsquo;s systems filters.
+ If you do that, since <a href="../modules/ecs.html#System:remove">System:remove</a> will not search for entities in systems where they should have been filtered out, the added entities will not be removed
+ when calling <a href="../modules/ecs.html#System:remove">System:remove</a> on a parent system or the world. The entity can be removed by calling <a href="../modules/ecs.html#System:remove">System:remove</a> on the system <a href="../modules/ecs.html#System:add">System:add</a> was called on.</p>
 
 <p> Complexity: O(1) per unordered system, O(entityCount) per ordered system.
 
@@ -1110,11 +1217,11 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">e</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            entity to add
           </li>
           <li><span class="parameter">...</span>
-              <span class="types"><span class="type">table...</span></span>
+              <span class="types"><span class="type">Entity...</span></span>
            other entities to add
           </li>
     </ul>
@@ -1122,8 +1229,51 @@
     <h3>Returns:</h3>
     <ol>
 
-           <span class="types"><span class="type">e,...</span></span>
-        the function arguments
+           <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity,...</a></span>
+        <code>e,&hellip;</code> the function arguments
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "System:remove"></a>
+    <strong>System:remove (e, ...)</strong>
+    </dt>
+    <dd>
+    Remove entities from the system and its subsystems. </p>
+
+<p> Will skip entities that are not in the system.</p>
+
+<p> Entities are removed from subsystems before they are removed from their parent system.</p>
+
+<p> If you intend to call this on a subsystem instead of the world, please read the warning in <a href="../modules/ecs.html#System:add">System:add</a>.</p>
+
+<p> Complexity: O(1) per system.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">e</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
+           entity to remove
+          </li>
+          <li><span class="parameter">...</span>
+              <span class="types"><span class="type">Entity...</span></span>
+           other entities to remove
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity,...</a></span>
+        <code>e,&hellip;</code> the function arguments
     </ol>
 
 
@@ -1150,11 +1300,11 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">e</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            entity to refresh
           </li>
           <li><span class="parameter">...</span>
-              <span class="types"><span class="type">table...</span></span>
+              <span class="types"><span class="type">Entity...</span></span>
            other entities to refresh
           </li>
     </ul>
@@ -1162,8 +1312,8 @@
     <h3>Returns:</h3>
     <ol>
 
-           <span class="types"><span class="type">e,...</span></span>
-        the function arguments
+           <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity,...</a></span>
+        <code>e,&hellip;</code> the function arguments
     </ol>
 
 
@@ -1171,21 +1321,16 @@
 
 </dd>
     <dt>
-    <a name = "System:remove"></a>
-    <strong>System:remove (e, ...)</strong>
+    <a name = "System:reorder"></a>
+    <strong>System:reorder (e, ...)</strong>
     </dt>
     <dd>
-    Remove entities to the system and its subsystems. </p>
+    Reorder an entity. </p>
 
-<p> Will skip entities that are not in the system.</p>
+<p> Will recalculate the entity position in the entity list for this system and its subsystems.
+ Will skip entities that are not in the system.</p>
 
-<p> Entities are removed from subsystems before they are removed from their parent system.</p>
-
-<p> If you intend to call this on a subsystem instead of the world, please read the warning in <a href="../modules/ecs.html#System:add">System:add</a>.</p>
-
-<p> Returns all removed entities.</p>
-
-<p> Complexity: O(1) per system.
+<p> Complexity: O(entityCount) per system.
 
     </ul>
     </ul>
@@ -1195,20 +1340,20 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">e</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
-           entity to remove
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
+           entity to reorder
           </li>
           <li><span class="parameter">...</span>
-              <span class="types"><span class="type">table...</span></span>
-           other entities to remove
+              <span class="types"><span class="type">Entity...</span></span>
+           other entities to reorder
           </li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
 
-           <span class="types"><span class="type">e,...</span></span>
-        the function arguments
+           <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity,...</a></span>
+        <code>e,&hellip;</code> the function arguments
     </ol>
 
 
@@ -1220,7 +1365,7 @@
     <strong>System:has (e, ...)</strong>
     </dt>
     <dd>
-    Returns true if every entity is in the system. </p>
+    Returns <code>true</code> if all these entities are in the system. </p>
 
 <p> Complexity: O(1).
 
@@ -1232,11 +1377,11 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">e</span>
-              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            entity that may be in the system
           </li>
           <li><span class="parameter">...</span>
-              <span class="types"><span class="type">table...</span></span>
+              <span class="types"><span class="type">Entity...</span></span>
            other entities that may be in the system
           </li>
     </ul>
@@ -1245,7 +1390,7 @@
     <ol>
 
            <span class="types"><span class="type">boolean</span></span>
-        true if every entity is in the system
+        <code>true</code> if every entity is in the system
     </ol>
 
 
@@ -1257,7 +1402,7 @@
     <strong>System:iter ()</strong>
     </dt>
     <dd>
-    Returns an iterator that iterate through the entties in this system.
+    Returns an iterator that iterate through the entties in this system, in order.
 
     </ul>
     </ul>
@@ -1269,7 +1414,7 @@
     <ol>
 
            <span class="types"><span class="type">iterator</span></span>
-        iterator over the entities in this system, in order
+        iterator over the entities in this system
     </ol>
 
 
@@ -1342,6 +1487,92 @@
 
 </dd>
     <dt>
+    <a name = "System:callback"></a>
+    <strong>System:callback (name, e, ...)</strong>
+    </dt>
+    <dd>
+    Trigger a custom callback on a single entity. </p>
+
+<p> This will call the <code>System:name(c, e, &hellip;)</code> method in this system and its subsystems,
+ if the method exists and the entity is in the system. <code>c</code> is the system <a href="#Entity.Component">component</a>
+ associated with the current system, and <code>e</code> is the <a href="../modules/ecs.html#Entity_objects">Entity</a>.</p>
+
+<p> Think of it as a way to perform custom callbacks issued from an entity event, similar to <a href="../modules/ecs.html#System:onAdd">System:onAdd</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">name</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+           name of the callback
+          </li>
+          <li><span class="parameter">e</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
+           the entity to perform the callback on
+          </li>
+          <li><span class="parameter">...</span>
+           other arguments to pass to the callback
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "System:emit"></a>
+    <strong>System:emit (name, ...)</strong>
+    </dt>
+    <dd>
+    Emit an event on the system. </p>
+
+<p> This will call the <code>System:name(&hellip;)</code> method in this system and its subsystems,
+ if the method exists.</p>
+
+<p> Think of it as a way to perform custom callbacks issued from a general event, similar to <a href="../modules/ecs.html#System:onUpdate">System:onUpdate</a>.</p>
+
+<p> The called methods may return a string value to affect the event propagation behaviour:</p>
+
+<ul>
+<li>if a callback returns <code>&quot;stop&quot;</code>, the event will not be propagated to the subsystems.</li>
+<li>if a callback returns <code>&quot;capture&quot;</code>, the event will not be propagated to the subsystems <em>and</em>
+its sibling systems (i.e. completely stop the propagation of the event).</li>
+</ul>
+
+
+<p> <code>&quot;stop&quot;</code> would be for example used to disable some behaviour in the system and its subsystems (like <code>active = false</code> can
+ disable <a href="../modules/ecs.html#System:onUpdate">System:onUpdate</a> behaviour on the system and its subsystems).</p>
+
+<p> <code>&quot;capture&quot;</code> would be for example used to prevent other systems from handling the event (for example to make sure an
+ input event is handled only once by a single system).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">name</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+           name of the callback
+          </li>
+          <li><span class="parameter">...</span>
+           other arguments to pass to the callback
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "System:destroy"></a>
     <strong>System:destroy ()</strong>
     </dt>
@@ -1366,7 +1597,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2021-12-25 23:19:42 </i>
+<i style="float:right;">Last updated 2021-12-26 18:13:01 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

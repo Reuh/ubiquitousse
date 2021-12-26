@@ -34,13 +34,14 @@
 <h2>Contents</h2>
 <ul>
 <li><a href="#Functions">Functions</a></li>
+<li><a href="#Entity_objects">Entity objects </a></li>
 <li><a href="#Tileset_objects">Tileset objects </a></li>
 <li><a href="#Layer_objects">Layer objects </a></li>
 <li><a href="#Tile_objects">Tile objects </a></li>
 <li><a href="#IntTile_objects">IntTile objects </a></li>
-<li><a href="#Entity_objects">Entity objects </a></li>
 <li><a href="#Level_objects">Level objects </a></li>
 <li><a href="#Project_objects">Project objects </a></li>
+<li><a href="#CustomFields_objects">CustomFields objects </a></li>
 </ul>
 
 
@@ -108,6 +109,65 @@ end
     <td class="summary">Load a LDtk project.</td>
     </tr>
 </table>
+<h2><a href="#Entity_objects">Entity objects </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Entity.layer">Entity.layer</a></td>
+    <td class="summary"><a href="../modules/ldtk.html#Layer_objects">Layer</a> this entity belongs to.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.identifier">Entity.identifier</a></td>
+    <td class="summary">The entity name.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.x">Entity.x</a></td>
+    <td class="summary">X position of the entity relative to the layer.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.y">Entity.y</a></td>
+    <td class="summary">Y position of the entity relative to the layer.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.width">Entity.width</a></td>
+    <td class="summary">The entity width.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.height">Entity.height</a></td>
+    <td class="summary">The entity height.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.sx">Entity.sx</a></td>
+    <td class="summary">Scale factor on x axis relative to original entity size.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.sy">Entity.sy</a></td>
+    <td class="summary">Scale factor on y axis relative to original entity size.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.pivotX">Entity.pivotX</a></td>
+    <td class="summary">The entity pivot point x position relative to the entity.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.pivotY">Entity.pivotY</a></td>
+    <td class="summary">The entity pivot point x position relative to the entity.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.color">Entity.color</a></td>
+    <td class="summary">Entity color.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.tile">Entity.tile</a></td>
+    <td class="summary">Tile associated with the entity, if any.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.fields">Entity.fields</a></td>
+    <td class="summary">Map of <a href="../modules/ldtk.html#CustomFields_objects">CustomFields</a> of the entity.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity:draw">Entity:draw ()</a></td>
+    <td class="summary">Called for the entity when drawing the associated entity layer (you will likely want to redefine it).</td>
+    </tr>
+</table>
 <h2><a href="#Tileset_objects">Tileset objects </a></h2>
 <table class="function_list">
     <tr>
@@ -131,7 +191,7 @@ end
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Layer.type">Layer.type</a></td>
-    <td class="summary">Type of layer: IntGrid, Entities, Tiles or AutoLayer (string).</td>
+    <td class="summary">Type of layer: IntGrid, Entities, Tiles or AutoLayer.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Layer.visible">Layer.visible</a></td>
@@ -190,7 +250,7 @@ end
 <table class="function_list">
     <tr>
     <td class="name" nowrap><a href="#Tile.layer">Tile.layer</a></td>
-    <td class="summary">Layer the tile belongs to.</td>
+    <td class="summary"><a href="../modules/ldtk.html#Layer_objects">Layer</a> the tile belongs to.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Tile.x">Tile.x</a></td>
@@ -225,7 +285,7 @@ end
 <table class="function_list">
     <tr>
     <td class="name" nowrap><a href="#IntTile.layer">IntTile.layer</a></td>
-    <td class="summary">Layer the IntTile belongs to.</td>
+    <td class="summary"><a href="../modules/ldtk.html#Layer_objects">Layer</a> the IntTile belongs to.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#IntTile.x">IntTile.x</a></td>
@@ -248,65 +308,6 @@ end
     <td class="summary">Color of the IntTile.</td>
     </tr>
 </table>
-<h2><a href="#Entity_objects">Entity objects </a></h2>
-<table class="function_list">
-    <tr>
-    <td class="name" nowrap><a href="#Entity.layer">Entity.layer</a></td>
-    <td class="summary"><a href="../modules/ldtk.html#Layer_objects">Layer</a> this entity belongs to.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.identifier">Entity.identifier</a></td>
-    <td class="summary">The entity name.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.x">Entity.x</a></td>
-    <td class="summary">X position of the entity relative to the layer.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.y">Entity.y</a></td>
-    <td class="summary">Y position of the entity relative to the layer.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.width">Entity.width</a></td>
-    <td class="summary">The entity width.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.height">Entity.height</a></td>
-    <td class="summary">The entity height.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.sx">Entity.sx</a></td>
-    <td class="summary">Scale factor on x axis relative to original entity size.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.sy">Entity.sy</a></td>
-    <td class="summary">Scale factor on y axis relative to original entity size.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.pivotX">Entity.pivotX</a></td>
-    <td class="summary">The entity pivot point x position relative to the entity.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.pivotY">Entity.pivotY</a></td>
-    <td class="summary">The entity pivot point x position relative to the entity.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.color">Entity.color</a></td>
-    <td class="summary">Entity color.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.tile">Entity.tile</a></td>
-    <td class="summary">Tile associated with the entity, if any.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity.fields">Entity.fields</a></td>
-    <td class="summary">Map of custom fields of the entity.</td>
-    </tr>
-    <tr>
-    <td class="name" nowrap><a href="#Entity:draw">Entity:draw ()</a></td>
-    <td class="summary">Called for the entity when drawing the associated entity layer (you will likely want to redefine it).</td>
-    </tr>
-</table>
 <h2><a href="#Level_objects">Level objects </a></h2>
 <table class="function_list">
     <tr>
@@ -327,31 +328,31 @@ end
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.loaded">Level.loaded</a></td>
-    <td class="summary">Whether this level is currently loaded or not (boolean).</td>
+    <td class="summary">Whether this level is currently loaded or not.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.identifier">Level.identifier</a></td>
-    <td class="summary">The level name (string).</td>
+    <td class="summary">The level name.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.x">Level.x</a></td>
-    <td class="summary">The level x position (number).</td>
+    <td class="summary">The level x position.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.y">Level.y</a></td>
-    <td class="summary">The level y position (number).</td>
+    <td class="summary">The level y position.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.width">Level.width</a></td>
-    <td class="summary">The level width (number).</td>
+    <td class="summary">The level width.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.height">Level.height</a></td>
-    <td class="summary">The level height (number).</td>
+    <td class="summary">The level height.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.fields">Level.fields</a></td>
-    <td class="summary">Map of custom fields of the level (table).</td>
+    <td class="summary">Map of <a href="../modules/ldtk.html#CustomFields_objects">CustomFields</a> of the level (table).</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Level.layers">Level.layers</a></td>
@@ -368,6 +369,12 @@ end
     <td class="name" nowrap><a href="#Project.levels">Project.levels</a></td>
     <td class="summary">List of <a href="../modules/ldtk.html#Level_objects">Level</a>s in this project.</td>
     </tr>
+</table>
+<h2><a href="#CustomFields_objects">CustomFields objects </a></h2>
+<table class="function_list">
+    </table>
+    <h3 class="doc-title"><a href="#CustomFields.conversion">Type conversion.</a></h3>
+    <table class="function_list">
 </table>
 
 <br/>
@@ -403,6 +410,315 @@ end
            <span class="types"><a class="type" href="../modules/ldtk.html#Project_objects">Project</a></span>
         the loaded LDtk project
     </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Entity_objects"></a>Entity objects </h2>
+
+          <div class="section-description">
+          Entities are regular tables that get processed by <code>System</code>s. </p>
+
+<p> The idea is that entities <em>should</em> only contain data and no code; it&rsquo;s the systems that are responsible for the actual processing
+ (but it&rsquo;s your game, do as you want).</p>
+
+<p> This data is referred to, and organized in, &ldquo;components&rdquo;.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Entity.layer"></a>
+    <strong>Entity.layer</strong>
+    </dt>
+    <dd>
+    <a href="../modules/ldtk.html#Layer_objects">Layer</a> this entity belongs to.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>Layer</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.identifier"></a>
+    <strong>Entity.identifier</strong>
+    </dt>
+    <dd>
+    The entity name.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.x"></a>
+    <strong>Entity.x</strong>
+    </dt>
+    <dd>
+    X position of the entity relative to the layer.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.y"></a>
+    <strong>Entity.y</strong>
+    </dt>
+    <dd>
+    Y position of the entity relative to the layer.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.width"></a>
+    <strong>Entity.width</strong>
+    </dt>
+    <dd>
+    The entity width.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.height"></a>
+    <strong>Entity.height</strong>
+    </dt>
+    <dd>
+    The entity height.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.sx"></a>
+    <strong>Entity.sx</strong>
+    </dt>
+    <dd>
+    Scale factor on x axis relative to original entity size.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.sy"></a>
+    <strong>Entity.sy</strong>
+    </dt>
+    <dd>
+    Scale factor on y axis relative to original entity size.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.pivotX"></a>
+    <strong>Entity.pivotX</strong>
+    </dt>
+    <dd>
+    The entity pivot point x position relative to the entity.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.pivotY"></a>
+    <strong>Entity.pivotY</strong>
+    </dt>
+    <dd>
+    The entity pivot point x position relative to the entity.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.color"></a>
+    <strong>Entity.color</strong>
+    </dt>
+    <dd>
+    Entity color.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>table</code> {r,g,b} with r,g,b in [0-1]
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.tile"></a>
+    <strong>Entity.tile</strong>
+    </dt>
+    <dd>
+    Tile associated with the entity, if any.  Is a table { tileset = associated tileset object, quad = associated quad }.
+ <a href="../modules/ldtk.html#Tile.quad">quad</a> is a LÖVE Quad if LÖVE is available, otherwise a table <code>{ x, y, width, height }</code>.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>table</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.fields"></a>
+    <strong>Entity.fields</strong>
+    </dt>
+    <dd>
+    Map of <a href="../modules/ldtk.html#CustomFields_objects">CustomFields</a> of the entity.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>CustomFields</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity:draw"></a>
+    <strong>Entity:draw ()</strong>
+    </dt>
+    <dd>
+    Called for the entity when drawing the associated entity layer (you will likely want to redefine it). </p>
+
+<p> By default, this draws the tile associated with the entity if there is one, or a rectangle around the entity position otherwise.
+
+    <h3>Requires:</h3>
+    <ul>
+         love
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
 
 
 
@@ -474,6 +790,9 @@ end
     <a href="../modules/ldtk.html#Level_objects">Level</a> this layer belongs to.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>Level</code>
     </ul>
     </ul>
     </ul>
@@ -492,6 +811,9 @@ end
     The layer name.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -507,9 +829,12 @@ end
     <strong>Layer.type</strong>
     </dt>
     <dd>
-    Type of layer: IntGrid, Entities, Tiles or AutoLayer (string).
+    Type of layer: IntGrid, Entities, Tiles or AutoLayer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -528,6 +853,9 @@ end
     Whether the layer is visible or not.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>boolean</code>
     </ul>
     </ul>
     </ul>
@@ -546,6 +874,9 @@ end
     The layer opacity (0-1).
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -564,6 +895,9 @@ end
     The layer order: smaller order means it is on top.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -582,6 +916,9 @@ end
     X position of the layer relative to the level.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -600,6 +937,9 @@ end
     Y position of the layer relative to the level.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -618,6 +958,9 @@ end
     Size of the grid on this layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -636,6 +979,9 @@ end
     Width of the layer, in grid units.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -654,6 +1000,9 @@ end
     Height of the layer, in grid units.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -672,6 +1021,9 @@ end
     <em>(Entities layer only)</em> List of <a href="../modules/ldtk.html#Entity_objects">Entity</a> in the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>{Entity,...}</code>
     </ul>
     </ul>
     </ul>
@@ -690,6 +1042,10 @@ end
     <em>(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)</em> List of <a href="../modules/ldtk.html#Tile_objects">Tile</a>s in the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>{Tile,...}</code></li>
+         <li><code>nil</code> if not applicable</li>
     </ul>
     </ul>
     </ul>
@@ -708,6 +1064,10 @@ end
     <em>(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)</em> <a href="../modules/ldtk.html#Tileset_objects">Tileset</a> object associated with the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>Tileset</code></li>
+         <li><code>nil</code> if not applicable</li>
     </ul>
     </ul>
     </ul>
@@ -724,12 +1084,15 @@ end
     </dt>
     <dd>
     <em>(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)</em> <a href="https://love2d.org/wiki/SpriteBatch">LÖVE SpriteBatch</a> containing the layer.
- nil if LÖVE not available.
 
     <h3>Requires:</h3>
     <ul>
          love
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>SpriteBatch</code></li>
+         <li><code>nil</code> if LÖVE not available.</li>
     </ul>
     </ul>
     </ul>
@@ -748,6 +1111,10 @@ end
     <em>(IntGrid without AutoLayer rules layer only)</em> list of <a href="../modules/ldtk.html#IntTile_objects">IntTile</a>s in the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>{IntTile,...}</code></li>
+         <li><code>nil</code> if not applicable</li>
     </ul>
     </ul>
     </ul>
@@ -766,7 +1133,7 @@ end
 
 <p> This represent the tiles from a Tiles, AutoLayer or IntGrid with AutoLayer rules layer.</p>
 
-<p> Can be retrived from the <a href="../modules/ldtk.html#Layer.tiles">tiles</a> list or <code>onAddTile</code> level load callback.
+<p> Can be retrived from the <a href="../modules/ldtk.html#Layer.tiles">Layer.tiles</a> list or <code>onAddTile</code> level load callback.
           </div>
     <dl class="function">
     <dt>
@@ -774,9 +1141,12 @@ end
     <strong>Tile.layer</strong>
     </dt>
     <dd>
-    Layer the tile belongs to.
+    <a href="../modules/ldtk.html#Layer_objects">Layer</a> the tile belongs to.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>Layer</code>
     </ul>
     </ul>
     </ul>
@@ -795,6 +1165,9 @@ end
     X position of the tile relative to the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -813,6 +1186,9 @@ end
     Y position of the tile relative to the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -831,6 +1207,9 @@ end
     Whether the tile is flipped horizontally.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>boolean</code>
     </ul>
     </ul>
     </ul>
@@ -849,6 +1228,9 @@ end
     Whether the tile is flipped vertically.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>boolean</code>
     </ul>
     </ul>
     </ul>
@@ -867,6 +1249,9 @@ end
     Tags associated with the tile: can be used either as a list of tags or a map of activated tags tags[name] == true.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>{"tag",["tag"]=true,...}</code>
     </ul>
     </ul>
     </ul>
@@ -885,6 +1270,9 @@ end
     Custom data associated with the tile, if any.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -901,9 +1289,12 @@ end
     </dt>
     <dd>
     Quad associated with the tile (relative to the layer&rsquo;s tileset).
- LÖVE Quad if LÖVE is available, otherwise a table <code>{ x, y, width, height }</code>.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>LÖVE</code> Quad if LÖVE is available</li>
+         <li><code>table</code> { x, y, width, height } if LÖVE not available</li>
     </ul>
     </ul>
     </ul>
@@ -930,9 +1321,12 @@ end
     <strong>IntTile.layer</strong>
     </dt>
     <dd>
-    Layer the IntTile belongs to.
+    <a href="../modules/ldtk.html#Layer_objects">Layer</a> the IntTile belongs to.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>Layer</code>
     </ul>
     </ul>
     </ul>
@@ -951,6 +1345,9 @@ end
     X position of the IntTile relative to the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -969,6 +1366,9 @@ end
     Y position of the IntTile relative to the layer.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -987,6 +1387,9 @@ end
     Name of the IntTile.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -1005,6 +1408,9 @@ end
     Integer value of the IntTile.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -1023,275 +1429,9 @@ end
     Color of the IntTile.
 
     </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-</dl>
-    <h2 class="section-header has-description"><a name="Entity_objects"></a>Entity objects </h2>
-
-          <div class="section-description">
-          Entity object. </p>
-
-<p> This represent an entity from an Entities layer.</p>
-
-<p> Can be retrived from the <a href="../modules/ldtk.html#Layer.entities">entities</a> list or <code>onAddEntity</code> level load callback.
-          </div>
-    <dl class="function">
-    <dt>
-    <a name = "Entity.layer"></a>
-    <strong>Entity.layer</strong>
-    </dt>
-    <dd>
-    <a href="../modules/ldtk.html#Layer_objects">Layer</a> this entity belongs to.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.identifier"></a>
-    <strong>Entity.identifier</strong>
-    </dt>
-    <dd>
-    The entity name.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.x"></a>
-    <strong>Entity.x</strong>
-    </dt>
-    <dd>
-    X position of the entity relative to the layer.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.y"></a>
-    <strong>Entity.y</strong>
-    </dt>
-    <dd>
-    Y position of the entity relative to the layer.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.width"></a>
-    <strong>Entity.width</strong>
-    </dt>
-    <dd>
-    The entity width.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.height"></a>
-    <strong>Entity.height</strong>
-    </dt>
-    <dd>
-    The entity height.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.sx"></a>
-    <strong>Entity.sx</strong>
-    </dt>
-    <dd>
-    Scale factor on x axis relative to original entity size.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.sy"></a>
-    <strong>Entity.sy</strong>
-    </dt>
-    <dd>
-    Scale factor on y axis relative to original entity size.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.pivotX"></a>
-    <strong>Entity.pivotX</strong>
-    </dt>
-    <dd>
-    The entity pivot point x position relative to the entity.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.pivotY"></a>
-    <strong>Entity.pivotY</strong>
-    </dt>
-    <dd>
-    The entity pivot point x position relative to the entity.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.color"></a>
-    <strong>Entity.color</strong>
-    </dt>
-    <dd>
-    Entity color.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.tile"></a>
-    <strong>Entity.tile</strong>
-    </dt>
-    <dd>
-    Tile associated with the entity, if any.  Is a table { tileset = associated tileset object, quad = associated quad }.
- <a href="../modules/ldtk.html#Tile.quad">quad</a> is a LÖVE Quad if LÖVE is available, otherwise a table <code>{ x, y, width, height }</code>.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity.fields"></a>
-    <strong>Entity.fields</strong>
-    </dt>
-    <dd>
-    Map of custom fields of the entity.
-
-    </ul>
-    </ul>
-    </ul>
-    </ul>
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Entity:draw"></a>
-    <strong>Entity:draw ()</strong>
-    </dt>
-    <dd>
-    Called for the entity when drawing the associated entity layer (you will likely want to redefine it). </p>
-
-<p> By default, this draws the tile associated with the entity if there is one, or a rectangle around the entity position otherwise.
-
-    <h3>Requires:</h3>
+    <h3>Type:</h3>
     <ul>
-         love
-    </ul>
+         <code>table</code> {r,g,b} with r,g,b in [0-1]
     </ul>
     </ul>
     </ul>
@@ -1425,6 +1565,9 @@ end
     <a href="../modules/ldtk.html#Project_objects">Project</a> this level belongs to.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>Project</code>
     </ul>
     </ul>
     </ul>
@@ -1440,9 +1583,12 @@ end
     <strong>Level.loaded</strong>
     </dt>
     <dd>
-    Whether this level is currently loaded or not (boolean).
+    Whether this level is currently loaded or not.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>boolean</code>
     </ul>
     </ul>
     </ul>
@@ -1458,9 +1604,12 @@ end
     <strong>Level.identifier</strong>
     </dt>
     <dd>
-    The level name (string).
+    The level name.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -1476,9 +1625,12 @@ end
     <strong>Level.x</strong>
     </dt>
     <dd>
-    The level x position (number).
+    The level x position.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -1494,9 +1646,12 @@ end
     <strong>Level.y</strong>
     </dt>
     <dd>
-    The level y position (number).
+    The level y position.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -1512,9 +1667,12 @@ end
     <strong>Level.width</strong>
     </dt>
     <dd>
-    The level width (number).
+    The level width.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -1530,9 +1688,12 @@ end
     <strong>Level.height</strong>
     </dt>
     <dd>
-    The level height (number).
+    The level height.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>number</code>
     </ul>
     </ul>
     </ul>
@@ -1548,9 +1709,12 @@ end
     <strong>Level.fields</strong>
     </dt>
     <dd>
-    Map of custom fields of the level (table).
+    Map of <a href="../modules/ldtk.html#CustomFields_objects">CustomFields</a> of the level (table).
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>CustomFields</code>
     </ul>
     </ul>
     </ul>
@@ -1569,6 +1733,9 @@ end
     List of <a href="../modules/ldtk.html#Layer_objects">Layer</a>s in the level (table).
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>{Layer,...}</code>
     </ul>
     </ul>
     </ul>
@@ -1587,7 +1754,7 @@ end
     Level background. </p>
 
 <p> If there is a background image, <code>background.image</code> contains a table <code>{image=image, x=number, y=number, sx=number, sy=number}</code>
- where <a href="../modules/ldtk.html#Tileset.image">image</a> is the LÖVE image (or image filepath if LÖVE not available) <a href="../modules/ldtk.html#Entity.x">x</a> and <a href="../modules/ldtk.html#Level.y">y</a> are the top-left position,
+ where <a href="../modules/ldtk.html#Tileset.image">image</a> is the LÖVE image (or image filepath if LÖVE not available) <a href="../modules/ldtk.html#Entity.x">x</a> and <a href="../modules/ldtk.html#Tile.y">y</a> are the top-left position,
  and <a href="../modules/ldtk.html#Entity.sx">sx</a> and <a href="../modules/ldtk.html#Entity.sy">sy</a> the horizontal and vertical scale factors.
 
     </ul>
@@ -1598,7 +1765,7 @@ end
     <h3>Fields:</h3>
     <ul>
           <li><span class="parameter">color</span>
-           backrgound color
+           backrgound color {r,g,b} with r,g,b in [0-1]
           </li>
           <li><span class="parameter">image</span>
            backrgound image information, if any
@@ -1627,6 +1794,50 @@ end
     List of <a href="../modules/ldtk.html#Level_objects">Level</a>s in this project.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>{Level,...}</code>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="CustomFields_objects"></a>CustomFields objects </h2>
+
+          <div class="section-description">
+          Custom fields: map of each field name to its value. </p>
+
+<p> LDtk allows to defined custom fields in some places (<a href="../modules/ldtk.html#Entity.fields">Entity.fields</a>, <a href="../modules/ldtk.html#Level.fields">Level.fields</a>). This library allows you to access them in a table that
+ map each field name to its value <code>{[&quot;fieldName&quot;]=value,&hellip;}</code>.
+          </div>
+    <dl class="function">
+    </dl>
+    <h3 class="doc-title"><a name = "CustomFields.conversion"></a>Type conversion.</h3>
+    <div class="doc-description">
+    <p> Here is how the values are converted to Lua values:</p>
+
+<ul>
+<li>Integers, Floats are converted into a Lua number.</li>
+<li>Booleans are converted into a Lua boolean.</li>
+<li>Strings, Multilines are converted in a Lua string.</li>
+<li>Enum are converted into a Lua string giving the currently selected enum value.</li>
+<li>Filepath are converted into a Lua string giving the file path.</li>
+<li>Arrays are converted into a Lua table with the elements in it as a list.</li>
+<li>Points are converted into a Lua table with the fields <a href="../modules/ldtk.html#Entity.x">x</a> and <a href="../modules/ldtk.html#Tile.y">y</a>: <code>{ x=number, y=number }</code>.</li>
+<li>Colors are converted into a Lua table with the red, green and blue components in [0-1] as a list: <code>{r,g,b}</code>.</li>
+</ul>
+
+
+    </div>
+    <dl class="function">
+
+    </ul>
     </ul>
     </ul>
     </ul>
@@ -1644,7 +1855,7 @@ end
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2021-12-25 23:19:42 </i>
+<i style="float:right;">Last updated 2021-12-26 18:13:01 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

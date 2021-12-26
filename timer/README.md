@@ -1,6 +1,6 @@
 # ubiquitousse.timer
 
-Timer and time related functions.
+Timer management for Lua.
 
 You can read the documentation [here](https://reuh.github.io/ubiquitousse/modules/timer.html).
 

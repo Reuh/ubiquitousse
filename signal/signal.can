@@ -1,7 +1,10 @@
---- Signal management.
+--- Signal management for Lua.
 --
 -- No dependency.
+-- Optional dependency: LÖVE to hook into LÖVE events.
 -- @module signal
+-- @usage
+-- TODO
 
 --- Signal registry.
 --
@@ -9,20 +12,27 @@
 -- @type SignalRegistry
 let registry_mt = {
 	--- Map of signals to list of listeners.
+	-- @ftype {["name"]={fn,...}}
 	signals = {},
 
 	--- Bind one or several functions to a signal name.
+	-- @tparam string name the name of the signal
+	-- @tparam function fn the function to bind to the signal
+	-- @tparam function,... ... other function to bind to the signal
 	bind = :(name, fn, ...)
 		if not @signals[name] then
 			@signals[name] = {}
 		end
 		table.insert(@signals[name], fn)
 		if ... then
-			return @bind(name, ...)
+			@bind(name, ...)
 		end
 	end,
 
 	--- Unbind one or several functions to a signal name.
+	-- @tparam string name the name of the signal
+	-- @tparam function fn the function to unbind to the signal
+	-- @tparam function,... ... other function to unbind to the signal
 	unbind = :(name, fn, ...)
 		if not @signals[name] then
 			return
@@ -33,16 +43,20 @@ let registry_mt = {
 			end
 		end
 		if ... then
-			return @unbind(name, ...)
+			@unbind(name, ...)
 		end
 	end,
 
 	--- Remove every bound function to a signal name.
+	-- @tparam string name the name of the signal
 	unbindAll = :(name)
 		@signals[name] = nil
 	end,
 
 	--- Replace a bound function with another function.
+	-- @tparam string name the name of the signal
+	-- @tparam function sourceFn the function currently bound to the signal
+	-- @tparam function destFn the function that will replace the previous one
 	replace = :(name, sourceFn, destFn)
 		if not @signals[name] then
 			@signals[name] = {}
@@ -61,6 +75,8 @@ let registry_mt = {
 	end,
 
 	--- Emit a signal, i.e. call every function bound to it, with the given arguments.
+	-- @tparam string name the name of the signal
+	-- @param ... arguments to pass to the functions bound to this signal
 	emit = :(name, ...)
 		if @signals[name] then
 			for _, fn in ipairs(@signals[name]) do
@@ -105,7 +121,7 @@ let signal = {
 		return registry_mt.emit(signal, ...)
 	end,
 
-	--- SignalRegistry which will be used to bind signals that need to be called on game engine event; other ubiquitousse modules may bind to this registry
+	--- `SignalRegistry` which will be used to bind signals that need to be called on game engine event; other ubiquitousse modules may bind to this registry
 	-- if avaible.
 	--
 	-- For example, every ubiquitousse module with a "update" function will bind it to the "update" signal in the registry;
@@ -116,6 +132,7 @@ let signal = {
 	-- * `update(dt)`, should be called on every game update
 	-- * `draw()`, should be called on every game draw
 	-- * for LÖVE, there are callbacks for every LÖVE callback function that need to be called on their corresponding LÖVE callback
+	-- @ftype SignalRegistry
 	event = nil,
 
 	--- Call this function to hook `signal.event` signals to LÖVE events.

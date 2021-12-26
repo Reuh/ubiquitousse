@@ -1,7 +1,9 @@
---- Time related functions.
+--- Timer management for Lua.
 --
 -- No dependency.
 -- @module timer
+-- @usage
+-- TODO
 local ease = require((...):match("^.-timer")..".easing")
 
 local timer_module
@@ -33,24 +35,32 @@ local timer_mt = {
 
 	--- Wait time seconds before running the function.
 	-- Specify no time to remove condition.
+	-- @tparam[opt] number time duration to wait
+	-- @treturn Timer the same timer, for chaining method calls
 	after = function(self, time)
 		self.t.after = time
 		return self
 	end,
 	--- Run the function every time millisecond.
 	-- Specify no time to remove condition.
+	-- @tparam[opt] number time duration between execution
+	-- @treturn Timer the same timer, for chaining method calls
 	every = function(self, time)
 		self.t.every = time
 		return self
 	end,
 	--- The function will not execute more than count times.
 	-- Specify no time to remove condition.
+	-- @tparam[opt] number count number of times
+	-- @treturn Timer the same timer, for chaining method calls
 	times = function(self, count)
 		self.t.times = count or -1
 		return self
 	end,
 	--- The timer will be active for a time duration.
 	-- Specify no time to remove condition.
+	-- @tparam[opt] number time duration of execution
+	-- @treturn Timer the same timer, for chaining method calls
 	during = function(self, time)
 		self.t.during = time
 		return self
@@ -62,12 +72,16 @@ local timer_mt = {
 	--- Starts the function execution when func() returns true. Checked before the "after" condition,
 	-- meaning the "after" countdown starts when func() returns true.
 	-- If multiple init functions are added, init will trigger only when all of them returns true.
+	-- @tparam function func function that returns true if condition is verified
+	-- @treturn Timer the same timer, for chaining method calls
 	initWhen = function(self, func)
 		table.insert(self.t.initWhen, func)
 		return self
 	end,
 	--- Starts the function execution when func() returns true. Checked after the "after" condition.
 	-- If multiple start functions are added, start will trigger only when all of them returns true.
+	-- @tparam function func function that returns true if condition is verified
+	-- @treturn Timer the same timer, for chaining method calls
 	startWhen = function(self, func)
 		table.insert(self.t.startWhen, func)
 		return self
@@ -75,12 +89,16 @@ local timer_mt = {
 	--- When the functions ends, the execution won't stop and will repeat as long as func() returns true.
 	-- Will cancel timed repeat conditions if false but needs other timed repeat conditions to be true to create a new repeat.
 	-- If multiple repeat functions are added, a repeat will trigger only when all of them returns true.
+	-- @tparam function func function that returns true if condition is verified
+	-- @treturn Timer the same timer, for chaining method calls
 	repeatWhile = function(self, func)
 		table.insert(self.t.repeatWhile, func)
 		return self
 	end,
 	--- Stops the function execution when func() returns true. Checked before all timed conditions.
 	-- If multiple stop functions are added, stop will trigger only when all of them returns true.
+	-- @tparam function func function that returns true if condition is verified
+	-- @treturn Timer the same timer, for chaining method calls
 	stopWhen = function(self, func)
 		table.insert(self.t.stopWhen, func)
 		return self
@@ -90,39 +108,51 @@ local timer_mt = {
 	-- @doc conditionoverride
 
 	--- Force the function to start its execution.
+	-- @treturn Timer the same timer, for chaining method calls
 	start = function(self)
 		self.t.forceStart = true
 		return self
 	end,
 	--- Force the function to stop its execution.
+	-- @treturn Timer the same timer, for chaining method calls
 	stop = function(self)
 		self.t.forceStop = true
 		return self
 	end,
 	--- Force the function to stop immediately. Won't trigger onEnd or other callbacks.
+	-- @treturn Timer the same timer, for chaining method calls
 	abort = function(self)
 		self.t.abort = true
 		return self
 	end,
 	--- Skip some amount of time.
+	-- @tparam number time duration to skip
+	-- @treturn Timer the same timer, for chaining method calls
 	skip = function(self, time)
 		self.t.skip = (self.t.skip or 0) + time
+		return self
 	end,
 
 	--- Callbacks functions
 	-- @doc callbacks
 
 	--- Add a function to the start callback: will execute func(self, lag) when the function execution start.
+	-- @tparam function func function to call when timer start
+	-- @treturn Timer the same timer, for chaining method calls
 	onStart = function(self, func)
 		table.insert(self.t.onStart, func)
 		return self
 	end,
 	--- Add a function to the update callback: will execute func(self, lag) each frame the main function is run.
+	-- @tparam function func function to call at each timer update
+	-- @treturn Timer the same timer, for chaining method calls
 	onUpdate = function(self, func)
 		table.insert(self.t.onUpdate, func)
 		return self
 	end,
 	--- Add a function to the end callback: will execute func(self, lag) when the function execution end.
+	-- @tparam function func function to call when timer ends
+	-- @treturn Timer the same timer, for chaining method calls
 	onEnd = function(self, func)
 		table.insert(self.t.onEnd, func)
 		return self
@@ -133,7 +163,8 @@ local timer_mt = {
 
 	--- Creates another timer which will be replace the current one when it ends.
 	-- Returns the new timer (and not the original one!).
-	-- @treturn Timer
+	-- @tparam function func function called by the chained timer
+	-- @treturn Timer the new timer
 	chain = function(self, func)
 		local fn = timer_module.run(func)
 		self:onEnd(function(self, lag)
@@ -242,6 +273,8 @@ local registry_mt = {
 
 	--- Create a new timer and add it to the registry.
 	-- Same as timer_module.run, but add it to the registry.
+	-- @tparam function func function called by the timer
+	-- @treturn Timer the new timer
 	run = function(self, func)
 		local r = timer_module.run(func)
 		table.insert(self.timers, r)
@@ -250,6 +283,7 @@ local registry_mt = {
 
 	--- Create a new tween timer and add it to the registry.
 	-- Same as timer_module.tween, but add it to the registry.
+	-- @treturn TweenTimer the new timer
 	tween = function(self, duration, tbl, to, method)
 		local r = timer_module.tween(duration, tbl, to, method)
 		table.insert(self.timers, r)
@@ -289,7 +323,7 @@ timer_module = {
 	-- You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
 	-- don't want to handle your timers manually.
 	-- @tparam[opt] function func the function to schedule
-	-- @treturn Timer the object
+	-- @treturn Timer the new timer
 	run = function(func)
 		local r = setmetatable({
 			t = {
@@ -323,8 +357,6 @@ timer_module = {
 	--- Create a timer that will tween some numeric values.
 	-- You will need to call the :update(dt) method on the timer object every frame to make it do something, or create the timer from a timer registry if you
 	-- don't want to handle your timers manually.
-	--
-	--
 	-- @tparam number duration tween duration (seconds)
 	-- @tparam table tbl the table containing the values to tween
 	-- @tparam table to the new values
@@ -374,9 +406,13 @@ timer_module = {
 
 		--- Creates another tween which will be initialized when the current one ends.
 		-- If tbl_ and/or method_ are not specified, the values from the current tween will be used.
-		-- Returns the new tween.
-		-- @treturn TweenTimer
-		r.chain = function(_, duration_, tbl_, to_, method_)
+		-- Returns the new tween timer.
+		-- @tparam number duration tween duration (seconds)
+		-- @tparam table tbl the table containing the values to tween
+		-- @tparam table to the new values
+		-- @tparam[opt="linear"] string/function method tweening method (string name or the actual function(time, start, change, duration))
+		-- @treturn TweenTimer the new timer
+		function r:chain(duration_, tbl_, to_, method_)
 			if not method_ and to_ then
 				if type(to_) == "string" then
 					tbl_, to_, method_ = tbl, tbl_, to_

@@ -1,7 +1,9 @@
---- Various functions useful for game developement.
+--- Various functions useful for Lua game developement.
 --
 -- No dependency.
 -- @module util
+-- @usage
+-- TODO
 
 --- Functions
 -- @section Functions

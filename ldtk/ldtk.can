@@ -191,39 +191,58 @@ let layer_mt = {
 	_init = (layer, level, order, callbacks)
 		let gridSize = layer.__gridSize
 		let t = {
-			--- @{Level} this layer belongs to.
+			--- `Level` this layer belongs to.
+			-- @ftype Level
 			level = level,
 			--- The layer name.
+			-- @ftype string
 			identifier = layer.__identifier,
-			--- Type of layer: IntGrid, Entities, Tiles or AutoLayer (string).
+			--- Type of layer: IntGrid, Entities, Tiles or AutoLayer.
+			-- @ftype string
 			type = layer.__type,
 			--- Whether the layer is visible or not.
+			-- @ftype boolean
 			visible = layer.visible,
 			--- The layer opacity (0-1).
+			-- @ftype number
 			opacity = layer.opacity,
 			--- The layer order: smaller order means it is on top.
+			-- @ftype number
 			order = order,
 			--- X position of the layer relative to the level.
+			-- @ftype number
 			offsetX = layer.__pxTotalOffsetX,
 			--- Y position of the layer relative to the level.
+			-- @ftype number
 			offsetY = layer.__pxTotalOffsetY,
 			--- Size of the grid on this layer.
+			-- @ftype number
 			gridSize = gridSize,
 			--- Width of the layer, in grid units.
+			-- @ftype number
 			gridWidth = layer.__cWid,
 			--- Height of the layer, in grid units.
+			-- @ftype number
 			gridHeight = layer.__cHei,
-			--- _(Entities layer only)_ List of @{Entity} in the layer.
+			--- _(Entities layer only)_ List of `Entity` in the layer.
+			-- @ftype {Entity,...}
 			entities = nil,
-			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ List of @{Tile}s in the layer.
+			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ List of `Tile`s in the layer.
+			-- @ftype {Tile,...}
+			-- @ftype nil if not applicable
 			tiles = nil,
-			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ @{Tileset} object associated with the layer.
+			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ `Tileset` object associated with the layer.
+			-- @ftype Tileset
+			-- @ftype nil if not applicable
 			tileset = nil,
 			--- _(Tiles, AutoLayer, or IntGrid with AutoLayer rules layers only)_ [LÖVE SpriteBatch](https://love2d.org/wiki/SpriteBatch) containing the layer.
-			-- nil if LÖVE not available.
+			-- @ftype SpriteBatch
+			-- @ftype nil if LÖVE not available.
 			-- @require love
 			spritebatch = nil,
-			--- _(IntGrid without AutoLayer rules layer only)_ list of @{IntTile}s in the layer.
+			--- _(IntGrid without AutoLayer rules layer only)_ list of `IntTile`s in the layer.
+			-- @ftype {IntTile,...}
+			-- @ftype nil if not applicable
 			intTiles = nil,
 		}
 		-- Layers with an associated tileset (otherwise ignore as there is nothing to draw) (Tiles, AutoLayer & IntGrid with AutoLayer rules)
@@ -242,26 +261,34 @@ let layer_mt = {
 				--
 				-- This represent the tiles from a Tiles, AutoLayer or IntGrid with AutoLayer rules layer.
 				--
-				-- Can be retrived from the @{tiles} list or `onAddTile` level load callback.
+				-- Can be retrived from the `Layer.tiles` list or `onAddTile` level load callback.
 				--
 				-- @type Tile
 				let tile = {
-					--- Layer the tile belongs to.
+					--- `Layer` the tile belongs to.
+					-- @ftype Layer
 					layer = t,
 					--- X position of the tile relative to the layer.
+					-- @ftype number
 					x = x,
 					--- Y position of the tile relative to the layer.
+					-- @ftype number
 					y = y,
 					--- Whether the tile is flipped horizontally.
+					-- @ftype boolean
 					flipX = false,
 					--- Whether the tile is flipped vertically.
+					-- @ftype boolean
 					flipY = false,
 					--- Tags associated with the tile: can be used either as a list of tags or a map of activated tags tags[name] == true.
+					-- @ftype {"tag",["tag"]=true,...}
 					tags = tilesetData[tl.t].tags,
 					--- Custom data associated with the tile, if any.
+					-- @ftype string
 					data = tilesetData[tl.t].data,
 					--- Quad associated with the tile (relative to the layer's tileset).
-					-- LÖVE Quad if LÖVE is available, otherwise a table `{ x, y, width, height }`.
+					-- @ftype LÖVE Quad if LÖVE is available
+					-- @ftype table { x, y, width, height } if LÖVE not available
 					quad = quad
 				}
 				if tl.f == 1 or tl.f == 3 then
@@ -295,17 +322,23 @@ let layer_mt = {
 					--
 					-- @type IntTile
 					let tile = {
-						--- Layer the IntTile belongs to.
+						--- `Layer` the IntTile belongs to.
+						-- @ftype Layer
 						layer = t,
 						--- X position of the IntTile relative to the layer.
+						-- @ftype number
 						x = x,
 						--- Y position of the IntTile relative to the layer.
+						-- @ftype number
 						y = y,
 						--- Name of the IntTile.
+						-- @ftype string
 						identifier = values[tl].identifier,
 						--- Integer value of the IntTile.
+						-- @ftype number
 						value = tl,
 						--- Color of the IntTile.
+						-- @ftype table {r,g,b} with r,g,b in [0-1]
 						color = values[tl].color
 					}
 					table.insert(t.intTiles, tile)
@@ -327,32 +360,45 @@ let layer_mt = {
 				--
 				-- @type Entity
 				let entity = {
-					--- @{Layer} this entity belongs to.
+					--- `Layer` this entity belongs to.
+					-- @ftype Layer
 					layer = t,
 					--- The entity name.
+					-- @ftype string
 					identifier = e.__identifier,
 					--- X position of the entity relative to the layer.
+					-- @ftype number
 					x = e.px[1],
 					--- Y position of the entity relative to the layer.
+					-- @ftype number
 					y = e.px[2],
 					--- The entity width.
+					-- @ftype number
 					width = e.width,
 					--- The entity height.
+					-- @ftype number
 					height = e.height,
 					--- Scale factor on x axis relative to original entity size.
+					-- @ftype number
 					sx = e.width / entityDef.width,
 					--- Scale factor on y axis relative to original entity size.
+					-- @ftype number
 					sy = e.height / entityDef.height,
 					--- The entity pivot point x position relative to the entity.
+					-- @ftype number
 					pivotX = e.__pivot[1] * e.width,
 					--- The entity pivot point x position relative to the entity.
+					-- @ftype number
 					pivotY = e.__pivot[2] * e.height,
 					--- Entity color.
+					-- @ftype table {r,g,b} with r,g,b in [0-1]
 					color = entityDef.color,
 					--- Tile associated with the entity, if any. Is a table { tileset = associated tileset object, quad = associated quad }.
 					-- `quad` is a LÖVE Quad if LÖVE is available, otherwise a table `{ x, y, width, height }`.
+					-- @ftype table
 					tile = nil,
-					--- Map of custom fields of the entity.
+					--- Map of `CustomFields` of the entity.
+					-- @ftype CustomFields
 					fields = getFields(e.fieldInstances),
 					--- Called for the entity when drawing the associated entity layer (you will likely want to redefine it).
 					--
@@ -489,30 +535,39 @@ let level_mt = {
 
 	_init = (level, project)
 		let t = {
-			--- @{Project} this level belongs to.
+			--- `Project` this level belongs to.
+			-- @ftype Project
 			project = project,
-			--- Whether this level is currently loaded or not (boolean).
+			--- Whether this level is currently loaded or not.
+			-- @ftype boolean
 			loaded = false,
-			--- The level name (string).
+			--- The level name.
+			-- @ftype string
 			identifier = level.identifier,
-			--- The level x position (number).
+			--- The level x position.
+			-- @ftype number
 			x = level.worldX,
-			--- The level y position (number).
+			--- The level y position.
+			-- @ftype number
 			y = level.worldY,
-			--- The level width (number).
+			--- The level width.
+			-- @ftype number
 			width = level.pxWid,
-			--- The level height (number).
+			--- The level height.
+			-- @ftype number
 			height = level.pxHei,
-			--- Map of custom fields of the level (table).
+			--- Map of `CustomFields` of the level (table).
+			-- @ftype CustomFields
 			fields = getFields(level.fieldInstances),
-			--- List of @{Layer}s in the level (table).
+			--- List of `Layer`s in the level (table).
+			-- @ftype {Layer,...}
 			layers = nil,
 			--- Level background.
 			--
 			-- If there is a background image, `background.image` contains a table `{image=image, x=number, y=number, sx=number, sy=number}`
 			-- where `image` is the LÖVE image (or image filepath if LÖVE not available) `x` and `y` are the top-left position,
 			-- and `sx` and `sy` the horizontal and vertical scale factors.
-			-- @field color backrgound color
+			-- @field color backrgound color {r,g,b} with r,g,b in [0-1]
 			-- @field image backrgound image information, if any
 			background = {
 				color = parseColor(level.__bgColor),
@@ -536,7 +591,8 @@ let project_mt = {
 	_init = (project, directory)
 		assert(project.jsonVersion == "0.9.3", "map made for LDtk version %s":format(project.jsonVersion))
 		let t = {
-			--- List of @{Level}s in this project.
+			--- List of `Level`s in this project.
+			-- @ftype {Level,...}
 			levels = nil,
 
 			-- private
@@ -608,9 +664,26 @@ let project_mt = {
 }
 project_mt.__index = project_mt
 
---- Custom fields.
--- TODO
--- @section fields
+--- Custom fields: map of each field name to its value.
+--
+-- LDtk allows to defined custom fields in some places (`Entity.fields`, `Level.fields`). This library allows you to access them in a table that
+-- map each field name to its value `{["fieldName"]=value,...}`.
+--
+-- @type CustomFields
+
+--- Type conversion.
+--
+-- Here is how the values are converted to Lua values:
+--
+-- * Integers, Floats are converted into a Lua number.
+-- * Booleans are converted into a Lua boolean.
+-- * Strings, Multilines are converted in a Lua string.
+-- * Enum are converted into a Lua string giving the currently selected enum value.
+-- * Filepath are converted into a Lua string giving the file path.
+-- * Arrays are converted into a Lua table with the elements in it as a list.
+-- * Points are converted into a Lua table with the fields `x` and `y`: `{ x=number, y=number }`.
+-- * Colors are converted into a Lua table with the red, green and blue components in [0-1] as a list: `{r,g,b}`.
+-- @doc conversion
 
 --- LDtk module.
 -- `ubiquitousse.ldtk` returns a single function, @{LDtk}.

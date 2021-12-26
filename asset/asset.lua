@@ -1,4 +1,4 @@
---- Asset manager.
+--- Asset manager for Lua.
 --
 -- Loads asset and cache them.
 --
@@ -8,6 +8,8 @@
 --
 -- No dependencies.
 -- @module asset
+-- @usage
+-- TODO
 
 --- Asset manager.
 -- @type Asset

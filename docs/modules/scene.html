@@ -60,7 +60,7 @@
 <div id="content">
 
 <h1>Module <code>scene</code></h1>
-<p>Scene management.</p>
+<p>Scene management for Lua game development.</p>
 <p><p> You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
  This module is fully implemented in Ubiquitousse and is mostly a &ldquo;recommended way&rdquo; of organising an Ubiquitousse-based game.
  However, you don&rsquo;t have to use this if you don&rsquo;t want to. ubiquitousse.scene handles all the differents Ubiquitousse-states and
@@ -93,6 +93,11 @@
 </ul>
 
 </p>
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">TODO
+</pre>
+    </ul>
 
 
 <h2><a href="#Scene_objects">Scene objects </a></h2>
@@ -103,11 +108,11 @@
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Scene.timer">Scene.timer</a></td>
-    <td class="summary">Scene-specific TimerRegistry, if uqt.time is available.</td>
+    <td class="summary">Scene-specific <a href="../modules/timer.html#TimerRegistry_objects">timer.TimerRegistry</a>, if uqt.time is available.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Scene.signal">Scene.signal</a></td>
-    <td class="summary">Scene-specific SignalRegistry, if uqt.signal is available.</td>
+    <td class="summary">Scene-specific <a href="../modules/signal.html#SignalRegistry_objects">signal.SignalRegistry</a>, if uqt.signal is available.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Scene:enter">Scene:enter (...) <sup><em>[callback]</em></sup></a></td>
@@ -138,15 +143,15 @@
 <table class="function_list">
     <tr>
     <td class="name" nowrap><a href="#current">current</a></td>
-    <td class="summary">The current scene object.</td>
+    <td class="summary">The current <a href="../modules/scene.html#Scene_objects">Scene</a> object.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#timer">timer</a></td>
-    <td class="summary">Shortcut for scene.current.timer.</td>
+    <td class="summary">Shortcut for scene.current.timer, the current scene <a href="../modules/timer.html#TimerRegistry_objects">timer.TimerRegistry</a>.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#signal">signal</a></td>
-    <td class="summary">Shortcut for scene.current.signal.</td>
+    <td class="summary">Shortcut for scene.current.signal, the current scene <code>timer.SignalRegistry</code>.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#stack">stack</a></td>
@@ -204,6 +209,9 @@
     The scene name.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -219,9 +227,13 @@
     <strong>Scene.timer</strong>
     </dt>
     <dd>
-    Scene-specific TimerRegistry, if uqt.time is available.
+    Scene-specific <a href="../modules/timer.html#TimerRegistry_objects">timer.TimerRegistry</a>, if uqt.time is available.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>TimerRegistry</code></li>
+         <li><code>nil</code> if uqt.time unavailable</li>
     </ul>
     </ul>
     </ul>
@@ -237,9 +249,13 @@
     <strong>Scene.signal</strong>
     </dt>
     <dd>
-    Scene-specific SignalRegistry, if uqt.signal is available.
+    Scene-specific <a href="../modules/signal.html#SignalRegistry_objects">signal.SignalRegistry</a>, if uqt.signal is available.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>SignalRegistry</code></li>
+         <li><code>nil</code> if uqt.signal unavailable</li>
     </ul>
     </ul>
     </ul>
@@ -265,8 +281,7 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">...</span>
-
-
+           additional arguments passed to <a href="../modules/scene.html#switch">scene:switch</a> or <a href="../modules/scene.html#push">scene:push</a>
           </li>
     </ul>
 
@@ -344,12 +359,11 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">dt</span>
-
-
+              <span class="types"><span class="type">number</span></span>
+           the delta time
           </li>
           <li><span class="parameter">...</span>
-
-
+           additional arguments passed to <a href="../modules/scene.html#update">scene:update</a>
           </li>
     </ul>
 
@@ -373,8 +387,7 @@
     <h3>Parameters:</h3>
     <ul>
           <li><span class="parameter">...</span>
-
-
+           additional arguments passed to <a href="../modules/scene.html#draw">scene:draw</a>
           </li>
     </ul>
 
@@ -392,9 +405,12 @@
     <strong>current</strong>
     </dt>
     <dd>
-    The current scene object.
+    The current <a href="../modules/scene.html#Scene_objects">Scene</a> object.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>Scene</code>
     </ul>
     </ul>
     </ul>
@@ -410,9 +426,13 @@
     <strong>timer</strong>
     </dt>
     <dd>
-    Shortcut for scene.current.timer.
+    Shortcut for scene.current.timer, the current scene <a href="../modules/timer.html#TimerRegistry_objects">timer.TimerRegistry</a>.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>TimerRegistry</code></li>
+         <li><code>nil</code> if uqt.time unavailable</li>
     </ul>
     </ul>
     </ul>
@@ -428,9 +448,13 @@
     <strong>signal</strong>
     </dt>
     <dd>
-    Shortcut for scene.current.signal.
+    Shortcut for scene.current.signal, the current scene <code>timer.SignalRegistry</code>.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>SignalRegistry</code></li>
+         <li><code>nil</code> if uqt.signal unavailable</li>
     </ul>
     </ul>
     </ul>
@@ -449,6 +473,9 @@
     The scene stack: list of scene, from the farest one to the nearest.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>{Scene,...}</code>
     </ul>
     </ul>
     </ul>
@@ -468,6 +495,9 @@
  Will search in the &ldquo;scene&rdquo; directory by default (<code>prefix=&quot;scene.&quot;</code>). Redefine it to fit your own ridiculous filesystem.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -628,7 +658,7 @@
     <ul>
           <li><span class="parameter">dt</span>
               <span class="types"><span class="type">number</span></span>
-           the delta-time (milisecond)
+           the delta-time
           </li>
           <li><span class="parameter">...</span>
            arguments to pass to the scene&rsquo;s update function after dt
@@ -672,7 +702,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2021-12-25 23:19:42 </i>
+<i style="float:right;">Last updated 2021-12-26 18:13:01 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

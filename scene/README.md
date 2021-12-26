@@ -1,6 +1,6 @@
 # ubiquitousse.scene
 
-Scene management library.
+Scene management library for Lua game development.
 
 You can read the documentation [here](https://reuh.github.io/ubiquitousse/modules/scene.html).
 

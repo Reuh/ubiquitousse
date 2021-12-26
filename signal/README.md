@@ -1,6 +1,6 @@
 # ubiquitousse.signal
 
-Signal management library.
+Signal management library for Lua.
 
 You can read the documentation [here](https://reuh.github.io/ubiquitousse/modules/signal.html).
 

@@ -1,4 +1,4 @@
---- Scene management.
+--- Scene management for Lua game development.
 --
 -- You can use use scenes to seperate the different states of your game: for example, a menu scene and a game scene.
 -- This module is fully implemented in Ubiquitousse and is mostly a "recommended way" of organising an Ubiquitousse-based game.
@@ -23,6 +23,8 @@
 -- * ubiquitousse.timer (to provide each scene a timer registry).
 -- * ubiquitousse.signal (to bind to update and draw signal in signal.event).
 -- @module scene
+-- @usage
+-- TODO
 local loaded, signal = pcall(require, (...):match("^(.-)scene").."signal")
 if not loaded then signal = nil end
 local loaded, timer = pcall(require, (...):match("^(.-)scene").."timer")
@@ -32,12 +34,18 @@ if not loaded then timer = nil end
 -- @type Scene
 local _ = {
 	--- The scene name.
+	-- @ftype string
 	name = name or "unamed",
-	--- Scene-specific TimerRegistry, if uqt.time is available.
+	--- Scene-specific `timer.TimerRegistry`, if uqt.time is available.
+	-- @ftype TimerRegistry
+	-- @ftype nil if uqt.time unavailable
 	timer = timer and timer.new(),
-	--- Scene-specific SignalRegistry, if uqt.signal is available.
+	--- Scene-specific `signal.SignalRegistry`, if uqt.signal is available.
+	-- @ftype SignalRegistry
+	-- @ftype nil if uqt.signal unavailable
 	signal = signal and signal.new(),
 	--- Called when entering a scene.
+	-- @param ... additional arguments passed to `scene:switch` or `scene:push`
 	-- @callback
 	enter = function(self, ...) end,
 	--- Called when exiting a scene, and not expecting to come back (scene may be unloaded).
@@ -50,9 +58,12 @@ local _ = {
 	-- @callback
 	resume = function(self) end,
 	--- Called on each update on the current scene.
+	-- @tparam number dt the delta time
+	-- @param ... additional arguments passed to `scene:update`
 	-- @callback
 	update = function(self, dt, ...) end,
 	--- Called on each draw on the current scene.
+	-- @param ... additional arguments passed to `scene:draw`
 	-- @callback
 	draw = function(self, ...) end
 }
@@ -62,19 +73,26 @@ local _ = {
 
 local scene
 scene = {
-	--- The current scene object.
+	--- The current `Scene` object.
+	-- @ftype Scene
 	current = nil,
 
-	--- Shortcut for scene.current.timer.
+	--- Shortcut for scene.current.timer, the current scene `timer.TimerRegistry`.
+	-- @ftype TimerRegistry
+	-- @ftype nil if uqt.time unavailable
 	timer = nil,
-	--- Shortcut for scene.current.signal.
+	--- Shortcut for scene.current.signal, the current scene `timer.SignalRegistry`.
+	-- @ftype SignalRegistry
+	-- @ftype nil if uqt.signal unavailable
 	signal = nil,
 
 	--- The scene stack: list of scene, from the farest one to the nearest.
+	-- @ftype {Scene,...}
 	stack = {},
 
 	--- A prefix for scene modules names.
 	-- Will search in the "scene" directory by default (`prefix="scene."`). Redefine it to fit your own ridiculous filesystem.
+	-- @ftype string
 	prefix = "scene.",
 
 	--- Creates and returns a new Scene object.
@@ -156,7 +174,7 @@ scene = {
 
 	--- Update the current scene.
 	-- Should be called at every game update. If ubiquitousse.signal is available, will be bound to the "update" signal in signal.event.
-	-- @tparam number dt the delta-time (milisecond)
+	-- @tparam number dt the delta-time
 	-- @param ... arguments to pass to the scene's update function after dt
 	update = function(dt, ...)
 		if scene.current then

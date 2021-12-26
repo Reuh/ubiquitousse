@@ -38,12 +38,9 @@
 -- * CamelCase for class names.
 -- * lowerCamelCase is expected for everything else.
 --
--- Regarding the documentation: Ubiquitousse used LDoc/LuaDoc styled-comments, but since LDoc hates me and my code, the
--- generated result is complete garbage, so please read the documentation directly in the comments here until fix this.
--- Stuff you're interested in starts with triple - (e.g., "--- This functions saves the world").
---
--- *UPDATE*: I give up, currently in the process of admitting defat to LDoc and progressively porting all my documentation to it.
--- Though I had to modify a few things to get LDoc to like me, so the documentation is generated using [my LDoc fork](https://github.com/Reuh/LDoc).
+-- Regarding the documentation: Ubiquitousse uses LDoc/LuaDoc styled-comments, but since LDoc hates me and my code, the
+-- generated result is mostly garbage, so to generate the documentation you will need to use my [LDoc fork](https://github.com/Reuh/LDoc)
+-- which I modified to force LDoc to like me.
 --
 -- @module ubiquitousse
 -- @usage local ubiquitousse = require("ubiquitousse")
