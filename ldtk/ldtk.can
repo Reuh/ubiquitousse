@@ -145,12 +145,16 @@ tileset_mt.__index = tileset_mt
 -- @type Layer
 let layer_mt = {
 	--- Draw the current layer.
+	--
 	-- Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
+	-- You can specify an offset if your level top-left coordinate is not at 0,0 (or to produce other effects).
+	-- @number[opt=0] x offset X position to draw the layer at
+	-- @number[opt=0] y offset Y position to draw the layer at
 	-- @require love
-	draw = :()
+	draw = :(x=0, y=0)
 		if @visible then
 			lg.push()
-				lg.translate(@x, @y)
+				lg.translate(x + @x, y + @y)
 				if @spritebatch then
 					lg.setColor(1, 1, 1, @opacity)
 					lg.draw(@spritebatch)
@@ -402,9 +406,10 @@ let layer_mt = {
 					fields = getFields(e.fieldInstances),
 					--- Called for the entity when drawing the associated entity layer (you will likely want to redefine it).
 					--
-					-- By default, this draws the tile associated with the entity if there is one, or a rectangle around the entity position otherwise.
+					-- By default, this draws the tile associated with the entity if there is one, or a rectangle around the entity position otherwise,
+					-- assuming we are currently in layer coordinates (i.e. layer top-left is at 0,0).
 					-- @require love
-					draw = :() 
+					draw = :()
 						if @tile then
 							let _, _, w, h = @tile.quad:getViewport()
 							lg.setColor(white)
@@ -441,15 +446,20 @@ layer_mt.__index = layer_mt
 --
 -- @type Level
 let level_mt = {
-	--- Draw this level (background and layers).
-	-- Assumes we are currently in world coordinates (i.e. world top-left is at 0,0).
-	-- The level must be loaded.
+	--- Draw this level.
 	-- Will draw the eventual backgrounds and all the layers in the level.
+	--
+	-- Assumes we are currently in world coordinates (i.e. world top-left is at 0,0).
+	-- You can specify an offset if your world top-left coordinate is not at 0,0 (or to produce other effects).
+	--
+	-- The level must be loaded.
+	-- @number[opt=0] x offset X position to draw the level at
+	-- @number[opt=0] y offset Y position to draw the level at
 	-- @require love
-	draw = :()
+	draw = :(x=0, y=0)
 		assert(@loaded == true, "level not loaded")
 		lg.push()
-			lg.translate(@x, @y)
+			lg.translate(x + @x, y + @y)
 			@drawBackground()
 			-- layers
 			for _, l in ipairs(@layers) do
@@ -458,19 +468,24 @@ let level_mt = {
 		lg.pop()
 	end,
 	--- Draw this level background.
+	--
 	-- Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
+	-- You can specify an offset if your level top-left coordinate is not at 0,0 (or to produce other effects).
+	--
 	-- The level must be loaded.
+	-- @number[opt=0] x offset X position to draw the background at
+	-- @number[opt=0] y offset Y position to draw the backgroud at
 	-- @require love
-	drawBackground = :()
+	drawBackground = :(x=0, y=0)
 		assert(@loaded == true, "level not loaded")
 		-- background color
 		lg.setColor(@background.color)
-		lg.rectangle("fill", 0, 0, @width, @height)
+		lg.rectangle("fill", x, y, @width, @height)
 		-- background image
 		lg.setColor(white)
 		let bgImage = @background.image
 		if bgImage then
-			lg.draw(bgImage.image, bgImage.quad, bgImage.x, bgImage.y, 0, bgImage.sx, bgImage.sy)
+			lg.draw(bgImage.image, bgImage.quad, x + bgImage.x, y + bgImage.y, 0, bgImage.sx, bgImage.sy)
 		end
 	end,
 
