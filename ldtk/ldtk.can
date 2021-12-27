@@ -150,7 +150,7 @@ let layer_mt = {
 	draw = :()
 		if @visible then
 			lg.push()
-				lg.translate(@offsetX, @offsetY)
+				lg.translate(@x, @y)
 				if @spritebatch then
 					lg.setColor(1, 1, 1, @opacity)
 					lg.draw(@spritebatch)
@@ -211,10 +211,10 @@ let layer_mt = {
 			order = order,
 			--- X position of the layer relative to the level.
 			-- @ftype number
-			offsetX = layer.__pxTotalOffsetX,
+			x = layer.__pxTotalOffsetX,
 			--- Y position of the layer relative to the level.
 			-- @ftype number
-			offsetY = layer.__pxTotalOffsetY,
+			y = layer.__pxTotalOffsetY,
 			--- Size of the grid on this layer.
 			-- @ftype number
 			gridSize = gridSize,
@@ -441,7 +441,7 @@ layer_mt.__index = layer_mt
 --
 -- @type Level
 let level_mt = {
-	--- Draw this level.
+	--- Draw this level (background and layers).
 	-- Assumes we are currently in world coordinates (i.e. world top-left is at 0,0).
 	-- The level must be loaded.
 	-- Will draw the eventual backgrounds and all the layers in the level.
@@ -450,20 +450,28 @@ let level_mt = {
 		assert(@loaded == true, "level not loaded")
 		lg.push()
 			lg.translate(@x, @y)
-			-- background color
-			lg.setColor(@background.color)
-			lg.rectangle("fill", 0, 0, @width, @height)
-			-- background image
-			lg.setColor(white)
-			let bgImage = @background.image
-			if bgImage then
-				lg.draw(bgImage.image, bgImage.quad, bgImage.x, bgImage.y, 0, bgImage.sx, bgImage.sy)
-			end
+			@drawBackground()
 			-- layers
 			for _, l in ipairs(@layers) do
 				l:draw()
 			end
 		lg.pop()
+	end,
+	--- Draw this level background.
+	-- Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
+	-- The level must be loaded.
+	-- @require love
+	drawBackground = :()
+		assert(@loaded == true, "level not loaded")
+		-- background color
+		lg.setColor(@background.color)
+		lg.rectangle("fill", 0, 0, @width, @height)
+		-- background image
+		lg.setColor(white)
+		let bgImage = @background.image
+		if bgImage then
+			lg.draw(bgImage.image, bgImage.quad, bgImage.x, bgImage.y, 0, bgImage.sx, bgImage.sy)
+		end
 	end,
 
 	--- Load the level.
@@ -589,7 +597,7 @@ level_mt.__index = level_mt
 -- @type Project
 let project_mt = {
 	_init = (project, directory)
-		assert(project.jsonVersion == "0.9.3", "map made for LDtk version %s":format(project.jsonVersion))
+		assert(project.jsonVersion == "0.9.3", "the map was made with LDtk version %s but the importer is made for 0.9.3":format(project.jsonVersion))
 		let t = {
 			--- List of `Level`s in this project.
 			-- @ftype {Level,...}
