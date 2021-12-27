@@ -1,40 +1,40 @@
---- Children system
--- Allow to build a hierarchy between entities.
--- Children are stored directly in the .children entity table: they are added when their parent is added, and removed when it is removed from the world.
+--- Children system.
+-- Allows to build a hierarchy between entities.
+--
+-- An entity's parent entity is stored in its `parent` component.
+-- An entity's children are stored in its `children` component (list of children entities).
+--
+-- You can set theses values before adding the entity to the world; when you add the entity it will add itself
+-- to its parent children list and add all its children to the world.
+--
+-- If you remove an entity from the world, it will also remove all its children from the world.
 
 return {
 	name = "children",
 	filter = true,
-	default = {
-		parent = nil, -- reference to parent entity, if any
-		-- ... list of children to add when the entity is added to the world
-		children = {}, -- [children]=true,children... map+list of children currently in the entity children (don't set this yourself)
-	},
-	onAdd = :(c, e)
-		if c.parent then -- add to parent
-			let parentcc = c.parent.children.children
-			table.insert(parentcc, e)
-			parentcc[e] = true
+	onAdd = :(e)
+		if not e.children then e.children = {} end
+		if e.parent then -- add to parent
+			let parentchildren = e.parent.children
+			table.insert(parentchildren, e)
 		end
-		for _, o in ipairs(c) do -- add children
-			if not o.children then o.children = {} end
-			o.children.parent = e
+		for _, o in ipairs(e.children) do -- add predefined children
+			o.parent = e
 			@world:add(o)
 		end
 	end,
-	onRemove = :(c, e)
-		for i=#c.children, 1, -1 do -- remove children
-			@world:remove(c.children[i])
+	onRemove = :(e)
+		for i=#e.children, 1, -1 do -- remove children
+			@world:remove(e.children[i])
 		end
-		if c.parent then -- remove from parent
-			let parentcc = c.parent.children.children
-			for i=#parentcc, 1, -1 do
-				if parentcc[i] == e then
-					table.remove(parentcc, i)
+		if e.parent then -- remove from parent
+			let parentchildren = e.parent.children
+			for i=#parentchildren, 1, -1 do
+				if parentchildren[i] == e then
+					table.remove(parentchildren, i)
 					break
 				end
 			end
-			parentcc[e] = nil
 		end
 	end
 }
