@@ -327,23 +327,36 @@ let system_mt = {
 	-- @callback
 	onDestroy = :() end,
 	--- Called when updating the system.
+	-- Called before any call to `System:process` or call to subsystems.
 	-- @callback
 	-- @number dt delta-time since last update
 	onUpdate = :(dt) end,
 	--- Called when drawing the system.
+	-- Called before any call to `System:draw` or call to subsystems.
 	-- @callback
 	onDraw = :() end,
-	--- Called when updating the system, for every entity the system contains. Called after `System:onUpdate` was called on the system.
+	--- Called when updating the system, for every entity the system contains.
+	-- Called after `System:onUpdate` was called on the system, and before any call to subsystems.
 	-- @callback
 	-- @tparam Entity e the entity table
 	-- @tparam Component c the entity's system component, if any
 	-- @number dt delta-time since last update
 	process = :(e, c, dt) end,
-	--- Called when drawing the system, for every entity the system contains. Called after `System:onDraw` was called on the system.
+	--- Called when drawing the system, for every entity the system contains.
+	-- Called after `System:onDraw` was called on the system, and before any call to subsystems.
 	-- @callback
 	-- @tparam Entity e the entity table
 	-- @tparam Component c the entity's system component, if any
 	render = :(e, c) end,
+	--- Called after updating the system.
+	-- Called after `System:onDraw`, `System:process` and calls to subsystems.
+	-- @callback
+	-- @number dt delta-time since last update
+	onUpdateEnd = :(dt) end,
+	--- Called after drawing the system.
+	-- Called after `System:onUpdate`, `System:render` and calls to subsystems.
+	-- @callback
+	onDrawEnd = :() end,
 
 	--- Read-only fields.
 	--
@@ -626,6 +639,7 @@ let system_mt = {
 			for _, s in ipairs(@systems) do
 				s:update(dt)
 			end
+			@onUpdateEnd(dt)
 			if @interval then
 				@_waited -= @interval
 			end
@@ -645,6 +659,7 @@ let system_mt = {
 			for _, s in ipairs(@systems) do
 				s:draw()
 			end
+			@onDrawEnd()
 		end
 	end,
 	--- Trigger a custom callback on a single entity.

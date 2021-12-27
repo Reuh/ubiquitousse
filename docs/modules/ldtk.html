@@ -178,7 +178,7 @@ end
 <h2><a href="#Layer_objects">Layer objects </a></h2>
 <table class="function_list">
     <tr>
-    <td class="name" nowrap><a href="#Layer:draw">Layer:draw ()</a></td>
+    <td class="name" nowrap><a href="#Layer:draw">Layer:draw ([, x=0[, y=0]])</a></td>
     <td class="summary">Draw the current layer.</td>
     </tr>
     <tr>
@@ -311,11 +311,11 @@ end
 <h2><a href="#Level_objects">Level objects </a></h2>
 <table class="function_list">
     <tr>
-    <td class="name" nowrap><a href="#Level:draw">Level:draw ()</a></td>
-    <td class="summary">Draw this level (background and layers).</td>
+    <td class="name" nowrap><a href="#Level:draw">Level:draw ([, x=0[, y=0]])</a></td>
+    <td class="summary">Draw this level.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#Level:drawBackground">Level:drawBackground ()</a></td>
+    <td class="name" nowrap><a href="#Level:drawBackground">Level:drawBackground ([, x=0[, y=0]])</a></td>
     <td class="summary">Draw this level background.</td>
     </tr>
     <tr>
@@ -712,7 +712,8 @@ end
     <dd>
     Called for the entity when drawing the associated entity layer (you will likely want to redefine it). </p>
 
-<p> By default, this draws the tile associated with the entity if there is one, or a rectangle around the entity position otherwise.
+<p> By default, this draws the tile associated with the entity if there is one, or a rectangle around the entity position otherwise,
+ assuming we are currently in layer coordinates (i.e. layer top-left is at 0,0).
 
     <h3>Requires:</h3>
     <ul>
@@ -766,11 +767,13 @@ end
     <dl class="function">
     <dt>
     <a name = "Layer:draw"></a>
-    <strong>Layer:draw ()</strong>
+    <strong>Layer:draw ([, x=0[, y=0]])</strong>
     </dt>
     <dd>
-    Draw the current layer.
- Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
+    Draw the current layer. </p>
+
+<p> Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
+ You can specify an offset if your level top-left coordinate is not at 0,0 (or to produce other effects).
 
     <h3>Requires:</h3>
     <ul>
@@ -780,6 +783,19 @@ end
     </ul>
     </ul>
 
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           offset X position to draw the layer at
+           (<em>default</em> 0)
+          </li>
+          <li><span class="parameter">y</span>
+              <span class="types"><span class="type">number</span></span>
+           offset Y position to draw the layer at
+           (<em>default</em> 0)
+          </li>
+    </ul>
 
 
 
@@ -1459,13 +1475,16 @@ end
     <dl class="function">
     <dt>
     <a name = "Level:draw"></a>
-    <strong>Level:draw ()</strong>
+    <strong>Level:draw ([, x=0[, y=0]])</strong>
     </dt>
     <dd>
-    Draw this level (background and layers).
- Assumes we are currently in world coordinates (i.e. world top-left is at 0,0).
- The level must be loaded.
- Will draw the eventual backgrounds and all the layers in the level.
+    Draw this level.
+ Will draw the eventual backgrounds and all the layers in the level.</p>
+
+<p> Assumes we are currently in world coordinates (i.e. world top-left is at 0,0).
+ You can specify an offset if your world top-left coordinate is not at 0,0 (or to produce other effects).</p>
+
+<p> The level must be loaded.
 
     <h3>Requires:</h3>
     <ul>
@@ -1475,6 +1494,19 @@ end
     </ul>
     </ul>
 
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           offset X position to draw the level at
+           (<em>default</em> 0)
+          </li>
+          <li><span class="parameter">y</span>
+              <span class="types"><span class="type">number</span></span>
+           offset Y position to draw the level at
+           (<em>default</em> 0)
+          </li>
+    </ul>
 
 
 
@@ -1483,12 +1515,15 @@ end
 </dd>
     <dt>
     <a name = "Level:drawBackground"></a>
-    <strong>Level:drawBackground ()</strong>
+    <strong>Level:drawBackground ([, x=0[, y=0]])</strong>
     </dt>
     <dd>
-    Draw this level background.
- Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
- The level must be loaded.
+    Draw this level background. </p>
+
+<p> Assumes we are currently in level coordinates (i.e. level top-left is at 0,0).
+ You can specify an offset if your level top-left coordinate is not at 0,0 (or to produce other effects).</p>
+
+<p> The level must be loaded.
 
     <h3>Requires:</h3>
     <ul>
@@ -1498,6 +1533,19 @@ end
     </ul>
     </ul>
 
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           offset X position to draw the background at
+           (<em>default</em> 0)
+          </li>
+          <li><span class="parameter">y</span>
+              <span class="types"><span class="type">number</span></span>
+           offset Y position to draw the backgroud at
+           (<em>default</em> 0)
+          </li>
+    </ul>
 
 
 
@@ -1781,7 +1829,7 @@ end
     Level background. </p>
 
 <p> If there is a background image, <code>background.image</code> contains a table <code>{image=image, x=number, y=number, sx=number, sy=number}</code>
- where <a href="../modules/ldtk.html#Tileset.image">image</a> is the LÖVE image (or image filepath if LÖVE not available) <a href="../modules/ldtk.html#Entity.x">x</a> and <a href="../modules/ldtk.html#Entity.y">y</a> are the top-left position,
+ where <a href="../modules/ldtk.html#Tileset.image">image</a> is the LÖVE image (or image filepath if LÖVE not available) <a href="../modules/ldtk.html#Layer.x">x</a> and <a href="../modules/ldtk.html#Level.y">y</a> are the top-left position,
  and <a href="../modules/ldtk.html#Entity.sx">sx</a> and <a href="../modules/ldtk.html#Entity.sy">sy</a> the horizontal and vertical scale factors.
 
     </ul>
@@ -1856,7 +1904,7 @@ end
 <li>Enum are converted into a Lua string giving the currently selected enum value.</li>
 <li>Filepath are converted into a Lua string giving the file path.</li>
 <li>Arrays are converted into a Lua table with the elements in it as a list.</li>
-<li>Points are converted into a Lua table with the fields <a href="../modules/ldtk.html#Entity.x">x</a> and <a href="../modules/ldtk.html#Entity.y">y</a>: <code>{ x=number, y=number }</code>.</li>
+<li>Points are converted into a Lua table with the fields <a href="../modules/ldtk.html#Layer.x">x</a> and <a href="../modules/ldtk.html#Level.y">y</a>: <code>{ x=number, y=number }</code>.</li>
 <li>Colors are converted into a Lua table with the red, green and blue components in [0-1] as a list: <code>{r,g,b}</code>.</li>
 </ul>
 
@@ -1882,7 +1930,7 @@ end
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2021-12-27 13:22:21 </i>
+<i style="float:right;">Last updated 2021-12-27 14:09:51 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
