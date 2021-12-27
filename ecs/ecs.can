@@ -271,7 +271,7 @@ let system_mt = {
 	--- Called when checking if an entity should be added to this system.
 	-- Returns `true` if the entity should be added to this system (and therefore its subsystems).
 	--
-	-- If this is a string or a table, it will be converted to a filter function on instanciation using ecs.any.
+	-- If this is a string or a table, it will be converted to a filter function on instanciation using `ecs.all`.
 	--
 	-- If this `true`, will accept every entity; if `false`, reject every entity.
 	--
@@ -735,7 +735,7 @@ let recInstanciateSystems = (world, systems)
 		if type(s.filter) == "string" then
 			system.filter = (_, e) return e[s.filter] ~= nil end
 		elseif type(s.filter) == "table" then
-			system.filter = ecs.any(unpack(s.filter))
+			system.filter = ecs.all(unpack(s.filter))
 		elseif type(s.filter) == "boolean" then
 			if s.filter then
 				system.filter = alwaysTrue
