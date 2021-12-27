@@ -92,7 +92,7 @@ local ecs = require(&quot;ubiquitousse.ecs&quot;)
 
 local talkingSystem = {
 	filter = { &quot;name&quot;, &quot;mass&quot;, &quot;phrase&quot; },
-	process = function(self, c, e, dt)
+	process = function(self, e, c, dt)
 		e.mass = e.mass + dt * 3
 		print((&quot;%s who weighs %d pounds, says %q.&quot;):format(e.name, e.mass, e.phrase))
 	end
@@ -166,6 +166,10 @@ end
     <td class="summary">The system and its subsystems will only draw if this is <code>true</code>.</td>
     </tr>
     <tr>
+    <td class="name" nowrap><a href="#System.component">System.component</a></td>
+    <td class="summary">Name of the system component.</td>
+    </tr>
+    <tr>
     <td class="name" nowrap><a href="#System.default">System.default</a></td>
     <td class="summary">Defaults value to put into the entities&rsquo;s system component when they are added.</td>
     </tr>
@@ -181,11 +185,11 @@ end
     <td class="summary">Called when adding an entity to this system determining its order.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:onAdd">System:onAdd (c, e) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:onAdd">System:onAdd (e, c) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when adding an entity to the system.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:onRemove">System:onRemove (c, e) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:onRemove">System:onRemove (e, c) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when removing an entity from the system.</td>
     </tr>
     <tr>
@@ -213,11 +217,11 @@ end
     <td class="summary">Called when drawing the system.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:process">System:process (c, e, dt) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:process">System:process (e, c, dt) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when updating the system, for every entity the system contains.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#System:render">System:render (c, e) <sup><em>[callback]</em></sup></a></td>
+    <td class="name" nowrap><a href="#System:render">System:render (e, c) <sup><em>[callback]</em></sup></a></td>
     <td class="summary">Called when drawing the system, for every entity the system contains.</td>
     </tr>
     </table>
@@ -459,7 +463,8 @@ whatever you want, and ideally each component <em>should</em> store the data for
 so you are free to handle them as you want in your systems or elsewhere.</p>
 
 <p>Since it&rsquo;s relatively common for systems to only operate on a single component, as a shortcut the library often consider what it calls the &ldquo;system component&rdquo;:
-that is, the component in the entity that has the same name as the system (if it exists).
+that is, the component in the entity that is named like <a href="../modules/ecs.html#System.component">System.component</a> (or <a href="../modules/ecs.html#System.name">System.name</a> if it is not set). Though there&rsquo;s no problem if there&rsquo;s no system
+component or if it doesn&rsquo;t exist in the entity.
     </div>
     <dl class="function">
 
@@ -486,9 +491,9 @@ that is, the component in the entity that has the same name as the system (if it
 	filter = <span class="string">"sprite"</span>, <span class="comment">-- process entities that have a "sprite" component
 </span>	<span class="comment">-- systems callbacks that are called per-entity often give you the system component as an argument
 </span>	<span class="comment">-- the system component is the component with the same name as the system, thus here the sprite component
-</span>	render = <span class="keyword">function</span>(self, component, entity)
+</span>	render = <span class="keyword">function</span>(self, entity, component)
 		<span class="comment">-- component == entity.sprite
-</span>		component:draw()
+</span>		draw(component)
 	<span class="keyword">end</span>
 }</pre>
     </ul>
@@ -532,12 +537,12 @@ avoid repeating your filters or allow controlling several system from a single p
 </span>	systems = { animated }, <span class="comment">-- subsystems: they only operate on entities already filtered by this system (on top of their own filtering)
 </span>
 	<span class="comment">-- Called when an entity is added to this system.
-</span>	onAdd = <span class="keyword">function</span>(self, component, entity)
+</span>	onAdd = <span class="keyword">function</span>(self, entity, component)
 		<span class="global">print</span>(<span class="string">"Added an entity, entity count in the system:"</span>, self.entityCount) <span class="comment">-- self refer to the instancied system
 </span>	<span class="keyword">end</span>,
 
 	<span class="comment">-- Called when the system is updated, for every entity the system
-</span>	process = <span class="keyword">function</span>(self, component, entity, dt)
+</span>	process = <span class="keyword">function</span>(self, entity, component, dt)
 		<span class="comment">-- processing...
 </span>	<span class="keyword">end</span>
 }
@@ -583,8 +588,8 @@ avoid repeating your filters or allow controlling several system from a single p
     </dt>
     <dd>
     Name of the system.
- Used to create a field with the system&rsquo;s name in <code>world.s</code> and determine the associated system component.
- If not set, the system will not appear in <code>world.s</code> and gives <code>nil</code> instead of the system component in callbacks.</p>
+ Used to create a field with the system&rsquo;s name in <code>world.s</code> and determine the associated system component if <a href="../modules/ecs.html#System.component">System.component</a> is not set.
+ If not set, the system will not appear in <code>world.s</code>.</p>
 
 <p> Do not change after system instanciation.
 
@@ -696,6 +701,30 @@ avoid repeating your filters or allow controlling several system from a single p
 
 </dd>
     <dt>
+    <a name = "System.component"></a>
+    <strong>System.component</strong>
+    </dt>
+    <dd>
+    Name of the system component.
+ Used to determine the associated system component.
+ If not set, this will fall back to <a href="../modules/ecs.html#System.name">System.name</a>. If this is also not set, then we will give <code>nil</code> instead of the system component in callbacks.
+
+    </ul>
+    <h3>Type:</h3>
+    <ul>
+         <li><code>string</code></li>
+         <li><code>nil</code> if no name</li>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "System.default"></a>
     <strong>System.default</strong>
     </dt>
@@ -706,7 +735,7 @@ avoid repeating your filters or allow controlling several system from a single p
  Metatables will be preserved during the copy but not copied themselves.</p>
 
 <p> Changing this will not affect entities already in the system.
- Doesn&rsquo;t have any effect if the system doesn&rsquo;t have a name.
+ Doesn&rsquo;t have any effect if the system doesn&rsquo;t have a component name.
 
     </ul>
     <h3>Type:</h3>
@@ -825,7 +854,7 @@ avoid repeating your filters or allow controlling several system from a single p
 </dd>
     <dt>
     <a name = "System:onAdd"></a>
-    <strong>System:onAdd (c, e) <sup><em>[callback]</em></sup></strong>
+    <strong>System:onAdd (e, c) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when adding an entity to the system.
@@ -837,13 +866,13 @@ avoid repeating your filters or allow controlling several system from a single p
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">c</span>
-              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
-           the entity&rsquo;s system component
-          </li>
           <li><span class="parameter">e</span>
               <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            the entity table
+          </li>
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component, if any
           </li>
     </ul>
 
@@ -854,7 +883,7 @@ avoid repeating your filters or allow controlling several system from a single p
 </dd>
     <dt>
     <a name = "System:onRemove"></a>
-    <strong>System:onRemove (c, e) <sup><em>[callback]</em></sup></strong>
+    <strong>System:onRemove (e, c) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when removing an entity from the system.
@@ -866,13 +895,13 @@ avoid repeating your filters or allow controlling several system from a single p
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">c</span>
-              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
-           the entity&rsquo;s system component
-          </li>
           <li><span class="parameter">e</span>
               <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            the entity table
+          </li>
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component, if any
           </li>
     </ul>
 
@@ -1012,7 +1041,7 @@ avoid repeating your filters or allow controlling several system from a single p
 </dd>
     <dt>
     <a name = "System:process"></a>
-    <strong>System:process (c, e, dt) <sup><em>[callback]</em></sup></strong>
+    <strong>System:process (e, c, dt) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when updating the system, for every entity the system contains.  Called after <a href="../modules/ecs.html#System:onUpdate">System:onUpdate</a> was called on the system.
@@ -1024,13 +1053,13 @@ avoid repeating your filters or allow controlling several system from a single p
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">c</span>
-              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
-           the entity&rsquo;s system component
-          </li>
           <li><span class="parameter">e</span>
               <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            the entity table
+          </li>
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component, if any
           </li>
           <li><span class="parameter">dt</span>
               <span class="types"><span class="type">number</span></span>
@@ -1045,7 +1074,7 @@ avoid repeating your filters or allow controlling several system from a single p
 </dd>
     <dt>
     <a name = "System:render"></a>
-    <strong>System:render (c, e) <sup><em>[callback]</em></sup></strong>
+    <strong>System:render (e, c) <sup><em>[callback]</em></sup></strong>
     </dt>
     <dd>
     Called when drawing the system, for every entity the system contains.  Called after <a href="../modules/ecs.html#System:onDraw">System:onDraw</a> was called on the system.
@@ -1057,13 +1086,13 @@ avoid repeating your filters or allow controlling several system from a single p
 
     <h3>Parameters:</h3>
     <ul>
-          <li><span class="parameter">c</span>
-              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
-           the entity&rsquo;s system component
-          </li>
           <li><span class="parameter">e</span>
               <span class="types"><a class="type" href="../modules/ecs.html#Entity_objects">Entity</a></span>
            the entity table
+          </li>
+          <li><span class="parameter">c</span>
+              <span class="types"><a class="type" href="../modules/ecs.html#Entity.Component">Component</a></span>
+           the entity&rsquo;s system component, if any
           </li>
     </ul>
 
@@ -1493,7 +1522,7 @@ avoid repeating your filters or allow controlling several system from a single p
     <dd>
     Trigger a custom callback on a single entity. </p>
 
-<p> This will call the <code>System:name(c, e, &hellip;)</code> method in this system and its subsystems,
+<p> This will call the <code>System:name(e, c, &hellip;)</code> method in this system and its subsystems,
  if the method exists and the entity is in the system. <code>c</code> is the system <a href="#Entity.Component">component</a>
  associated with the current system, and <code>e</code> is the <a href="../modules/ecs.html#Entity_objects">Entity</a>.</p>
 
@@ -1597,7 +1626,7 @@ its sibling systems (i.e. completely stop the propagation of the event).</li>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2021-12-27 12:20:29 </i>
+<i style="float:right;">Last updated 2021-12-27 13:15:05 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

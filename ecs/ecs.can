@@ -28,7 +28,7 @@ local ecs = require("ubiquitousse.ecs")
 
 local talkingSystem = {
 	filter = { "name", "mass", "phrase" },
-	process = function(self, c, e, dt)
+	process = function(self, e, c, dt)
 		e.mass = e.mass + dt * 3
 		print(("%s who weighs %d pounds, says %q."):format(e.name, e.mass, e.phrase))
 	end
@@ -74,7 +74,8 @@ This library does not do any kind of special processing by itself on the entity 
 so you are free to handle them as you want in your systems or elsewhere.
 
 Since it's relatively common for systems to only operate on a single component, as a shortcut the library often consider what it calls the "system component":
-that is, the component in the entity that has the same name as the system (if it exists).
+that is, the component in the entity that is named like `System.component` (or `System.name` if it is not set). Though there's no problem if there's no system
+component or if it doesn't exist in the entity.
 
 @doc Component
 @usage
@@ -90,9 +91,9 @@ local sprite = {
 	filter = "sprite", -- process entities that have a "sprite" component
 	-- systems callbacks that are called per-entity often give you the system component as an argument
 	-- the system component is the component with the same name as the system, thus here the sprite component
-	render = function(self, component, entity)
+	render = function(self, entity, component)
 		-- component == entity.sprite
-		component:draw()
+		draw(component)
 	end
 }
 ]]--
@@ -187,12 +188,12 @@ local sprite = {
 	systems = { animated }, -- subsystems: they only operate on entities already filtered by this system (on top of their own filtering)
 
 	-- Called when an entity is added to this system.
-	onAdd = function(self, component, entity)
+	onAdd = function(self, entity, component)
 		print("Added an entity, entity count in the system:", self.entityCount) -- self refer to the instancied system
 	end,
 
 	-- Called when the system is updated, for every entity the system
-	process = function(self, component, entity, dt)
+	process = function(self, entity, component, dt)
 		-- processing...
 	end
 }
@@ -221,8 +222,8 @@ let system_mt = {
 	-- @doc modifiable
 
 	--- Name of the system.
-	-- Used to create a field with the system's name in `world.s` and determine the associated system component.
-	-- If not set, the system will not appear in `world.s` and gives `nil` instead of the system component in callbacks.
+	-- Used to create a field with the system's name in `world.s` and determine the associated system component if `System.component` is not set.
+	-- If not set, the system will not appear in `world.s`.
 	--
 	-- Do not change after system instanciation.
 	-- @ftype string
@@ -251,13 +252,19 @@ let system_mt = {
 	-- @ftype boolean
 	visible = true,
 
+	--- Name of the system component.
+	-- Used to determine the associated system component.
+	-- If not set, this will fall back to `System.name`. If this is also not set, then we will give `nil` instead of the system component in callbacks.
+	-- @ftype string
+	-- @ftype nil if no name
+	component = nil,
 	--- Defaults value to put into the entities's system component when they are added.
 	--
 	-- If this is table, will recursively fill missing values.
 	-- Metatables will be preserved during the copy but not copied themselves.
 	--
 	-- Changing this will not affect entities already in the system.
-	-- Doesn't have any effect if the system doesn't have a name.
+	-- Doesn't have any effect if the system doesn't have a component name.
 	-- @ftype any
 	-- @ftype nil if no default
 	default = nil,
@@ -297,14 +304,14 @@ let system_mt = {
 
 	--- Called when adding an entity to the system.
 	-- @callback
-	-- @tparam Component c the entity's system component
 	-- @tparam Entity e the entity table
-	onAdd = :(c, e) end,
+	-- @tparam Component c the entity's system component, if any
+	onAdd = :(e, c) end,
 	--- Called when removing an entity from the system.
 	-- @callback
-	-- @tparam Component c the entity's system component
 	-- @tparam Entity e the entity table
-	onRemove = :(c, e) end,
+	-- @tparam Component c the entity's system component, if any
+	onRemove = :(e, c) end,
 	--- Called when the system is instancied, before any call to `System:onAddToWorld` (including other systems in the world).
 	-- @callback
 	onInstance = :() end,
@@ -328,15 +335,15 @@ let system_mt = {
 	onDraw = :() end,
 	--- Called when updating the system, for every entity the system contains. Called after `System:onUpdate` was called on the system.
 	-- @callback
-	-- @tparam Component c the entity's system component
 	-- @tparam Entity e the entity table
+	-- @tparam Component c the entity's system component, if any
 	-- @number dt delta-time since last update
-	process = :(c, e, dt) end,
+	process = :(e, c, dt) end,
 	--- Called when drawing the system, for every entity the system contains. Called after `System:onDraw` was called on the system.
 	-- @callback
-	-- @tparam Component c the entity's system component
 	-- @tparam Entity e the entity table
-	render = :(c, e) end,
+	-- @tparam Component c the entity's system component, if any
+	render = :(e, c) end,
 
 	--- Read-only fields.
 	--
@@ -395,8 +402,8 @@ let system_mt = {
 	add = :(e, ...)
 		if e ~= nil and not @_previous[e] and @filter(e) then
 			-- copy default system component
-			if @name and @default then
-				copy({ [@name] = @default }, e)
+			if @component and @default then
+				copy({ [@component] = @default }, e)
 			end
 			-- add to linked list
 			if @_first == nil then
@@ -426,7 +433,7 @@ let system_mt = {
 			end
 			-- notify addition
 			@entityCount += 1
-			@onAdd(e[@name], e)
+			@onAdd(e, e[@component])
 			-- add to subsystems (if it wasn't immediately removed in onAdd)
 			if @_previous[e] then
 				for _, s in ipairs(@systems) do
@@ -477,7 +484,7 @@ let system_mt = {
 				-- notify removal
 				@_previous[e] = nil
 				@entityCount -= 1
-				@onRemove(e[@name], e)
+				@onRemove(e, e[@component])
 			end
 		end
 		if ... then
@@ -613,7 +620,7 @@ let system_mt = {
 			@onUpdate(dt)
 			if @process ~= system_mt.process then
 				for e in @iter() do
-					@process(e[@name], e, dt)
+					@process(e, e[@component], dt)
 				end
 			end
 			for _, s in ipairs(@systems) do
@@ -632,7 +639,7 @@ let system_mt = {
 			@onDraw()
 			if @render ~= system_mt.render then
 				for e in @iter() do
-					@render(e[@name], e)
+					@render(e, e[@component])
 				end
 			end
 			for _, s in ipairs(@systems) do
@@ -642,7 +649,7 @@ let system_mt = {
 	end,
 	--- Trigger a custom callback on a single entity.
 	--
-	-- This will call the `System:name(c, e, ...)` method in this system and its subsystems,
+	-- This will call the `System:name(e, c, ...)` method in this system and its subsystems,
 	-- if the method exists and the entity is in the system. `c` is the system [component](#Entity.Component)
 	-- associated with the current system, and `e` is the `Entity`.
 	--
@@ -653,7 +660,7 @@ let system_mt = {
 	callback = :(name, e, ...)
 		-- call callback
 		if @_previous[e] and @[name] then
-			@[name](@, e[@name], e, ...)
+			@[name](@, e, e[@component], ...)
 		end
 		-- callback on subsystems (if it wasn't removed during the callback)
 		if @_previous[e] then
@@ -732,6 +739,7 @@ let recInstanciateSystems = (world, systems)
 				end
 			end
 		})
+		-- create filter
 		if type(s.filter) == "string" then
 			system.filter = (_, e) return e[s.filter] ~= nil end
 		elseif type(s.filter) == "table" then
@@ -742,6 +750,10 @@ let recInstanciateSystems = (world, systems)
 			else
 				system.filter = alwaysFalse
 			end
+		end
+		-- system component fallback on system name
+		if not s.component and s.name then
+			s.component = s.name
 		end
 		-- add system
 		table.insert(t, system)
