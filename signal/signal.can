@@ -1,10 +1,33 @@
---- Signal management for Lua.
---
--- No dependency.
--- Optional dependency: LÖVE to hook into LÖVE events.
--- @module signal
--- @usage
--- TODO
+--[[-- Simple signal / observer pattern implementation for Lua.
+
+No dependency.
+Optional dependency: LÖVE to hook into LÖVE events.
+
+The returned module also acts as a global `SignalRegistry`, so you can call the `:bind`, `:emit`, etc. methods directly on the module
+if you don't need to isolate your signals in separate registries.
+
+@module signal
+@usage
+local signal = require("ubiquitousse.signal")
+
+-- Bind a function to a "hit" signal
+signal:bind("hit", function(enemy)
+	print(enemy.." was hit!")
+end)
+
+-- Somewhere else in your code: will call every function bound to "hit" signal with "invader" argument
+signal:emit("hit", "invader")
+
+-- We also provides a predefined SignalRegistry (signal.event) which emit signals on LÖVE callbacks
+-- You can initialize it with:
+signal.registerEvents()
+
+signal.event:bind("update", function(dt) print("called every update") end)
+signal.event:bind("keypressed", function(key, scancode) print("pressed key "..key) end)
+-- etc., for every LÖVE callback
+--]]
+
+let signal
 
 --- Signal registry.
 --
@@ -12,66 +35,72 @@
 -- @type SignalRegistry
 let registry_mt = {
 	--- Map of signals to list of listeners.
-	-- @ftype {["name"]={fn,...}}
+	-- @ftype {["name"]={fn,[fn]=1,...}}
 	signals = {},
 
-	--- Bind one or several functions to a signal name.
+	--- List of registries chained to this registry.
+	-- @ftype { registry, ... }
+	chained = {},
+
+	--- Bind a function to a signal name.
 	-- @tparam string name the name of the signal
 	-- @tparam function fn the function to bind to the signal
-	-- @tparam function,... ... other function to bind to the signal
-	bind = :(name, fn, ...)
+	bind = :(name, fn)
+		assert(not @has(name, fn), ("function %s already bound to signal %s"):format(fn, name))
 		if not @signals[name] then
 			@signals[name] = {}
 		end
 		table.insert(@signals[name], fn)
-		if ... then
-			@bind(name, ...)
-		end
+		return @
 	end,
 
-	--- Unbind one or several functions to a signal name.
+	--- Returns true if fn is bound to the signal.
 	-- @tparam string name the name of the signal
-	-- @tparam function fn the function to unbind to the signal
-	-- @tparam function,... ... other function to unbind to the signal
-	unbind = :(name, fn, ...)
+	-- @tparam function fn the function
+	has = :(name, fn)
 		if not @signals[name] then
-			return
+			return false
 		end
-		for i=#@signals[name], 1, -1 do
-			if @signals[name] == fn then
-				table.remove(@signals[name], i)
+		for _, f in ipairs(@signals[name]) do
+			if f == fn then
+				return true
 			end
 		end
-		if ... then
-			@unbind(name, ...)
+		return false
+	end,
+
+	--- Unbind a function from a signal name.
+	-- @tparam string name the name of the signal
+	-- @tparam function fn the function to unbind to the signal
+	unbind = :(name, fn)
+		if not @signals[name] then
+			@signals[name] = {}
 		end
+		for i=#@signals[name], 1, -1 do
+			local f = @signals[name][i]
+			if f == fn then
+				table.remove(@signals[name], i)
+				return @
+			end
+		end
+		error(("function %s not bound to signal %s"):format(fn, name))
+	end,
+	--- Unbind a function from every signal whose name match the pattern.
+	-- @tparam string pat Lua pattern string
+	-- @tparam function fn the function to unbind to the signals
+	unbindPattern = :(pat, fn)
+		return @_patternize("unbind", pat, fn)
 	end,
 
 	--- Remove every bound function to a signal name.
 	-- @tparam string name the name of the signal
-	unbindAll = :(name)
+	clear = :(name)
 		@signals[name] = nil
 	end,
-
-	--- Replace a bound function with another function.
-	-- @tparam string name the name of the signal
-	-- @tparam function sourceFn the function currently bound to the signal
-	-- @tparam function destFn the function that will replace the previous one
-	replace = :(name, sourceFn, destFn)
-		if not @signals[name] then
-			@signals[name] = {}
-		end
-		for i, fn in ipairs(@signals[name]) do
-			if fn == sourceFn then
-				@signals[name][i] = destFn
-				break
-			end
-		end
-	end,
-
-	--- Remove every bound function to every signal.
-	clear = :()
-		@signals = {}
+	--- Remove every bound function to every signal whose name match the pattern.
+	-- @tparam string pat Lua string pattern
+	clearPattern = :(pat)
+		return @_patternize("clear", pat)
 	end,
 
 	--- Emit a signal, i.e. call every function bound to it, with the given arguments.
@@ -83,21 +112,130 @@ let registry_mt = {
 				fn(...)
 			end
 		end
+		for _, c in ipairs(@chained) do
+			c:emit(name, ...)
+		end
+		return @
+	end,
+	--- Emit to every signal whose name match the pattern.
+	-- @tparam string pat Lua pattern string
+	-- @param ... arguments to pass to the functions bound to each signal
+	emitPattern = :(pat, ...)
+		return @_patternize("emit", pat, ...)
+	end,
+
+	--- Chain another regsitry to this registry.
+	-- I.e., after an event is emitted in this registry it will be automatically emitted in the other registry.
+	-- Several registries can be chained to a single registry.
+	-- @tparam SignalRegistry registry
+	chain = :(registry)
+		if not registry then
+			registry = signal.new()
+		end
+		table.insert(@chained, registry)
+		return registry
+	end,
+	--- Unchain a specific registry from the registry chaining list.
+	-- Will error if the regsitry is not in the chaining list.
+	-- @tparam SignalRegistry registry
+	unchain = :(registry)
+		for i=#@chained, 1, -1 do
+			if @chained[i] == registry then
+				table.remove(@chained, i)
+				return @
+			end
+		end
+		error("the givent registry is not chained with this registry")
+	end,
+
+	_patternize = :(method, pat, ...)
+		for name in pairs(@signals) do
+			if name:match(pat) then
+				@[method](@, name, ...)
+			end
+		end
 	end
 }
 registry_mt.__index = registry_mt
 
+--- Signal group.
+--
+-- A SignalGroup is a list of (registry, signal name, function) triplets.
+-- When the group is active, all of these triplets will bind the specified signal name to the specified function in the specified registry.
+-- When the group is paused, all of these triplets are unbound.
+--
+-- This can be used to maintain a list of signal bindings where every one should be either disabled or enabled at the same time.
+-- For example you may maintain a signal group of signals you want to be emitted when your game is running, and disabled when the game is paused
+-- (like inputs, update, simulation step, etc. signals).
+--
+-- @type SignalGroup
+let group_mt = {
+	--- Indicate if the signal group if currently paused or not.
+	-- @ftype boolean
+	paused = false,
+
+	--- List of triplets in the group.
+	-- @ftype { {registry, "signal name", function}, ... }
+	binds = {},
+
+	--- Bind a function to a signal name in the given registry.
+	-- This handles binding the function on its own; you do not need to call `SignalRegistry:bind` manually.
+	-- If the group is paused, this will not bind the function immediately but only on the next time this group is resumed (as expected).
+	-- @tparam SignalRegistry registry to bind the signal in
+	-- @tparam string name the name of the signal
+	-- @tparam function fn the function to bind to the signal
+	bind = :(registry, name, fn)
+		table.insert(@binds, { registry, name, fn })
+		if not @paused then registry:bind(name, fn) end
+	end,
+
+	--- Remove every bound triplet in the group.
+	clear = :()
+		if not @paused then
+			for _, b in ipairs(@binds) do
+				b[1]:unbind(b[2], b[3])
+			end
+		end
+		@binds = {}
+	end,
+
+	--- Pause the group.
+	-- The signals bound to this group will be disabled in their given registries.
+	pause = :()
+		assert(not @paused, "event group is already paused")
+		@paused = true
+		for _, b in ipairs(@binds) do
+			b[1]:unbind(b[2], b[3])
+		end
+	end,
+
+	--- Resume the group.
+	-- The signals bound to this group will be enabled in their given registries.
+	resume = :()
+		assert(@paused, "event group is not paused")
+		@paused = false
+		for _, b in ipairs(@binds) do
+			b[1]:bind(b[2], b[3])
+		end
+	end
+}
+group_mt.__index = group_mt
+
 --- Module.
 --
--- This module also acts as a global `SignalRegistry`, so you can call the `:bind`, `:emit`, etc. methods directly on the module
--- if you don't need to isolate your signals in separate registries.
 -- @section module
 
-let signal = {
+signal = {
 	--- Creates and return a new SignalRegistry.
 	-- @treturn SignalRegistry
 	new = ()
-		return setmetatable({ signals = {} }, registry_mt)
+		return setmetatable({ signals = {}, chained = {} }, registry_mt)
+	end,
+
+	--- Creates and return a new SignalGroup.
+	-- @treturn SignalGroup
+	group = ()
+		return setmetatable({ binds = {} }, group_mt)
 	end,
 
 	-- Global SignalRegistry.
@@ -105,33 +243,45 @@ let signal = {
 	bind = (...)
 		return registry_mt.bind(signal, ...)
 	end,
+	has = (...)
+		return registry_mt.has(signal, ...)
+	end,
 	unbind = (...)
 		return registry_mt.unbind(signal, ...)
 	end,
-	unbindAll = (...)
-		return registry_mt.unbindAll(signal, ...)
-	end,
-	replace = (...)
-		return registry_mt.replace(signal, ...)
+	unbindPattern = (...)
+		return registry_mt.unbindPattern(signal, ...)
 	end,
 	clear = (...)
 		return registry_mt.clear(signal, ...)
 	end,
+	clearPattern = (...)
+		return registry_mt.clearPattern(signal, ...)
+	end,
 	emit = (...)
 		return registry_mt.emit(signal, ...)
 	end,
+	emitPattern = (...)
+		return registry_mt.emitPattern(signal, ...)
+	end,
 
-	--- `SignalRegistry` which will be used to bind signals that need to be called on game engine event; other ubiquitousse modules may bind to this registry
+	--- `SignalRegistry` which will be used to bind signals that need to be called on LÖVE events; other ubiquitousse modules may bind to this registry
 	-- if avaible.
 	--
 	-- For example, every ubiquitousse module with a "update" function will bind it to the "update" signal in the registry;
 	-- you can then call this signal on each game update to update every ubiquitousse module easily.
 	--
-	-- Provided signals:
+	-- You will need to call `registerEvents` for the signal to be called on LÖVE callbacks automatically (otherwise you will have to emit the events
+	-- from the LÖVE callbacks manually).
 	--
-	-- * `update(dt)`, should be called on every game update
-	-- * `draw()`, should be called on every game draw
-	-- * for LÖVE, there are callbacks for every LÖVE callback function that need to be called on their corresponding LÖVE callback
+	-- List of signals available: "displayrotated", "draw", "load", "lowmemory", "quit", "update",
+	-- "directorydropped", "filedropped", "focus", "mousefocus", "resize", "visible",
+	-- "keypressed", "keyreleased", "textedited", "textinput",
+	-- "mousemoved", "mousepressed", "mousereleased", "wheelmoved",
+	-- "gamepadaxis", "gamepadpressed", "gamepadreleased",
+	-- "joystickadded", "joystickaxis", "joystickhat", "joystickpressed", "joystickreleased", "joystickremoved",
+	-- "touchmoved", "touchpressed", "touchreleased".
+	--
 	-- @ftype SignalRegistry
 	event = nil,
 
