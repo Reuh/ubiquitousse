@@ -609,6 +609,21 @@ let system_mt = {
 	iter = :()
 		return nextEntity, { @_first }
 	end,
+	--- Get the `i`th entity in the system.
+	-- This is a simple wrapper around `iter`; it _will_ iterate over all the entities in the system in order until we reach the desired one.
+	-- Complexity: O(i)
+	-- @tparam number i the index of the entity
+	-- @treturn Entity the entity; `nil` if there is no such entity in the system
+	get = :(i)
+		local n = 1
+		for e in @iter() do
+			if n == i then
+				return e
+			end
+			n += 1
+		end
+		return nil
+	end,
 	--- Remove every entity from the system and its subsystems.
 	clear = :()
 		for e in @iter() do
@@ -846,10 +861,18 @@ ecs = {
 	end,
 
 	--- If `uqt.scene` is available, returns a new scene that will consist of a ECS world with the specified systems and entities.
+	--
+	-- When suspending and resuming the scene, the `onSuspend` and `onResume` events will be emitted on the ECS world.
+	--
+	-- Note that since `uqt.scene` use `require` to load the scenes, the scenes files will be cached - including variables defined in them.
+	-- So if you store the entity list directly in a variable in the scene file, it will be reused every time the scene is entered, and will thus
+	-- be shared among the different execution of the scene. This may be problematic if an entity is modified by one scene instance, as it will affect others
+	-- (this should not be a problem with systems due to system instanciation). To avoid this issue, instead you would typically define entities through a
+	-- function that will recreate the entities on every scene load.
 	-- @require ubiquitousse.scene
 	-- @string name the name of the new scene
-	-- @tparam[opt={}] table systems list of systems to add to the world
-	-- @tparam[opt={}] table entities list of entities to add to the world
+	-- @tparam[opt={}] table/function systems list of systems to add to the world. If it is a function, it will be executed every time we enter the scene and returns the list of systems.
+	-- @tparam[opt={}] table/function entities list of entities to add to the world. If it is a function, it will be executed every time we enter the scene and returns the list of entities.
 	-- @treturn scene the new scene
 	scene = (name, systems={}, entities={})
 		assert(scene, "ubiquitousse.scene unavailable")
@@ -857,11 +880,20 @@ ecs = {
 		let w
 
 		function s:enter()
-			w = ecs.world(unpack(systems))
-			w:add(unpack(entities))
+			local sys, ent = systems, entities
+			if type(systems) == "function" then sys = { systems() } end
+			if type(entities) == "function" then ent = { entities() } end
+			w = ecs.world(unpack(sys))
+			w:add(unpack(ent))
 		end
 		function s:exit()
 			w:destroy()
+		end
+		function s:suspend()
+			w:emit("onSuspend")
+		end
+		function s:resume()
+			w:emit("onResume")
 		end
 		function s:update(dt)
 			w:update(dt)

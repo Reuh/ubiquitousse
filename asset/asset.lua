@@ -6,6 +6,8 @@
 --
 -- See the `Asset:__call` method for more details on how assets are loaded. Hopefully this will allow you to use asset which are more game-specific than "image" or "audio".
 --
+-- TODO: async loading
+--
 -- No dependencies.
 -- @module asset
 -- @usage
