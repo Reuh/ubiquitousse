@@ -35,7 +35,7 @@ file = {
 	"init.lua",
 	"asset/asset.lua",
 	"ecs/ecs.can",
-	-- TODO: input
+	"input/input.lua",
 	"ldtk/ldtk.can",
 	"scene/scene.lua",
 	"signal/signal.can",
