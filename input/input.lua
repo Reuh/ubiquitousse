@@ -1,205 +1,489 @@
---- ubiquitousse.input
--- Depends on a backend.
--- Optional dependencies: ubiquitousse.signal (to bind to update signal in signal.event)
-local loaded, signal = pcall(require, (...):match("^(.-)input").."signal")
-if not loaded then signal = nil end
+--- Input management facilities.
+--
+-- The module returns a single function, `input`.
+--
+-- **Requires** ubiquitousse.signal.
+-- @module input
+-- @usage
+-- TODO
 
--- TODO: some key selection helper? Will be backend-implemented, to account for all the possible input methods.
--- TODO: some way to list all possible input / outputs, or make the *inUse make some separation between inputs indiscutitably in use and those who are incertain.
--- TODO: outputs! (rumble, lights, I don't know)
--- TODO: other, optional, default/generic inputs, and a way to know if they are binded.
--- TODO: multiplayer input helpers? something like getting the same input for different players, or default inputs for different players
+local signal = require((...):gsub("input%.input$", "signal"))
+local event = require((...):gsub("input$", "event"))
 
--- FIXME https://love2d.org/forums/viewtopic.php?p=241434#p241434
+local abs, sqrt, floor, ceil, min, max = math.abs, math.sqrt, math.floor, math.ceil, math.min, math.max
 
-local button_mt
-local axis_mt
-local pointer_mt
+-- TODO:
+-- friendly name for sources
+-- write doc, incl how to define your own source and source expressions, default inputs
 
---- Input stuff
--- Inspired by Tactile by Andrew Minnich (https://github.com/tesselode/tactile), under the MIT license.
--- Ubiquitousse considers two basic input methods, called buttons (binary input) and axes (analog input).
-local input
-input = {
-	--- Used to store inputs which were updated this frame
-	-- { Input: true, ... }
-	-- This table is for internal use and shouldn't be used from an external script.
-	updated = {},
+-- Always returns 0.
+local function zero() return 0 end
 
-	dt = 0,
-
-	---------------------------------
-	--- Detectors (input sources) ---
-	---------------------------------
-
-	-- Buttons detectors --
-	-- A button detector is a function which returns true (pressed) or false (unpressed).
-	-- All buttons are identified using an identifier string, which depends on the backend. The presence of eg., a mouse or keyboard is not assumed.
-	-- Some identifier strings conventions: (not used internally by Ubiquitousse, but it's nice to have some consistency between backends)
-	-- They should be in the format "source1.source2.[...].button", for example "keyboard.up" or "gamepad.button.1.a" for the A-button of the first gamepad.
-	-- If the button is actually an axis (ie, the button is pressed if the axis value passes a certain threshold), the threshold should be in the end of the
-	-- identifier, preceded by a % : for example "gamepad.axis.1.leftx%-0.5" should return true when the left-stick of the first gamepad is moved to the right
-	-- by more of 50%. The negative threshold value means that the button will be pressed only when the axis has a negative value (in the example, it won't be
-	-- pressed when the axis is moved to the right).
-	-- Buttons can also be defined by a list of buttons (string or functions), in which case the button will be considered down if all the buttons are down.
-
-	--- Makes a new button detector from a identifier string.
-	-- The function may error if the identifier is incorrect.
-	-- @tparam string button identifier, depends on the platform Ubiquitousse is running on
-	-- @treturn the new button detector
-	-- @require love
-	basicButtonDetector = function(str) end,
-
-	--- Make a new button detector from a detector function, string, or list of buttons.
-	-- @tparam string, function button identifier
-	buttonDetector = function(obj)
-		if type(obj) == "function" then
-			return obj
-		elseif type(obj) == "string" then
-			return input.basicButtonDetector(obj)
-		elseif type(obj) == "table" then
-			local l = {}
-			for _, b in ipairs(obj) do
-				table.insert(l, input.buttonDetector(b))
-			end
-			return function()
-				for _, b in ipairs(l) do
-					if not b() then
-						return false
-					end
-				end
-				return true
-			end
-		end
-		error(("Not a valid button detector: %s"):format(obj))
-	end,
-
-	-- Axis detectors --
-	-- Similar to buttons detectors, but returns a number between -1 and 1.
-	-- Threshold value can be used similarly with %.
-	-- Axis detectors can also be defined by two buttons: if the 1rst button is pressed, value will be -1, if the 2nd is pressed it will be 1
-	-- and if none or the both are pressed, the value will be 0. This kind of axis identifier is a table {"button1", "button2"}.
-	-- Axis detectors may also optionally return after the number between -1 and 1 the raw value and max value. The raw value is between -max and +max.
-
-	--- Makes a new axis detector from a identifier string.
-	-- The function may error if the identifier is incorrect.
-	-- @tparam string axis identifier, depends on the platform Ubiquitousse is running on
-	-- @treturn the new axis detector
-	-- @require love
-	basicAxisDetector = function(str) end,
-
-	--- Make a new axis detector from a detector function, string, or a couple of buttons.
-	-- @tparam string, function or table axis identifier
-	axisDetector = function(obj)
-		if type(obj) == "function" then
-			return obj
-		elseif type(obj) == "string" then
-			return input.basicAxisDetector(obj)
-		elseif type(obj) == "table" then
-			local b1, b2 = input.buttonDetector(obj[1]), input.buttonDetector(obj[2])
-			return function()
-				local d1, d2 = b1(), b2()
-				if d1 and d2 then return 0
-				elseif d1 then return -1
-				elseif d2 then return 1
-				else return 0 end
-			end
-		end
-		error(("Not a valid axis detector: %s"):format(obj))
-	end,
-
-	------------------------------
-	--- Input detection helpers --
-	------------------------------
-	-- TODO: make this better
-
-	--- Returns a list of the buttons currently in use, identified by their string button identifier.
-	-- This may also returns "axis threshold" buttons if an axis passes the threshold.
-	-- @tparam[opt=0.5] number threshold the threshold to detect axes as button
-	-- @treturn string,... buttons identifiers list
-	-- @require love
-	buttonUsed = function(threshold) end,
-
-	--- Returns a list of the axes currently in use, identified by their string axis identifier
-	-- @tparam[opt=0.5] number threshold the threshold to detect axes
-	-- @treturn string,... axes identifiers list
-	-- @require love
-	axisUsed = function(threshold) end,
-
-	--- Returns a nice name for the button identifier.
-	-- Can be locale-depedant and stuff, it's only for display.
-	-- May returns the raw identifier if you're lazy.
-	-- @tparam string... button identifier string(s)
-	-- @treturn string... the displayable names
-	-- @require love
-	buttonName = function(...) end,
-
-	--- Returns a nice name for the axis identifier.
-	-- Can be locale-depedant and stuff, it's only for display.
-	-- May returns the raw identifier if you're lazy.
-	-- @tparam string... axis identifier string(s)
-	-- @treturn string... the displayable names
-	-- @require love
-	axisName = function(...) end,
-
-	-------------------
-	--- Other stuff ---
-	-------------------
-
-	--- Some default inputs.
-	-- The backend should bind detectors to thoses inputs (don't recreate them).
-	-- These are used to provide some common input default detectors to allow to start a game quickly on
-	-- any platform without having to configure the keys.
-	-- If some key function in your game match one of theses defaults, using it instead of creating a new
-	-- input would be a good idea.
-	-- @require love
-	default = {
-		pointer = nil, -- Pointer: used to move and select. Example binds: arrow keys, WASD, stick.
-		confirm = nil, -- Button: used to confirm something. Example binds: Enter, A button.
-		cancel = nil -- Button: used to cancel something. Example binds: Escape, B button.
-	},
-
-	--- Get draw area dimensions.
-	-- Used for pointers.
-	-- @require love
-	getDrawWidth = function() return 1 end,
-	getDrawHeight = function() return 1 end,
-
-	--- Update all the Inputs.
-	-- Should be called at every game update. If ubiquitousse.signal is available, will be bound to the "update" signal in signal.event.
-	-- The backend can hook into this function to to its input-related updates.
-	-- @tparam numder dt the delta-time
-	update = function(newDt)
-		input.dt = newDt
-		input.updated = {}
+local function loadexp(exp, env)
+	local fn
+	if loadstring then
+		fn = assert(loadstring("return "..exp, "input expression"))
+		setfenv(fn, env)
+	else
+		fn = assert(load("return "..exp, "input expression", "t", env))
 	end
-
-	--- If you use LÖVE, note that in order to provide every feature (especially key detection), several callbacks functions will
-	-- need to be called on LÖVE events. See backend/love.lua.
-	-- If ubiquitousse.signal is available, these callbacks will be bound to signals in signal.event (with the same name as the LÖVE
-	-- callbacks, minux the "love.").
-}
-
-package.loaded[...] = input
-button_mt = require((...):gsub("input$", "button"))
-axis_mt = require((...):gsub("input$", "axis"))
-pointer_mt = require((...):gsub("input$", "pointer"))
-
--- Constructors
-input.button = button_mt._new
-input.axis = axis_mt._new
-input.pointer = pointer_mt._new
-
--- Create default inputs
-input.default.pointer = input.pointer()
-input.default.confirm = input.button()
-input.default.cancel = input.button()
-
--- Bind signals
-if signal then
-	signal.event:bind("update", input.update)
+	return fn
 end
 
-require((...):gsub("input$", "love"))
+-- Set a value in a table using its path string.
+local function setPath(t, path, val)
+	for part in path:gmatch("(.-)%.") do
+		assert(t[part])
+		t = t[part]
+	end
+	t[path:match("[^%.]+$")] = val
+end
+local function ensurePath(t, path, default)
+	for part in path:gmatch("(.-)%.") do
+		if not t[part] then t[part] = {} end
+		t = t[part]
+	end
+	local final = path:match("[^%.]+$")
+	if not t[final] then
+		t[final] = default
+	end
+end
 
-return input
+-- Functions available in input expressions.
+local expressionEnv
+expressionEnv = {
+	floor = floor,
+	ceil = ceil,
+	abs = abs,
+	clamp = function(x, xmin, xmax)
+		return min(max(x, xmin), xmax)
+	end,
+	min = function(x, y, ...)
+		local m = min(x, y)
+		if ... then
+			return expressionEnv.min(m, ...)
+		else
+			return m
+		end
+	end,
+	max = function(x, y, ...)
+		local m = max(x, y)
+		if ... then
+			return expressionEnv.max(m, ...)
+		else
+			return m
+		end
+	end,
+	deadzone = function(x, deadzone)
+		if abs(x) < deadzone then
+			return 0
+		end
+		return x
+	end
+}
+
+-- List of modifiers that can be applied to a source in an expression
+local sourceModifiers = { "passive", "active" }
+for _, mod in ipairs(sourceModifiers) do
+	expressionEnv[mod] = function(...) return ... end
+end
+
+local input_mt
+
+--- Make a new input object.
+-- t: input configuration table (optional)
+-- @function input
+local function make_input(t)
+	local self = setmetatable({
+		config = t or {},
+		children = {},
+		event = signal.new(),
+		_sourceCache = {},
+		_event = signal.group(),
+		_afterFilterEvent = signal.new(),
+		_boundSourceEvents = {}
+	}, input_mt)
+	self:reload()
+	return self
+end
+
+--- Input methods.
+-- @type Input
+input_mt = {
+	--- Input configuration table.
+	-- It can be used to recreate this input object later (by passing the table as an argument for the input constructor).
+	-- This table does not contain any userdata and should be easily serializable (e.g. to save custom input binding config).
+	-- This doesn't include input state, grab state, the event registry and the selected joystick since they may change often during runtime.
+	-- Can be changed anytime, but you may need to call `reload` to apply changes.
+	-- @usage
+	-- player.config = {
+	--   "key.a", "key.d - key.a", {"key.left + x", x=0.5}, -- list of input sources expressions
+	--   jump = {...}, -- children input
+	--   deadzone = 0.05, -- The deadzone for analog inputs (e.g. joystick axes): if the input absolute value is strictly below this, it will be considered as 0.
+	--   threshold = 0.05 -- The pressed threshold: an input is considered down if above or equal to this value.
+	-- }
+	config = {},
+	--- List and map of children inputs.
+	-- {[child1.name]=child1, [child2.name]=child2, child1, child2...}
+	children = {},
+	--- Name of the input.
+	-- Defined on children inputs only.
+	name = nil,
+
+	--- False if the input is currently not grabbed, a subinput otherwise.
+	-- This may be different between each subinput.
+	grabbed = false,
+	--- False if the input is not a subinput, the input it grabbed otherwise.
+	-- This may be different between each subinput.
+	grabbing = false,
+	--- Input event registry.
+	-- The following events are available:
+	--
+	-- * `"moved"`: called when the input value change, with arguments (new value, delta since last event)
+	-- * `"pressed"`: called when the input is pressed
+	-- * `"released"`: called when the input is released
+	--
+	-- For pointer inputs (have a "horizontal" and "vertical" children inputs) is also avaible:
+	--
+	-- * `"pointer moved"`: called when the pointer position change, with arguments (new pointer x, new pointer y, delta x since last event, delta y since last event)
+	--
+	-- Each subinput has a different event registry.
+	event = nil,
+
+	-- Input state, independendant between each grab. Reset by :neutralize().
+	_state = "none", -- none, pressed or released
+	_value = 0, -- input value
+	_prevValue = 0, -- value last frame
+
+	-- Input state, shared between grabs.
+	_event = nil, -- Event group for all event binded by this input.
+	_sourceCache = {}, -- Map of the values currently taken by every source this input use.
+	_afterFilterEvent = nil, -- Event registry that resend the source events after applying the eventual filter function.
+	_boundSourceEvents = {}, -- Map of sources events that are binded (and thus will send events to _afterFilterEvent).
+	_joystick = nil, -- Currently selected joystick for this player. Also shared with children inputs.
+
+	--- Update the input and its children.
+	-- Should be called every frame, typically _after_ you've done all your input handling
+	-- (otherwise `pressed` and `released` may never return true and `delta` might be wrong).
+	-- (Note: this should not be called on subinputs)
+	update = function(self)
+		self:_update()
+		self._prevValue = self._value
+		for _, i in ipairs(self.children) do
+			i:update()
+		end
+	end,
+
+	--- Create a new input object based on this input `config` data.
+	clone = function(self)
+		return make_input(self.config)
+	end,
+
+	--- Relond the input `config`, and do the same for its children.
+	-- This will reenable the input if it was disabled using `disable`.
+	reload = function(self)
+		-- clear all events we bounded previously
+		self._event:clear()
+		self._boundSourceEvents = {}
+		-- remove removed children
+		for i=#self.children, 1, -1 do
+			local c = self.children[i]
+			if not self.config[c.name] then
+				c:disable()
+				table.remove(self.children, i)
+			end
+		end
+		-- reload children
+		for _, c in ipairs(self.children) do
+			c:reload()
+		end
+		-- add added children
+		for subname, subt in pairs(self.config) do
+			if type(subname) == "string" and type(subt) == "table" and not rawget(self, subname) then
+				local c = make_input(subt)
+				c.name = subname
+				table.insert(self.children, c)
+				self.children[subname] = c
+				self[subname] = c
+			end
+		end
+		-- rebind source events
+		for _, exp in ipairs(self.config) do
+			-- extract args
+			local args = {}
+			if type(exp) == "table" then
+				for k, v in pairs(exp) do
+					if k ~= 1 then
+						args[k] = v
+					end
+				end
+				exp = exp[1]
+			end
+			-- build env
+			local env = {}
+			for k, v in pairs(args) do env[k] = v end
+			setmetatable(env, {
+				__index = function(t, key)
+					if key == "value" then return self:value() end
+					return self._sourceCache[key] or expressionEnv[key]
+				end
+			})
+			-- extract sources
+			local sources = {}
+			local srcmt
+			srcmt = { -- metamethods of sources values during the scanning process
+				__add = zero, __sub = zero,
+				__mul = zero, __div = zero,
+				__mod = zero, __pow = zero,
+				__unm = zero, __idiv = zero,
+				__index = function(t, key)
+					local i = rawget(t, 1)
+					if i then sources[i][1] = sources[i][1] .. "." .. key
+					else table.insert(sources, { key })
+					end
+					return setmetatable({ i or #sources }, srcmt)
+				end
+			}
+			local scanEnv = setmetatable({ value = 0 }, { __index = srcmt.__index }) -- value is not a source
+			for k, v in pairs(args) do scanEnv[k] = v end -- add args
+			for k in pairs(expressionEnv) do scanEnv[k] = zero end -- add functions
+			for _, mod in ipairs(sourceModifiers) do -- add modifiers functions
+				scanEnv[mod] = function(source)
+					assert(getmetatable(source) == srcmt, ("trying to apply %s modifier on a non-source value"):format(mod))
+					sources[rawget(source, 1)][mod] = true
+					return source
+				end
+			end
+			loadexp(exp, scanEnv)() -- scan!
+			-- set every source to passive if there is a dt source
+			local hasDt = false
+			for _, s in ipairs(sources) do
+				if s[1] == "dt" then hasDt = true break end
+			end
+			if hasDt then
+				for _, s in ipairs(sources) do
+					if s[1] ~= "dt" and not s.active then
+						s.passive = true
+					end
+				end
+			end
+			-- setup function
+			local fn = loadexp(exp, env)
+			-- init sources and bind to source events
+			local boundAfterFilterEvent = {}
+			local function onAfterFilterEvent(new) self:_update(fn()) end
+			for _, s in ipairs(sources) do
+				local sname = s[1]
+				ensurePath(self._sourceCache, sname, 0)
+				if not self._boundSourceEvents[sname] then
+					if sname:match("^child%.") then
+						local cname = sname:match("^child%.(.*)$")
+						assert(self.children[cname], ("input expression refer to %s but this input has no child named %s"):format(sname, cname))
+						self._event:bind(self.children[cname].event, "moved", function(new) -- child event -> self._afterFilterEvent link
+							setPath(self._sourceCache, sname, new)
+							self._afterFilterEvent:emit(sname, new)
+						end)
+					else
+						self._event:bind(event, sname, function(new, filter, ...) -- event source -> self._afterFilterEvent link
+							if filter then
+								new = filter(self, new, ...)
+								if not new then return end -- filtered out
+							end
+							setPath(self._sourceCache, sname, new)
+							self._afterFilterEvent:emit(sname, new)
+						end)
+					end
+					self._boundSourceEvents[sname] = true
+				end
+				if not boundAfterFilterEvent[sname] and not s.passive then
+					self._event:bind(self._afterFilterEvent, sname, onAfterFilterEvent) -- self._afterFilterEvent -> input update link
+					boundAfterFilterEvent[sname] = true
+				end
+			end
+		end
+		-- rebind pointer events
+		if self.config.horizontal and self.config.horizontal then
+			self._event:bind(self.horizontal.event, "moved", function(new, delta) self.event:emit("pointer moved", new, self.vertical:value(), delta, 0) end)
+			self._event:bind(self.vertical.event, "moved", function(new, delta) self.event:emit("pointer moved", self.horizontal:value(), new, 0, delta) end)
+		end
+	end,
+	--- Disable the input and its children, preventing further updates and events.
+	-- The input can be reenabled using `reload`.
+	disable = function(self)
+		for _, c in ipairs(self.children) do
+			c:disable()
+		end
+		self._event:clear()
+	end,
+
+	--- Will call fn(source) on the next activated source (including sources not currently used by this input).
+	-- Typically used to detect an input in your game input binding settings.
+	-- @param fn function that will be called on the next activated source matching the filter
+	-- @param[opt] filter list of string patterns that sources must start with (example `{"button", "key"}` to only get buttons and key sources)
+	onNextActiveSource = function(self, fn, filter)
+		local function onevent(source, new, filterfn, ...)
+			if filter then
+				local ok = false
+				for _, f in ipairs(filter) do
+					if source:match("^"..f) then
+						ok = true
+						break
+					end
+				end
+				if not ok then return end
+			end
+			if filterfn then
+				new = filterfn(self, new, ...)
+				if new == nil then return end
+			end
+			if abs(new) >= self:_threshold() then
+				event:unbind("_active", onevent)
+				fn(source)
+			end
+		end
+		event:bind("_active", onevent)
+	end,
+
+	--- Grab the input and its children input and returns the new subinput.
+	--
+	-- A grabbed input will no longer update and instead pass all new update to the subinput.
+	-- This is typically used for contextual action or pause menus: by grabbing the player input, all the direct use of
+	-- this input in the game will stop (can't move caracter, ...) and instead you can use the subinput to handle input in the pause menu.
+	-- To stop grabbing an input, you will need to `:release` the subinput.
+	--
+	-- This will also reset the input to a neutral state. The subinput will share everything with this input, except
+	-- `grabbed`, `grabbing`, `event` (a new event registry is created), and of course its current state.
+	grab = function(self)
+		local g = {
+			grabbed = false,
+			grabbing = self,
+			event = signal.new(),
+			children = {}
+		}
+		for _, c in ipairs(self.children) do
+			g[c.name] = c:grab()
+			table.insert(g.children, g[c.name])
+		end
+		self:neutralize()
+		self.grabbed = setmetatable(g, { __index = self })
+		return g
+	end,
+	--- Release a subinput and its children.
+	-- The parent grabbed input will be updated again. This subinput will be reset to a neutral position and won't be updated further.
+	release = function(self)
+		assert(self.grabbing, "not a grabbed input")
+		for _, c in ipairs(self.children) do
+			c:release()
+		end
+		self:neutralize()
+		self.grabbing.grabbed = false
+		self.grabbing = false
+	end,
+
+	--- Set the state of this input to a neutral position (i.e. value = 0).
+	neutralize = function(self)
+		self:_update(0)
+		self._state = "none"
+		self._value = 0
+		self._prevValue = 0
+	end,
+
+	--- Set the joystick associated with this input.
+	-- The input will ignore every other joystick.
+	-- Set joystick to `nil` to disable and get input from every connected joystick.
+	-- @param joystick LÖVE jostick object to associate
+	setJoystick = function(self, joystick)
+		self._joystick = joystick
+		for _, i in ipairs(self.children) do
+			i:setJoystick(joystick)
+		end
+	end,
+	--- Returns the currently selected joystick.
+	getJoystick = function(self)
+		return self._joystick
+	end,
+
+	--- Returns true if the input is currently down.
+	down = function(self)
+		return self._state == "down" or self._state == "pressed"
+	end,
+	--- Returns true if the input has just been pressed.
+	pressed = function(self)
+		return self._state == "pressed"
+	end,
+	--- Returns true if the input has just been released.
+	released = function(self)
+		return self._state == "released"
+	end,
+	--- Returns the current value of the input.
+	value = function(self)
+		return self._value
+	end,
+	--- Returns the delta value of the input since the last call to `update`.
+	delta = function(self)
+		return self._value - self._prevValue
+	end,
+	--- If there is a horizontal and vertical children inputs, this returns the horizontal value and the vertical value.
+	-- Typically used for movement/axes pairs (e.g. to get x,y of a stick or directional pad).
+	pointer = function(self)
+		return self.horizontal:value(), self.vertical:value()
+	end,
+	--- Same as `pointer`, but normalize the returned vector, i.e. "clamp" the returned x,y coordinates into a circle of radius 1.
+	-- Typically used to avoid faster movement on diagonals
+	-- (as if both horizontal and vertical values are 1, the pointer vector has √2 magnitude, higher than the 1 magnitude of a purely vertical or horizontal movement).
+	clamped = function(self)
+		local x, y = self:pointer()
+		local mag = x*x + y*y
+		if mag > 1 then
+			local d = sqrt(mag)
+			return x/d, y/d
+		else
+			return x, y
+		end
+	end,
+
+	-- Update the state of the input: called at least on every input value change and on :update().
+	-- new: new value of the input if it has changed (number, can be anything, but typically in [0-1]) (optional)
+	_update = function(self, new)
+		if self.grabbed then
+			self.grabbed:_update(new) -- pass onto grabber
+		else
+			local threshold = self:_threshold()
+			-- update values
+			new = new or self._value
+			local old = self._value
+			self._value = new
+			-- update state and emit events
+			local delta = new - old
+			if delta ~= 0 then
+				self.event:emit("moved", new, delta)
+			end
+			if abs(new) >= threshold then
+				if abs(old) < threshold then
+					self._state = "pressed"
+					self.event:emit("pressed")
+				else
+					self._state = "down"
+				end
+			else
+				if abs(old) >= threshold then
+					self._state = "released"
+					self.event:emit("released")
+				else
+					self._state = "none"
+				end
+			end
+		end
+	end,
+	-- Returns the deadzone of the input.
+	_deadzone = function(self)
+		return self.config.deadzone or 0.05
+	end,
+	-- Returns the threshold of the input.
+	_threshold = function(self)
+		return self.config.threshold or 0.05
+	end,
+}
+input_mt.__index = input_mt
+
+return make_input
