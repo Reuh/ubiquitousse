@@ -1,0 +1,706 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Ubiquitousse reference</title>
+    <link rel="stylesheet" href="../ldoc_new.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Ubiquitousse</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Input_objects">Input objects </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ubiquitousse.html">ubiquitousse</a></li>
+  <li><a href="../modules/asset.html">asset</a></li>
+  <li><a href="../modules/ecs.html">ecs</a></li>
+  <li><strong>input</strong></li>
+  <li><a href="../modules/ldtk.html">ldtk</a></li>
+  <li><a href="../modules/scene.html">scene</a></li>
+  <li><a href="../modules/signal.html">signal</a></li>
+  <li><a href="../modules/timer.html">timer</a></li>
+  <li><a href="../modules/util.html">util</a></li>
+</ul>
+<h2>Topics</h2>
+<ul class="">
+  <li><a href="../topics/README.md.html">README</a></li>
+  <li><a href="../topics/LICENSE.html">LICENSE</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>input</code></h1>
+<p>Input management facilities.</p>
+<p> The module returns a single function, <a href="../modules/input.html#">input</a>.</p>
+
+<p> <strong>Requires</strong> ubiquitousse.signal.</p>
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">TODO
+</pre>
+    </ul>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#input">input ()</a></td>
+    <td class="summary">Make a new input object.</td>
+    </tr>
+</table>
+<h2><a href="#Input_objects">Input objects </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Input.config">Input.config</a></td>
+    <td class="summary">Input configuration table.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input.children">Input.children</a></td>
+    <td class="summary">List and map of children inputs.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input.name">Input.name</a></td>
+    <td class="summary">Name of the input.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input.grabbed">Input.grabbed</a></td>
+    <td class="summary">False if the input is currently not grabbed, a subinput otherwise.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input.grabbing">Input.grabbing</a></td>
+    <td class="summary">False if the input is not a subinput, the input it grabbed otherwise.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input.event">Input.event</a></td>
+    <td class="summary">Input event registry.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:update">Input:update ()</a></td>
+    <td class="summary">Update the input and its children.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:clone">Input:clone ()</a></td>
+    <td class="summary">Create a new input object based on this input <a href="../modules/input.html#Input.config">config</a> data.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:reload">Input:reload ()</a></td>
+    <td class="summary">Relond the input <a href="../modules/input.html#Input.config">config</a>, and do the same for its children.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:disable">Input:disable ()</a></td>
+    <td class="summary">Disable the input and its children, preventing further updates and events.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:onNextActiveSource">Input:onNextActiveSource (fn[, filter])</a></td>
+    <td class="summary">Will call fn(source) on the next activated source (including sources not currently used by this input).</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:grab">Input:grab ()</a></td>
+    <td class="summary">Grab the input and its children input and returns the new subinput.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:release">Input:release ()</a></td>
+    <td class="summary">Release a subinput and its children.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:neutralize">Input:neutralize ()</a></td>
+    <td class="summary">Set the state of this input to a neutral position (i.e.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:setJoystick">Input:setJoystick (joystick)</a></td>
+    <td class="summary">Set the joystick associated with this input.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:getJoystick">Input:getJoystick ()</a></td>
+    <td class="summary">Returns the currently selected joystick.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:down">Input:down ()</a></td>
+    <td class="summary">Returns true if the input is currently down.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:pressed">Input:pressed ()</a></td>
+    <td class="summary">Returns true if the input has just been pressed.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:released">Input:released ()</a></td>
+    <td class="summary">Returns true if the input has just been released.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:value">Input:value ()</a></td>
+    <td class="summary">Returns the current value of the input.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:delta">Input:delta ()</a></td>
+    <td class="summary">Returns the delta value of the input since the last call to <a href="../modules/input.html#Input:update">update</a>.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:pointer">Input:pointer ()</a></td>
+    <td class="summary">If there is a horizontal and vertical children inputs, this returns the horizontal value and the vertical value.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Input:clamped">Input:clamped ()</a></td>
+    <td class="summary">Same as <a href="../modules/input.html#Input:pointer">pointer</a>, but normalize the returned vector, i.e.</td>
+    </tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "input"></a>
+    <strong>input ()</strong>
+    </dt>
+    <dd>
+    Make a new input object.
+ t: input configuration table (optional)
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Input_objects"></a>Input objects </h2>
+
+          <div class="section-description">
+          Input methods.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Input.config"></a>
+    <strong>Input.config</strong>
+    </dt>
+    <dd>
+    Input configuration table.
+ It can be used to recreate this input object later (by passing the table as an argument for the input constructor).
+ This table does not contain any userdata and should be easily serializable (e.g. to save custom input binding config).
+ This doesn&rsquo;t include input state, grab state, the event registry and the selected joystick since they may change often during runtime.
+ Can be changed anytime, but you may need to call <a href="../modules/input.html#Input:reload">reload</a> to apply changes.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">player.config = {
+  <span class="string">"key.a"</span>, <span class="string">"key.d - key.a"</span>, {<span class="string">"key.left + x"</span>, x=<span class="number">0.5</span>}, <span class="comment">-- list of input sources expressions
+</span>  jump = {...}, <span class="comment">-- children input
+</span>  deadzone = <span class="number">0.05</span>, <span class="comment">-- The deadzone for analog inputs (e.g. joystick axes): if the input absolute value is strictly below this, it will be considered as 0.
+</span>  threshold = <span class="number">0.05</span> <span class="comment">-- The pressed threshold: an input is considered down if above or equal to this value.
+</span>}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Input.children"></a>
+    <strong>Input.children</strong>
+    </dt>
+    <dd>
+    List and map of children inputs.
+ {[child1.name]=child1, [child2.name]=child2, child1, child2&hellip;}
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input.name"></a>
+    <strong>Input.name</strong>
+    </dt>
+    <dd>
+    Name of the input.
+ Defined on children inputs only.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input.grabbed"></a>
+    <strong>Input.grabbed</strong>
+    </dt>
+    <dd>
+    False if the input is currently not grabbed, a subinput otherwise.
+ This may be different between each subinput.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input.grabbing"></a>
+    <strong>Input.grabbing</strong>
+    </dt>
+    <dd>
+    False if the input is not a subinput, the input it grabbed otherwise.
+ This may be different between each subinput.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input.event"></a>
+    <strong>Input.event</strong>
+    </dt>
+    <dd>
+    Input event registry.
+ The following events are available:</p>
+
+<ul>
+<li><code>&quot;moved&quot;</code>: called when the input value change, with arguments (new value, delta since last event)</li>
+<li><code>&quot;pressed&quot;</code>: called when the input is pressed</li>
+<li><code>&quot;released&quot;</code>: called when the input is released</li>
+</ul>
+
+
+<p> For pointer inputs (have a &ldquo;horizontal&rdquo; and &ldquo;vertical&rdquo; children inputs) is also avaible:</p>
+
+<ul>
+<li><code>&quot;pointer moved&quot;</code>: called when the pointer position change, with arguments (new pointer x, new pointer y, delta x since last event, delta y since last event)</li>
+</ul>
+
+
+<p> Each subinput has a different event registry.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:update"></a>
+    <strong>Input:update ()</strong>
+    </dt>
+    <dd>
+    Update the input and its children.
+ Should be called every frame, typically <em>after</em> you've done all your input handling
+ (otherwise <a href="../modules/input.html#Input:pressed">pressed</a> and <a href="../modules/input.html#Input:released">released</a> may never return true and <a href="../modules/input.html#Input:delta">delta</a> might be wrong).
+ (Note: this should not be called on subinputs)
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:clone"></a>
+    <strong>Input:clone ()</strong>
+    </dt>
+    <dd>
+    Create a new input object based on this input <a href="../modules/input.html#Input.config">config</a> data.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:reload"></a>
+    <strong>Input:reload ()</strong>
+    </dt>
+    <dd>
+    Relond the input <a href="../modules/input.html#Input.config">config</a>, and do the same for its children.
+ This will reenable the input if it was disabled using <a href="../modules/input.html#Input:disable">disable</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:disable"></a>
+    <strong>Input:disable ()</strong>
+    </dt>
+    <dd>
+    Disable the input and its children, preventing further updates and events.
+ The input can be reenabled using <a href="../modules/input.html#Input:reload">reload</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:onNextActiveSource"></a>
+    <strong>Input:onNextActiveSource (fn[, filter])</strong>
+    </dt>
+    <dd>
+    Will call fn(source) on the next activated source (including sources not currently used by this input).
+ Typically used to detect an input in your game input binding settings.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">fn</span>
+           function that will be called on the next activated source matching the filter
+          </li>
+          <li><span class="parameter">filter</span>
+           list of string patterns that sources must start with (example <code>{&quot;button&quot;, &quot;key&quot;}</code> to only get buttons and key sources)
+           (<em>optional</em>)
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:grab"></a>
+    <strong>Input:grab ()</strong>
+    </dt>
+    <dd>
+    Grab the input and its children input and returns the new subinput. </p>
+
+<p> A grabbed input will no longer update and instead pass all new update to the subinput.
+ This is typically used for contextual action or pause menus: by grabbing the player input, all the direct use of
+ this input in the game will stop (can&rsquo;t move caracter, &hellip;) and instead you can use the subinput to handle input in the pause menu.
+ To stop grabbing an input, you will need to <code>:release</code> the subinput.</p>
+
+<p> This will also reset the input to a neutral state. The subinput will share everything with this input, except
+ <a href="../modules/input.html#Input.grabbed">grabbed</a>, <a href="../modules/input.html#Input.grabbing">grabbing</a>, <a href="../modules/input.html#Input.event">event</a> (a new event registry is created), and of course its current state.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:release"></a>
+    <strong>Input:release ()</strong>
+    </dt>
+    <dd>
+    Release a subinput and its children.
+ The parent grabbed input will be updated again. This subinput will be reset to a neutral position and won&rsquo;t be updated further.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:neutralize"></a>
+    <strong>Input:neutralize ()</strong>
+    </dt>
+    <dd>
+    Set the state of this input to a neutral position (i.e.  value = 0).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:setJoystick"></a>
+    <strong>Input:setJoystick (joystick)</strong>
+    </dt>
+    <dd>
+    Set the joystick associated with this input.
+ The input will ignore every other joystick.
+ Set joystick to <code>nil</code> to disable and get input from every connected joystick.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">joystick</span>
+           LÖVE jostick object to associate
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:getJoystick"></a>
+    <strong>Input:getJoystick ()</strong>
+    </dt>
+    <dd>
+    Returns the currently selected joystick.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:down"></a>
+    <strong>Input:down ()</strong>
+    </dt>
+    <dd>
+    Returns true if the input is currently down.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:pressed"></a>
+    <strong>Input:pressed ()</strong>
+    </dt>
+    <dd>
+    Returns true if the input has just been pressed.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:released"></a>
+    <strong>Input:released ()</strong>
+    </dt>
+    <dd>
+    Returns true if the input has just been released.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:value"></a>
+    <strong>Input:value ()</strong>
+    </dt>
+    <dd>
+    Returns the current value of the input.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:delta"></a>
+    <strong>Input:delta ()</strong>
+    </dt>
+    <dd>
+    Returns the delta value of the input since the last call to <a href="../modules/input.html#Input:update">update</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:pointer"></a>
+    <strong>Input:pointer ()</strong>
+    </dt>
+    <dd>
+    If there is a horizontal and vertical children inputs, this returns the horizontal value and the vertical value.
+ Typically used for movement/axes pairs (e.g. to get x,y of a stick or directional pad).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:clamped"></a>
+    <strong>Input:clamped ()</strong>
+    </dt>
+    <dd>
+    Same as <a href="../modules/input.html#Input:pointer">pointer</a>, but normalize the returned vector, i.e.  &ldquo;clamp&rdquo; the returned x,y coordinates into a circle of radius 1.
+ Typically used to avoid faster movement on diagonals
+ (as if both horizontal and vertical values are 1, the pointer vector has √2 magnitude, higher than the 1 magnitude of a purely vertical or horizontal movement).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2022-09-16 20:07:07 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

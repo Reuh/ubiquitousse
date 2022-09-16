@@ -289,206 +289,229 @@ end, -- ./ecs/ecs.can:604
 ["iter"] = function(self) -- ./ecs/ecs.can:609
 return nextEntity, { self["_first"] } -- ./ecs/ecs.can:610
 end, -- ./ecs/ecs.can:610
-["clear"] = function(self) -- ./ecs/ecs.can:613
-for e in self:iter() do -- ./ecs/ecs.can:614
-self:remove(e) -- ./ecs/ecs.can:615
-end -- ./ecs/ecs.can:615
-for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:617
-s:clear() -- ./ecs/ecs.can:618
-end -- ./ecs/ecs.can:618
-end, -- ./ecs/ecs.can:618
-["update"] = function(self, dt) -- ./ecs/ecs.can:625
-if self["active"] then -- ./ecs/ecs.can:626
-if self["interval"] then -- ./ecs/ecs.can:627
-self["_waited"] = self["_waited"] + (dt) -- ./ecs/ecs.can:628
-if self["_waited"] < self["interval"] then -- ./ecs/ecs.can:629
-return  -- ./ecs/ecs.can:630
+["get"] = function(self, i) -- ./ecs/ecs.can:617
+local n = 1 -- ./ecs/ecs.can:618
+for e in self:iter() do -- ./ecs/ecs.can:619
+if n == i then -- ./ecs/ecs.can:620
+return e -- ./ecs/ecs.can:621
+end -- ./ecs/ecs.can:621
+n = n + (1) -- ./ecs/ecs.can:623
+end -- ./ecs/ecs.can:623
+return nil -- ./ecs/ecs.can:625
+end, -- ./ecs/ecs.can:625
+["clear"] = function(self) -- ./ecs/ecs.can:628
+for e in self:iter() do -- ./ecs/ecs.can:629
+self:remove(e) -- ./ecs/ecs.can:630
 end -- ./ecs/ecs.can:630
-end -- ./ecs/ecs.can:630
-self:onUpdate(dt) -- ./ecs/ecs.can:633
-if self["process"] ~= system_mt["process"] then -- ./ecs/ecs.can:634
-for e in self:iter() do -- ./ecs/ecs.can:635
-self:process(e, e[self["component"]], dt) -- ./ecs/ecs.can:636
-end -- ./ecs/ecs.can:636
-end -- ./ecs/ecs.can:636
-for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:639
-s:update(dt) -- ./ecs/ecs.can:640
-end -- ./ecs/ecs.can:640
-self:onUpdateEnd(dt) -- ./ecs/ecs.can:642
-if self["interval"] then -- ./ecs/ecs.can:643
-self["_waited"] = self["_waited"] - (self["interval"]) -- ./ecs/ecs.can:644
-end -- ./ecs/ecs.can:644
-end -- ./ecs/ecs.can:644
-end, -- ./ecs/ecs.can:644
-["draw"] = function(self) -- ./ecs/ecs.can:651
-if self["visible"] then -- ./ecs/ecs.can:652
-self:onDraw() -- ./ecs/ecs.can:653
-if self["render"] ~= system_mt["render"] then -- ./ecs/ecs.can:654
-for e in self:iter() do -- ./ecs/ecs.can:655
-self:render(e, e[self["component"]]) -- ./ecs/ecs.can:656
-end -- ./ecs/ecs.can:656
-end -- ./ecs/ecs.can:656
-for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:659
-s:draw() -- ./ecs/ecs.can:660
-end -- ./ecs/ecs.can:660
-self:onDrawEnd() -- ./ecs/ecs.can:662
-end -- ./ecs/ecs.can:662
-end, -- ./ecs/ecs.can:662
-["callback"] = function(self, name, e, ...) -- ./ecs/ecs.can:675
-if self["_previous"][e] and self[name] then -- ./ecs/ecs.can:677
-self[name](self, e, e[self["component"]], ...) -- ./ecs/ecs.can:678
-end -- ./ecs/ecs.can:678
-if self["_previous"][e] then -- ./ecs/ecs.can:681
-for _, ss in ipairs(self["systems"]) do -- ./ecs/ecs.can:682
-ss:callback(name, e, ...) -- ./ecs/ecs.can:683
-end -- ./ecs/ecs.can:683
-end -- ./ecs/ecs.can:683
-end, -- ./ecs/ecs.can:683
-["emit"] = function(self, name, ...) -- ./ecs/ecs.can:708
-local status -- ./ecs/ecs.can:710
-if self[name] then -- ./ecs/ecs.can:711
-status = self[name](self, ...) -- ./ecs/ecs.can:712
-end -- ./ecs/ecs.can:712
-if status ~= "stop" and status ~= "capture" then -- ./ecs/ecs.can:715
-for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:716
-status = s:emit(name, ...) -- ./ecs/ecs.can:717
-if status == "capture" then -- ./ecs/ecs.can:718
-break -- ./ecs/ecs.can:718
-end -- ./ecs/ecs.can:718
-end -- ./ecs/ecs.can:718
-end -- ./ecs/ecs.can:718
-return status -- ./ecs/ecs.can:721
-end, -- ./ecs/ecs.can:721
-["destroy"] = function(self) -- ./ecs/ecs.can:724
-recCallOnRemoveFromWorld(self["world"], { self }) -- ./ecs/ecs.can:725
-recDestroySystems({ ["systems"] = { self } }) -- ./ecs/ecs.can:726
-end -- ./ecs/ecs.can:726
-} -- ./ecs/ecs.can:726
-local alwaysTrue -- ./ecs/ecs.can:731
-alwaysTrue = function() -- ./ecs/ecs.can:731
-return true -- ./ecs/ecs.can:731
-end -- ./ecs/ecs.can:731
-local alwaysFalse -- ./ecs/ecs.can:732
-alwaysFalse = function() -- ./ecs/ecs.can:732
-return false -- ./ecs/ecs.can:732
-end -- ./ecs/ecs.can:732
-local recInstanciateSystems -- ./ecs/ecs.can:737
-recInstanciateSystems = function(world, systems) -- ./ecs/ecs.can:737
-local t -- ./ecs/ecs.can:738
-t = {} -- ./ecs/ecs.can:738
-for _, s in ipairs(systems) do -- ./ecs/ecs.can:739
-local system -- ./ecs/ecs.can:740
-system = setmetatable({ -- ./ecs/ecs.can:742
-["systems"] = recInstanciateSystems(world, s["systems"] or {}), -- ./ecs/ecs.can:743
-["world"] = world, -- ./ecs/ecs.can:744
-["w"] = world, -- ./ecs/ecs.can:745
-["s"] = world["s"], -- ./ecs/ecs.can:746
-["_previous"] = {} -- ./ecs/ecs.can:747
-}, { ["__index"] = function(self, k) -- ./ecs/ecs.can:749
-if s[k] ~= nil then -- ./ecs/ecs.can:750
-return s[k] -- ./ecs/ecs.can:751
-else -- ./ecs/ecs.can:751
-return system_mt[k] -- ./ecs/ecs.can:753
-end -- ./ecs/ecs.can:753
-end }) -- ./ecs/ecs.can:753
-if type(s["filter"]) == "string" then -- ./ecs/ecs.can:758
-system["filter"] = function(_, e) -- ./ecs/ecs.can:759
-return e[s["filter"]] ~= nil -- ./ecs/ecs.can:759
-end -- ./ecs/ecs.can:759
-elseif type(s["filter"]) == "table" then -- ./ecs/ecs.can:760
-system["filter"] = ecs["all"](unpack(s["filter"])) -- ./ecs/ecs.can:761
-elseif type(s["filter"]) == "boolean" then -- ./ecs/ecs.can:762
-if s["filter"] then -- ./ecs/ecs.can:763
-system["filter"] = alwaysTrue -- ./ecs/ecs.can:764
-else -- ./ecs/ecs.can:764
-system["filter"] = alwaysFalse -- ./ecs/ecs.can:766
-end -- ./ecs/ecs.can:766
-end -- ./ecs/ecs.can:766
-if not s["component"] and s["name"] then -- ./ecs/ecs.can:770
-s["component"] = s["name"] -- ./ecs/ecs.can:771
-end -- ./ecs/ecs.can:771
-table["insert"](t, system) -- ./ecs/ecs.can:774
-if s["name"] then -- ./ecs/ecs.can:775
-world["s"][s["name"]] = system -- ./ecs/ecs.can:776
-end -- ./ecs/ecs.can:776
-system:onInstance() -- ./ecs/ecs.can:778
-end -- ./ecs/ecs.can:778
-return t -- ./ecs/ecs.can:780
-end -- ./ecs/ecs.can:780
-local recCallOnAddToWorld -- ./ecs/ecs.can:783
-recCallOnAddToWorld = function(world, systems) -- ./ecs/ecs.can:783
-for _, s in ipairs(systems) do -- ./ecs/ecs.can:784
-recCallOnAddToWorld(world, s["systems"]) -- ./ecs/ecs.can:785
-s:onAddToWorld(world) -- ./ecs/ecs.can:786
+for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:632
+s:clear() -- ./ecs/ecs.can:633
+end -- ./ecs/ecs.can:633
+end, -- ./ecs/ecs.can:633
+["update"] = function(self, dt) -- ./ecs/ecs.can:640
+if self["active"] then -- ./ecs/ecs.can:641
+if self["interval"] then -- ./ecs/ecs.can:642
+self["_waited"] = self["_waited"] + (dt) -- ./ecs/ecs.can:643
+if self["_waited"] < self["interval"] then -- ./ecs/ecs.can:644
+return  -- ./ecs/ecs.can:645
+end -- ./ecs/ecs.can:645
+end -- ./ecs/ecs.can:645
+self:onUpdate(dt) -- ./ecs/ecs.can:648
+if self["process"] ~= system_mt["process"] then -- ./ecs/ecs.can:649
+for e in self:iter() do -- ./ecs/ecs.can:650
+self:process(e, e[self["component"]], dt) -- ./ecs/ecs.can:651
+end -- ./ecs/ecs.can:651
+end -- ./ecs/ecs.can:651
+for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:654
+s:update(dt) -- ./ecs/ecs.can:655
+end -- ./ecs/ecs.can:655
+self:onUpdateEnd(dt) -- ./ecs/ecs.can:657
+if self["interval"] then -- ./ecs/ecs.can:658
+self["_waited"] = self["_waited"] - (self["interval"]) -- ./ecs/ecs.can:659
+end -- ./ecs/ecs.can:659
+end -- ./ecs/ecs.can:659
+end, -- ./ecs/ecs.can:659
+["draw"] = function(self) -- ./ecs/ecs.can:666
+if self["visible"] then -- ./ecs/ecs.can:667
+self:onDraw() -- ./ecs/ecs.can:668
+if self["render"] ~= system_mt["render"] then -- ./ecs/ecs.can:669
+for e in self:iter() do -- ./ecs/ecs.can:670
+self:render(e, e[self["component"]]) -- ./ecs/ecs.can:671
+end -- ./ecs/ecs.can:671
+end -- ./ecs/ecs.can:671
+for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:674
+s:draw() -- ./ecs/ecs.can:675
+end -- ./ecs/ecs.can:675
+self:onDrawEnd() -- ./ecs/ecs.can:677
+end -- ./ecs/ecs.can:677
+end, -- ./ecs/ecs.can:677
+["callback"] = function(self, name, e, ...) -- ./ecs/ecs.can:690
+if self["_previous"][e] and self[name] then -- ./ecs/ecs.can:692
+self[name](self, e, e[self["component"]], ...) -- ./ecs/ecs.can:693
+end -- ./ecs/ecs.can:693
+if self["_previous"][e] then -- ./ecs/ecs.can:696
+for _, ss in ipairs(self["systems"]) do -- ./ecs/ecs.can:697
+ss:callback(name, e, ...) -- ./ecs/ecs.can:698
+end -- ./ecs/ecs.can:698
+end -- ./ecs/ecs.can:698
+end, -- ./ecs/ecs.can:698
+["emit"] = function(self, name, ...) -- ./ecs/ecs.can:723
+local status -- ./ecs/ecs.can:725
+if self[name] then -- ./ecs/ecs.can:726
+status = self[name](self, ...) -- ./ecs/ecs.can:727
+end -- ./ecs/ecs.can:727
+if status ~= "stop" and status ~= "capture" then -- ./ecs/ecs.can:730
+for _, s in ipairs(self["systems"]) do -- ./ecs/ecs.can:731
+status = s:emit(name, ...) -- ./ecs/ecs.can:732
+if status == "capture" then -- ./ecs/ecs.can:733
+break -- ./ecs/ecs.can:733
+end -- ./ecs/ecs.can:733
+end -- ./ecs/ecs.can:733
+end -- ./ecs/ecs.can:733
+return status -- ./ecs/ecs.can:736
+end, -- ./ecs/ecs.can:736
+["destroy"] = function(self) -- ./ecs/ecs.can:739
+recCallOnRemoveFromWorld(self["world"], { self }) -- ./ecs/ecs.can:740
+recDestroySystems({ ["systems"] = { self } }) -- ./ecs/ecs.can:741
+end -- ./ecs/ecs.can:741
+} -- ./ecs/ecs.can:741
+local alwaysTrue -- ./ecs/ecs.can:746
+alwaysTrue = function() -- ./ecs/ecs.can:746
+return true -- ./ecs/ecs.can:746
+end -- ./ecs/ecs.can:746
+local alwaysFalse -- ./ecs/ecs.can:747
+alwaysFalse = function() -- ./ecs/ecs.can:747
+return false -- ./ecs/ecs.can:747
+end -- ./ecs/ecs.can:747
+local recInstanciateSystems -- ./ecs/ecs.can:752
+recInstanciateSystems = function(world, systems) -- ./ecs/ecs.can:752
+local t -- ./ecs/ecs.can:753
+t = {} -- ./ecs/ecs.can:753
+for _, s in ipairs(systems) do -- ./ecs/ecs.can:754
+local system -- ./ecs/ecs.can:755
+system = setmetatable({ -- ./ecs/ecs.can:757
+["systems"] = recInstanciateSystems(world, s["systems"] or {}), -- ./ecs/ecs.can:758
+["world"] = world, -- ./ecs/ecs.can:759
+["w"] = world, -- ./ecs/ecs.can:760
+["s"] = world["s"], -- ./ecs/ecs.can:761
+["_previous"] = {} -- ./ecs/ecs.can:762
+}, { ["__index"] = function(self, k) -- ./ecs/ecs.can:764
+if s[k] ~= nil then -- ./ecs/ecs.can:765
+return s[k] -- ./ecs/ecs.can:766
+else -- ./ecs/ecs.can:766
+return system_mt[k] -- ./ecs/ecs.can:768
+end -- ./ecs/ecs.can:768
+end }) -- ./ecs/ecs.can:768
+if type(s["filter"]) == "string" then -- ./ecs/ecs.can:773
+system["filter"] = function(_, e) -- ./ecs/ecs.can:774
+return e[s["filter"]] ~= nil -- ./ecs/ecs.can:774
+end -- ./ecs/ecs.can:774
+elseif type(s["filter"]) == "table" then -- ./ecs/ecs.can:775
+system["filter"] = ecs["all"](unpack(s["filter"])) -- ./ecs/ecs.can:776
+elseif type(s["filter"]) == "boolean" then -- ./ecs/ecs.can:777
+if s["filter"] then -- ./ecs/ecs.can:778
+system["filter"] = alwaysTrue -- ./ecs/ecs.can:779
+else -- ./ecs/ecs.can:779
+system["filter"] = alwaysFalse -- ./ecs/ecs.can:781
+end -- ./ecs/ecs.can:781
+end -- ./ecs/ecs.can:781
+if not s["component"] and s["name"] then -- ./ecs/ecs.can:785
+s["component"] = s["name"] -- ./ecs/ecs.can:786
 end -- ./ecs/ecs.can:786
-end -- ./ecs/ecs.can:786
-ecs = { -- ./ecs/ecs.can:792
-["world"] = function(...) -- ./ecs/ecs.can:797
-local world -- ./ecs/ecs.can:798
-world = setmetatable({ -- ./ecs/ecs.can:798
-["filter"] = ecs["all"](), -- ./ecs/ecs.can:799
-["s"] = {}, -- ./ecs/ecs.can:800
-["_previous"] = {} -- ./ecs/ecs.can:801
-}, { ["__index"] = system_mt }) -- ./ecs/ecs.can:802
-world["world"] = world -- ./ecs/ecs.can:803
-world["w"] = world -- ./ecs/ecs.can:804
-world["systems"] = recInstanciateSystems(world, { ... }) -- ./ecs/ecs.can:805
-recCallOnAddToWorld(world, world["systems"]) -- ./ecs/ecs.can:806
-return world -- ./ecs/ecs.can:807
-end, -- ./ecs/ecs.can:807
-["all"] = function(...) -- ./ecs/ecs.can:813
-if ... then -- ./ecs/ecs.can:814
-local l -- ./ecs/ecs.can:815
-l = { ... } -- ./ecs/ecs.can:815
-return function(s, e) -- ./ecs/ecs.can:816
-for _, k in ipairs(l) do -- ./ecs/ecs.can:817
-if e[k] == nil then -- ./ecs/ecs.can:818
-return false -- ./ecs/ecs.can:819
-end -- ./ecs/ecs.can:819
-end -- ./ecs/ecs.can:819
-return true -- ./ecs/ecs.can:822
-end -- ./ecs/ecs.can:822
-else -- ./ecs/ecs.can:822
-return alwaysTrue -- ./ecs/ecs.can:825
-end -- ./ecs/ecs.can:825
-end, -- ./ecs/ecs.can:825
-["any"] = function(...) -- ./ecs/ecs.can:832
-if ... then -- ./ecs/ecs.can:833
-local l -- ./ecs/ecs.can:834
-l = { ... } -- ./ecs/ecs.can:834
-return function(s, e) -- ./ecs/ecs.can:835
-for _, k in ipairs(l) do -- ./ecs/ecs.can:836
-if e[k] ~= nil then -- ./ecs/ecs.can:837
-return true -- ./ecs/ecs.can:838
-end -- ./ecs/ecs.can:838
-end -- ./ecs/ecs.can:838
-return false -- ./ecs/ecs.can:841
-end -- ./ecs/ecs.can:841
-else -- ./ecs/ecs.can:841
-return alwaysFalse -- ./ecs/ecs.can:844
-end -- ./ecs/ecs.can:844
-end, -- ./ecs/ecs.can:844
-["scene"] = function(name, systems, entities) -- ./ecs/ecs.can:854
-if systems == nil then systems = {} end -- ./ecs/ecs.can:854
-if entities == nil then entities = {} end -- ./ecs/ecs.can:854
-assert(scene, "ubiquitousse.scene unavailable") -- ./ecs/ecs.can:855
-local s -- ./ecs/ecs.can:856
-s = scene["new"](name) -- ./ecs/ecs.can:856
-local w -- ./ecs/ecs.can:857
-s["enter"] = function(self) -- ./ecs/ecs.can:859
-w = ecs["world"](unpack(systems)) -- ./ecs/ecs.can:860
-w:add(unpack(entities)) -- ./ecs/ecs.can:861
-end -- ./ecs/ecs.can:861
-s["exit"] = function(self) -- ./ecs/ecs.can:863
-w:destroy() -- ./ecs/ecs.can:864
-end -- ./ecs/ecs.can:864
-s["update"] = function(self, dt) -- ./ecs/ecs.can:866
-w:update(dt) -- ./ecs/ecs.can:867
-end -- ./ecs/ecs.can:867
-s["draw"] = function(self) -- ./ecs/ecs.can:869
-w:draw() -- ./ecs/ecs.can:870
-end -- ./ecs/ecs.can:870
-return s -- ./ecs/ecs.can:873
-end -- ./ecs/ecs.can:873
-} -- ./ecs/ecs.can:873
-return ecs -- ./ecs/ecs.can:877
+table["insert"](t, system) -- ./ecs/ecs.can:789
+if s["name"] then -- ./ecs/ecs.can:790
+world["s"][s["name"]] = system -- ./ecs/ecs.can:791
+end -- ./ecs/ecs.can:791
+system:onInstance() -- ./ecs/ecs.can:793
+end -- ./ecs/ecs.can:793
+return t -- ./ecs/ecs.can:795
+end -- ./ecs/ecs.can:795
+local recCallOnAddToWorld -- ./ecs/ecs.can:798
+recCallOnAddToWorld = function(world, systems) -- ./ecs/ecs.can:798
+for _, s in ipairs(systems) do -- ./ecs/ecs.can:799
+recCallOnAddToWorld(world, s["systems"]) -- ./ecs/ecs.can:800
+s:onAddToWorld(world) -- ./ecs/ecs.can:801
+end -- ./ecs/ecs.can:801
+end -- ./ecs/ecs.can:801
+ecs = { -- ./ecs/ecs.can:807
+["world"] = function(...) -- ./ecs/ecs.can:812
+local world -- ./ecs/ecs.can:813
+world = setmetatable({ -- ./ecs/ecs.can:813
+["filter"] = ecs["all"](), -- ./ecs/ecs.can:814
+["s"] = {}, -- ./ecs/ecs.can:815
+["_previous"] = {} -- ./ecs/ecs.can:816
+}, { ["__index"] = system_mt }) -- ./ecs/ecs.can:817
+world["world"] = world -- ./ecs/ecs.can:818
+world["w"] = world -- ./ecs/ecs.can:819
+world["systems"] = recInstanciateSystems(world, { ... }) -- ./ecs/ecs.can:820
+recCallOnAddToWorld(world, world["systems"]) -- ./ecs/ecs.can:821
+return world -- ./ecs/ecs.can:822
+end, -- ./ecs/ecs.can:822
+["all"] = function(...) -- ./ecs/ecs.can:828
+if ... then -- ./ecs/ecs.can:829
+local l -- ./ecs/ecs.can:830
+l = { ... } -- ./ecs/ecs.can:830
+return function(s, e) -- ./ecs/ecs.can:831
+for _, k in ipairs(l) do -- ./ecs/ecs.can:832
+if e[k] == nil then -- ./ecs/ecs.can:833
+return false -- ./ecs/ecs.can:834
+end -- ./ecs/ecs.can:834
+end -- ./ecs/ecs.can:834
+return true -- ./ecs/ecs.can:837
+end -- ./ecs/ecs.can:837
+else -- ./ecs/ecs.can:837
+return alwaysTrue -- ./ecs/ecs.can:840
+end -- ./ecs/ecs.can:840
+end, -- ./ecs/ecs.can:840
+["any"] = function(...) -- ./ecs/ecs.can:847
+if ... then -- ./ecs/ecs.can:848
+local l -- ./ecs/ecs.can:849
+l = { ... } -- ./ecs/ecs.can:849
+return function(s, e) -- ./ecs/ecs.can:850
+for _, k in ipairs(l) do -- ./ecs/ecs.can:851
+if e[k] ~= nil then -- ./ecs/ecs.can:852
+return true -- ./ecs/ecs.can:853
+end -- ./ecs/ecs.can:853
+end -- ./ecs/ecs.can:853
+return false -- ./ecs/ecs.can:856
+end -- ./ecs/ecs.can:856
+else -- ./ecs/ecs.can:856
+return alwaysFalse -- ./ecs/ecs.can:859
+end -- ./ecs/ecs.can:859
+end, -- ./ecs/ecs.can:859
+["scene"] = function(name, systems, entities) -- ./ecs/ecs.can:877
+if systems == nil then systems = {} end -- ./ecs/ecs.can:877
+if entities == nil then entities = {} end -- ./ecs/ecs.can:877
+assert(scene, "ubiquitousse.scene unavailable") -- ./ecs/ecs.can:878
+local s -- ./ecs/ecs.can:879
+s = scene["new"](name) -- ./ecs/ecs.can:879
+local w -- ./ecs/ecs.can:880
+s["enter"] = function(self) -- ./ecs/ecs.can:882
+local sys, ent = systems, entities -- ./ecs/ecs.can:883
+if type(systems) == "function" then -- ./ecs/ecs.can:884
+sys = { systems() } -- ./ecs/ecs.can:884
+end -- ./ecs/ecs.can:884
+if type(entities) == "function" then -- ./ecs/ecs.can:885
+ent = { entities() } -- ./ecs/ecs.can:885
+end -- ./ecs/ecs.can:885
+w = ecs["world"](unpack(sys)) -- ./ecs/ecs.can:886
+w:add(unpack(ent)) -- ./ecs/ecs.can:887
+end -- ./ecs/ecs.can:887
+s["exit"] = function(self) -- ./ecs/ecs.can:889
+w:destroy() -- ./ecs/ecs.can:890
+end -- ./ecs/ecs.can:890
+s["suspend"] = function(self) -- ./ecs/ecs.can:892
+w:emit("onSuspend") -- ./ecs/ecs.can:893
+end -- ./ecs/ecs.can:893
+s["resume"] = function(self) -- ./ecs/ecs.can:895
+w:emit("onResume") -- ./ecs/ecs.can:896
+end -- ./ecs/ecs.can:896
+s["update"] = function(self, dt) -- ./ecs/ecs.can:898
+w:update(dt) -- ./ecs/ecs.can:899
+end -- ./ecs/ecs.can:899
+s["draw"] = function(self) -- ./ecs/ecs.can:901
+w:draw() -- ./ecs/ecs.can:902
+end -- ./ecs/ecs.can:902
+return s -- ./ecs/ecs.can:905
+end -- ./ecs/ecs.can:905
+} -- ./ecs/ecs.can:905
+return ecs -- ./ecs/ecs.can:909
