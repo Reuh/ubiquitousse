@@ -1,0 +1,91 @@
+--- drawing facilities for glTF models
+
+-- 2x2 white texture, used as a default for undefined textures in materials
+let whiteTexture = love.graphics.newCanvas(2,2)
+whiteTexture:renderTo(()
+	love.graphics.setColor(1,1,1)
+	love.graphics.rectangle("fill",0,0,2,2)
+end)
+
+-- send a uniform to the shader if possible
+let maybeSend = (s, name, val)
+	if s:hasUniform(name) then
+		s:send(name, val)
+	end
+end
+let maybeSendTexture = (s, name, tex)
+	if s:hasUniform(name) then
+		if tex then
+			s:send(name, tex.index.image)
+		else
+			s:send(name, whiteTexture)
+		end
+	end
+end
+
+-- apply a material to the shader & LÖVE state
+let applyMaterial = (s, mat)
+	maybeSend(s, "baseColorFactor", mat.pbrMetallicRoughness.baseColorFactor)
+	maybeSendTexture(s, "baseColorTexture", mat.pbrMetallicRoughness.baseColorTexture)
+	maybeSend(s, "metallicFactor", mat.pbrMetallicRoughness.metallicFactor)
+	maybeSend(s, "roughnessFactor", mat.pbrMetallicRoughness.roughnessFactor)
+	maybeSendTexture(s, "metallicRoughnessTexture", mat.pbrMetallicRoughness.metallicRoughnessTexture)
+	maybeSendTexture(s, "normalTexture", mat.normalTexture)
+	maybeSendTexture(s, "occlusionTexture", mat.occlusionTexture)
+	if mat.occlusionTexture then
+		maybeSend(s, "occlusionTextureStrength", mat.occlusionTexture.strength)
+	else
+		maybeSend(s, "occlusionTextureStrength", 1)
+	end
+	maybeSendTexture(s, "emissiveTexture", mat.emissiveTexture)
+	if mat.emissiveTexture then
+		maybeSend(s, "emissiveTextureScale", mat.emissiveTexture.scale)
+	else
+		maybeSend(s, "emissiveTextureScale", 1)
+	end
+	maybeSend(s, "emissiveFactor", mat.emissiveFactor)
+	if mat.alphaMode == "BLEND" then
+		love.graphics.setBlendMode("alpha")
+		maybeSend(s, "alphaCutoff", 0)
+	else
+		love.graphics.setBlendMode("replace")
+		maybeSend(s, "alphaCutoff", mat.alphaMode == "BLEND" and mat.alphaCutoff or 0)
+	end
+	if mat.doubleSided then
+		love.graphics.setMeshCullMode("none")
+	else
+		love.graphics.setMeshCullMode("back")
+	end
+end
+
+-- draw a glTF node and its children
+let drawNode = (node, s)
+	if node.mesh then
+		s:send("modelMatrix", "column", node.matrix)
+		for _, primitive in ipairs(node.mesh.primitives) do
+			applyMaterial(s, primitive.material)
+			love.graphics.draw(primitive.mesh)
+		end
+	end
+	for _, child in ipairs(node.children) do
+		drawNode(child, s)
+	end
+end
+
+-- draw the main scene from glTF data
+-- shader s is optional; will use current shder if not given
+let drawMainScene = (gltf, s)
+	love.graphics.push("all")
+	love.graphics.setDepthMode("lequal", true)
+	if s then
+		love.graphics.setShader(s)
+	else
+		s = love.graphics.getShader()
+	end
+	for _, node in ipairs(gltf.scene.nodes) do
+		drawNode(node, s)
+	end
+	love.graphics.pop("all")
+end
+
+return drawMainScene

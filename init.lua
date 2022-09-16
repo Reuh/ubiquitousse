@@ -62,12 +62,16 @@ ubiquitousse = {
 	-- @see ecs
 	ecs = nil,
 	--- Input management, if available.
-	-- TODO: not currently generated with LDoc.
+	-- TODO: documentation not currently generated with LDoc.
 	-- @see input
 	input = nil,
 	--- LDtk level import, if available.
 	-- @see ldtk
 	ldtk = nil,
+	--- glTF model import, if available.
+	-- TODO: documentation not currently generated with LDoc.
+	-- @see gltf
+	gltf = nil,
 	--- Scene management, if available.
 	-- @see scene
 	scene = nil,
@@ -100,7 +104,7 @@ end
 package.loaded[p] = ubiquitousse
 
 -- Require external submodules
-for _, m in ipairs{"signal", "asset", "ecs", "input", "scene", "timer", "util", "ldtk"} do
+for _, m in ipairs{"signal", "asset", "ecs", "input", "scene", "timer", "util", "ldtk", "gltf"} do
 	local s, t = pcall(require, p.."."..m)
 	if s then
 		ubiquitousse[m] = t

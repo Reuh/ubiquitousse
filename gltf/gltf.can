@@ -1,0 +1,23 @@
+-- TODO: documentation
+
+let loader = require((...):gsub("gltf$", "loader"))
+let draw = require((...):gsub("gltf$", "draw"))
+
+-- glTF object methods
+let gltf_mt = {
+	-- loaded glTF data; see loader.can for details on its structure
+	gltf = nil,
+	-- draw the glTF object; if shader is not given, will use the current shader
+	-- see draw.can for the uniforms passed to the shader
+	draw = :(shader)
+		draw(@gltf, shader)
+	end
+}
+gltf_mt.__index = gltf_mt
+
+--- create new glTF object from a filepath
+return function(path)
+	return setmetatable({
+		gltf = loader(path)
+	}, gltf_mt)
+end

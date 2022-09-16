@@ -1,0 +1,398 @@
+-- glTF 2.0 loader
+-- see TODOs for missing features
+
+let json_decode
+do
+	let r, json = pcall(require, "json")
+	if not r then json = require((...):gsub("gltf%.loader$", "lib.json")) end
+	json_decode = json.decode
+end
+
+let cpml = require("cpml")
+let mat4, vec3, quat = cpml.mat4, cpml.vec3, cpml.quat
+
+let dunpack = string.unpack or love.data.unpack
+
+--- Enums and the string that will be used to represent their values.
+let attributeName = {
+	POSITION = "VertexPosition",
+	NORMAL = "VertexNormal",
+	TANGENT = "VertexTangent",
+	TEXCOORD_0 = "VertexTexCoord",
+	TEXCOORD_1 = "VertexTexCoord1",
+	COLOR_0 = "VertexColor",
+	JOINTS_0 = "VertexJoints",
+	WEIGHTS_0 = "VertexWeights"
+}
+
+let componentType = {
+	[5120] = "byte",
+	[5121] = "unsigned byte",
+	[5122] = "short",
+	[5123] = "unsigned short",
+	[5125] = "int",
+	[5126] = "float"
+}
+
+let samplerEnum = {
+	[9728] = "nearest",
+	[9729] = "linear",
+	[9984] = "nearest_mipmap_nearest",
+	[9985] = "linear_mipmap_nearest",
+	[9986] = "nearest_mipmap_linear",
+	[9987] = "linear_mipmap_linear",
+	[33071] = "clamp",
+	[33648] = "mirroredrepeat",
+	[10497] = "repeat"
+}
+
+let mode = {
+	[0] = "points",
+	[1] = "lines",
+	[2] = "line_loop",
+	[3] = "line_strip",
+	[4] = "triangles",
+	[5] = "strip",
+	[6] = "fan"
+}
+
+--- Load a glTF file and returns it.
+-- The Lua table returned mirror the glTF structure, except:
+-- * nodes, buffers, textures, etc. referenced using indices are replaced by an actual reference to the object
+-- * node.matrix are replaced by corresponding mat4 objects from cpml and is calculated from TRS when undefined
+-- * node.rotation, node.translation, node.scale replaced by quat and vec3 objects from cpml
+-- * optional fields are intialized whith their standard default value (if any)
+-- * enums number are replaced by the corresponding string (like accessor.componentType, primitive.mode)
+--   if there is a LÖVE equivalent of this value, it is used (for example the wrap modes for textures);
+--   otherwise the string is the same as the OpenGL name but in lowercase
+-- new fields:
+-- * camera.matrix: the projection matrix
+-- * set a data field in buffers with the decoded/loaded data as a string
+-- * set a image field in textures with the loaded LÖVE image
+-- * set a data field in accessors as a list of components (either list of scalar or list of list)
+-- * accessor.components contains component size
+-- * the default material is created at materials[0]
+-- * objects with name will have an associated field in list where they are present
+-- This implementation will not perform data consistency checks and have absolute trust in the exporter.
+let gltf = (path)
+	let f = assert(io.open(path, "r"))
+	let t = json_decode(f:read("*a"))
+	f:close()
+
+	-- asset
+	if t.asset.minVersion then
+		let maj, min = t.asset.minVersion:match("^(%d+)%.(%d+)$")
+		assert(maj == "2" and min == "0", "asset require at least glTF version %s.%s but we only support 2.0":format(maj, min))
+	else
+		let maj, min = t.asset.version:match("^(%d+)%.(%d+)$")
+		assert(maj == "2", "asset require glTF version %s.%s but we only support 2.x":format(maj, min))
+	end
+
+	-- empty lists
+	t.nodes or= {}
+	t.scenes or= {}
+	t.cameras or= {}
+	t.meshes or= {}
+	t.buffers or= {}
+	t.bufferViews or = {}
+	t.accessors or= {}
+	t.materials or= {}
+	t.textures or= {}
+	t.images or= {}
+	t.samplers or= {}
+	t.skins or= {}
+	t.animations or= {}
+
+	-- scenes
+	for _, scene in ipairs(t.scenes) do
+		if scene.name then t.scenes[scene.name] = scene end
+		for i, node in ipairs(scene.nodes) do
+			scene.nodes[i] = t.nodes[node+1]
+			if scene.nodes[i].name then scene.nodes[scene.nodes[i].name] = scene.nodes[i] end
+		end
+	end
+
+	-- scene
+	if t.scene then
+		t.scene = t.scenes[t.scene+1]
+	end
+
+	-- nodes
+	for _, node in ipairs(t.nodes) do
+		if node.name then t.nodes[node.name] = node end
+		node.children or= {}
+		for i, child in ipairs(node.children) do
+			node.children[i] = t.nodes[child+1]
+		end
+		if node.matrix then
+			node.matrix = mat4(node.matrix)
+		else
+			node.translation or= {0,0,0}
+			node.rotation or= {0,0,0,1}
+			node.scale or= {1,1,1}
+
+			node.translation = vec3(node.translation)
+			node.rotation = quat(node.rotation)
+			node.scale = vec3(node.scale)
+
+			-- build a default transformation matrix from TRS
+			node.matrix = mat4.identity()
+			node.matrix:scale(node.matrix, node.scale)
+			node.matrix:mul(mat4.from_quaternion(node.rotation), node.matrix)
+			node.matrix:translate(node.matrix, node.translation)
+		end
+		if node.mesh then
+			node.mesh = t.meshes[node.mesh+1]
+		end
+		if node.camera then
+			node.camera = t.cameras[node.camera+1]
+		end
+	end
+
+	-- buffers
+	for i, buffer in ipairs(t.buffers) do
+		if i == 1 and not buffer.uri then
+			error("no support for glb-stored buffer") -- TODO
+		end
+		if buffer.uri:match("data:") then
+			local data = buffer.uri:match("^data:.-,(.*)$")
+			if buffer.uri:match("^data:.-;base64,") then
+				buffer.data = love.data.decode("string", "base64", data):sub(1, buffer.byteLength+1)
+			else
+				buffer.data = data:gsub("%%(%x%x)", (hex)
+					return love.data.decode("string", "hex", hex)
+				end):sub(1, buffer.byteLength+1)
+			end
+		else
+			let bf = assert(io.open(buffer.uri, "r"), "can't find ressource %s":format(buffer.uri))
+			let s = bf:read("*a")
+			bf:close()
+			buffer.data = s:sub(1, buffer.byteLength+1)
+		end
+	end
+
+	-- bufferViews
+	for _, view in ipairs(t.bufferViews) do
+		view.buffer = t.buffers[view.buffer+1]
+		view.byteOffset or= 0
+		-- TODO target
+	end
+
+	-- accessors
+	for _, accessor in ipairs(t.accessors) do
+		accessor.bufferView = t.bufferViews[accessor.bufferView+1]
+		accessor.byteOffset or= 0
+
+		let view = accessor.bufferView
+		let data = view.buffer.data
+
+		-- get component type and size
+		let fmt, size
+		accessor.componentType = componentType[accessor.componentType]
+		if accessor.componentType == "byte" then
+			fmt, size = "b", 1
+		elseif accessor.componentType == "unsigned byte" then
+			fmt, size = "B", 1
+		elseif accessor.componentType == "short" then
+			fmt, size = "h", 2
+		elseif accessor.componentType == "unsigned short" then
+			fmt, size = "H", 2
+		elseif accessor.componentType == "unsigned int" then
+			fmt, size = "I4", 4
+		elseif accessor.componentType == "float" then
+			fmt, size = "f", 4
+		end
+
+		-- get element type and size
+		if accessor.type == "SCALAR" then
+			accessor.components, fmt = 1, fmt
+		elseif accessor.type == "VEC2" then
+			accessor.components, fmt = 2, fmt:rep(2)
+		elseif accessor.type == "VEC3" then
+			accessor.components, fmt = 3, fmt:rep(3)
+		elseif accessor.type == "VEC4" then
+			accessor.components, fmt = 4, fmt:rep(4)
+		elseif accessor.type == "MAT2" then
+			accessor.components = 4
+			fmt = (fmt:rep(2) .. "x":rep(4 - (size*2)%4)):rep(2) -- padding at each column start
+		elseif accessor.type == "MAT3" then
+			accessor.components = 9
+			fmt = (fmt:rep(3) .. "x":rep(4 - (size*3)%4)):rep(3)
+		elseif accessor.type == "MAT4" then
+			accessor.components = 16
+			fmt = (fmt:rep(4) .. "x":rep(4 - (size*4)%4)):rep(4)
+		end
+
+		fmt =.. "<" -- little endian
+
+		-- extract elements from raw data
+		accessor.data = {}
+		let i = view.byteOffset+1 + accessor.byteOffset
+		let stop = view.byteOffset+1 + view.byteLength
+		let count = 0
+		while i < stop and count < accessor.count do
+			local d = { dunpack(fmt, data, i) }
+			d[#d] = nil
+			if accessor.components > 1 then
+				table.insert(accessor.data, d)
+			else
+				table.insert(accessor.data, d[1])
+			end
+			count += 1
+			i += view.byteStride or (size * accessor.components)
+		end
+
+		-- TODO sparse accessor
+	end
+
+	-- images
+	for _, image in ipairs(t.images) do
+		if image.uri then
+			image.image = love.graphics.newImage(image.uri)
+		else
+			image.bufferView = t.bufferViews[image.bufferView+1]
+
+			let view = image.bufferView
+			let data = view.buffer.data
+
+			image.data = love.image.newImageData(love.data.newByteData(data:sub(view.byteOffset+1, view.byteOffset+view.byteLength)))
+		end
+	end
+	-- samplers
+	for _, sampler in ipairs(t.samplers) do
+		sampler.wrapS or= 10497
+		sampler.wrapT or= 10497
+
+		sampler.magFilter = samplerEnum[sampler.magFilter]
+		sampler.minFilter = samplerEnum[sampler.minFilter]
+		sampler.wrapS = samplerEnum[sampler.wrapS]
+		sampler.wrapT = samplerEnum[sampler.wrapT]
+	end
+	-- textures
+	for _, texture in ipairs(t.textures) do
+		texture.source = t.images[texture.source+1] or {}
+		texture.sampler = t.samplers[texture.sampler+1]
+		-- make LÖVE image
+		let mag = texture.sampler.magFilter
+		let min = texture.sampler.minFilter
+		let mip
+		if min:match("_mipmap_") then
+			min, mip = min:match("^(.*)_mipmap_(.*)$") -- use mipmap; get the filtering used for both mipmaps and min
+		end
+		texture.image = love.graphics.newImage(texture.source.data, { mipmaps = not not mip })
+		texture.image:setFilter(min or "linear", mag)
+		if mip then texture.image:setMipmapFilter(mip) end
+		texture.image:setWrap(texture.sampler.wrapS, texture.sampler.wrapT)
+	end
+
+	-- default material
+	t.materials[0] = {
+		pbrMetallicRoughness = {
+			baseColorFactor = {1,1,1,1},
+			metallicFactor = 1,
+			roughnessFactor = 1
+		},
+		emissiveFactor = {0,0,0},
+		alphaMode = "OPAQUE",
+		alphaCutoff = .5,
+		doubleSided = false
+	}
+	-- materials
+	for _, material in ipairs(t.materials) do
+		material.pbrMetallicRoughness or= {}
+		material.pbrMetallicRoughness.baseColorFactor or= {1,1,1,1}
+		if material.pbrMetallicRoughness.baseColorTexture then
+			material.pbrMetallicRoughness.baseColorTexture.index = t.textures[material.pbrMetallicRoughness.baseColorTexture.index+1]
+			material.pbrMetallicRoughness.baseColorTexture.texCoord or= 0
+		end
+		material.pbrMetallicRoughness.metallicFactor or= 1
+		material.pbrMetallicRoughness.roughnessFactor or= 1
+		if material.pbrMetallicRoughness.metallicRoughnessTexture then
+			material.pbrMetallicRoughness.metallicRoughnessTexture.index = t.textures[material.pbrMetallicRoughness.metallicRoughnessTexture.index+1]
+			material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord or= 0
+		end
+		if material.normalTexture then
+			material.normalTexture.index = t.textures[material.normalTexture.index+1]
+			material.normalTexture.texCoord or= 0
+			material.normalTexture.scale or= 1
+		end
+		if material.occlusionTexture then
+			material.occlusionTexture.index = t.textures[material.occlusionTexture.index+1]
+			material.occlusionTexture.texCoord or= 0
+			material.occlusionTexture.strength or= 1
+		end
+		if material.emissiveTexture then
+			material.emissiveTexture.index = t.textures[material.emissiveTexture.index+1]
+			material.emissiveTexture.texCoord or= 0
+		end
+		material.emissiveFactor or= {0,0,0}
+		material.alphaMode or= "OPAQUE"
+		material.alphaCutoff or= .5
+		material.doubleSided or= false
+	end
+
+	-- meshes
+	for _, mesh in ipairs(t.meshes) do
+		for _, primitive in ipairs(mesh.primitives) do
+			let vertexformat = {}
+			let vertices = {}
+			for n, v in pairs(primitive.attributes) do
+				let accessor = t.accessors[v+1]
+				primitive.attributes[n] = accessor
+				table.insert(vertexformat, { attributeName[n] or n, accessor.componentType, accessor.components })
+				for i, x in ipairs(accessor.data) do
+					let vertex = vertices[i]
+					if not vertex then
+						table.insert(vertices, i, {})
+						vertex = vertices[i]
+					end
+					for _, c in ipairs(x) do
+						table.insert(vertex, c)
+					end
+				end
+			end
+
+			if primitive.mode then
+				primitive.mode = mode[primitive.mode]
+			else
+				primitive.mode = "triangles"
+			end
+
+			primitive.mesh = love.graphics.newMesh(vertexformat, vertices, primitive.mode)
+			if primitive.indices then
+				primitive.indices = [ for _, i in ipairs(t.accessors[primitive.indices+1].data) do i+1 end ]
+				primitive.mesh:setVertexMap(primitive.indices)
+			end
+
+			primitive.material = t.materials[(primitive.material or -1)+1]
+			if primitive.material.pbrMetallicRoughness.baseColorTexture then
+				primitive.mesh:setTexture(primitive.material.pbrMetallicRoughness.baseColorTexture.index.image)
+			end
+
+			-- TODO targets
+		end
+	end
+
+	-- cameras
+	for _, camera in ipairs(t.cameras) do
+		if camera.name then t.cameras[camera.name] = camera end
+		if camera.type == "perspective" then
+			camera.perspective.aspectRatio or= 16/9
+			camera.matrix = mat4.from_perspective(camera.perspective.yfov, camera.perspective.aspectRatio, camera.perspective.znear, camera.perspective.zfar)
+		elseif camera.type == "orthographic" then
+			camera.matrix = mat4.from_ortho(0, 0, camera.orthographic.xmag, camera.orthographic.ymag, camera.orthographic.znear, camera.orthographic.zfar)
+		end
+	end
+
+	-- TODO skins
+
+	-- TODO animations
+
+	-- TODO extensions
+
+	-- TODO glb
+
+	return t
+end
+
+return gltf
