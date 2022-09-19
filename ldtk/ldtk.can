@@ -43,7 +43,7 @@
 -- TODO: handle nineSliceBorders when drawing entities
 -- TODO: Once stable in LDtk: handle parallax when drawing layers, multiple worlds per file
 
---- LÖVE wrappers/placeholder
+-- LÖVE wrappers/placeholder
 let lg = (love or {}).graphics
 let newQuad
 if lg then
@@ -56,7 +56,7 @@ end
 
 let cache
 
---- json helpers
+-- json helpers
 let json_decode
 do
 	let r, json = pcall(require, "json")
@@ -70,7 +70,7 @@ let readJson = (file)
 	return t
 end
 
---- color helpers
+-- color helpers
 let parseColor = (str)
 	local r, g, b = str:match("^#(..)(..)(..)")
 	r, g, b = tonumber(r, 16), tonumber(g, 16), tonumber(b, 16)

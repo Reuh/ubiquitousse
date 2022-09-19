@@ -5,7 +5,7 @@ Set of various libraries I use for game development, mainly with LÖVE. Most of 
 This provides, sorting the one with the fewest existing alterative as far as I know first:
 
 * `ldtk` provides a [LDtk](https://ldtk.io/) level importer
-* `gltf` provides a [glTF](https://www.khronos.org/gltf/) model loader
+* `gltf` provides a [glTF](https://www.khronos.org/gltf/) model loader (documentation WIP)
 * `ecs` provides [ECS](https://en.wikipedia.org/wiki/Entity_component_system) facilities
 * `input` provides input management facilities
 * `timer` provides time management facilities

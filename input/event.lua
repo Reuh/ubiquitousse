@@ -4,13 +4,13 @@ local max, min = math.max, math.min
 --- This event registry is where every input object will listen for source events.
 --
 -- Available events:
--- * `"source.name"`: triggered when source.name (example name) is updated.
---   Will pass the arguments _new value_ (number), _filter_ (optional), _..._ (additional arguments for the filter, optional).
---   `filter` is an optional filter function that will be called by the listening inputs with arguments filter(input object, new value, ...),
+-- * `"source.name"`: triggered when source.name (example input source name, replace with your own) is updated.
+--   Must pass the arguments _new value_ (number), _filter_ (optional), _..._ (additional arguments for the filter, optional).
+--   `filter` is an optional filter function that will be called by the listening inputs with arguments `filter(input object, new value, ...)`,
 --   and should return the (eventually modified) new value. If it returns `nil`, the input will ignore the event (for example if the event concerns
 --   a joystick that is not linked with the input).
 -- * `"_active"`: triggered when any input is active, used for input detection in `onActiveNextSource`.
---   Will pass arguments _source name_ (string), _new value_, _filter_, _..._ (same arguments as other source updates, with source name added).
+--   Must pass arguments _source name_ (string), _new value_, _filter_, _..._ (same arguments as other source updates, with source name added).
 local event = signal.new()
 
 local function update(source, new, filter, ...)

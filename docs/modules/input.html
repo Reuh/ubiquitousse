@@ -34,7 +34,9 @@
 <h2>Contents</h2>
 <ul>
 <li><a href="#Functions">Functions</a></li>
+<li><a href="#Input_expressions">Input expressions </a></li>
 <li><a href="#Input_objects">Input objects </a></li>
+<li><a href="#Input_sources">Input sources </a></li>
 </ul>
 
 
@@ -62,12 +64,59 @@
 
 <h1>Module <code>input</code></h1>
 <p>Input management facilities.</p>
-<p> The module returns a single function, <a href="../modules/input.html#">input</a>.</p>
+<p>The module returns a single function, <a href="../modules/input.html#">input</a>.</p>
 
-<p> <strong>Requires</strong> ubiquitousse.signal.</p>
+<p>You can find in the module <code>uqt.input.default</code> (in file <code>input/default.lua</code>) some common input configuration for
+2D movement, confirmation and cancellation (for both keyboard and joystick). Feel free to
+use them as-is, or as a base for your own inputs.</p>
+
+<p><strong>Requires</strong> ubiquitousse.signal.</p>
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">TODO
+        <pre class="example">local input = require(&quot;ubiquitousse.input&quot;)
+
+-- Joystick-only control for player 1
+local player1 = {
+	move = {
+		-- 2D movement, clamped on a circle
+		&quot;clamped(child.right - child.left, child.down - child.up)&quot;,
+		dimension = 2,
+
+		-- All the directions we can go, using both the left joystick and the D-pad
+		right = { &quot;axis.leftx.p&quot;, &quot;button.dpright&quot; },
+		left = { &quot;axis.leftx.n&quot;, &quot;button.dpleft&quot; },
+		down = { &quot;axis.lefty.p&quot;, &quot;button.dpdown&quot; },
+		up = { &quot;axis.lefty.n&quot;, &quot;button.dpup&quot; }
+	},
+
+	fire = { &quot;button.a&quot; }
+}
+
+-- Only consider inputs from the first joystick (in practice you will want to check if the joystick exists before running this line)
+player1:setJoystick(love.joystick.getJoysticks()[1])
+
+-- Player 2, using a second gamepad!
+local player2 = player1:clone()
+player2:setJoystick(love.joystick.getJoysticks()[2])
+
+-- Define input callbacks.
+player1.fire.event:bind(&quot;pressed&quot;, function() print(&quot;player 1 starts firing!&quot;) end)
+player1.fire.event:bind(&quot;released&quot;, function() print(&quot;player 1 stop firing...&quot;) end)
+
+function love.update()
+	-- Get player 1&apos;s 2D movement
+	local x, y = player1.move:value()
+	movePlayer1(x, y)
+
+	-- Check current state of the firing input
+	if player1.fire:down() then
+		-- currently firing!
+	end
+
+	-- Update inputs.
+	player1:update()
+	player2:update()
+end
 </pre>
     </ul>
 
@@ -75,8 +124,51 @@
 <h2><a href="#Functions">Functions</a></h2>
 <table class="function_list">
     <tr>
-    <td class="name" nowrap><a href="#input">input ()</a></td>
+    <td class="name" nowrap><a href="#input">input ([config])</a></td>
     <td class="summary">Make a new input object.</td>
+    </tr>
+</table>
+<h2><a href="#Input_expressions">Input expressions </a></h2>
+<table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#floor">floor (x)</a></td>
+    <td class="summary">Same as Lua&rsquo;s <a href="https://www.lua.org/manual/5.1/manual.html#pdf-math.floor">math.floor</a>.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#floor">floor (x)</a></td>
+    <td class="summary">Same as Lua&rsquo;s <a href="https://www.lua.org/manual/5.1/manual.html#pdf-math.ceil">math.ceil</a>.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#floor">floor (x)</a></td>
+    <td class="summary">Same as Lua&rsquo;s <a href="https://www.lua.org/manual/5.1/manual.html#pdf-math.abs">math.abs</a>.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#clamp">clamp (x, xmin, xmax)</a></td>
+    <td class="summary">Clamp x between xmin and xmax.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#min">min (x, y, ...)</a></td>
+    <td class="summary">Returns the minimal value among all parameters.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#max">max (x, y, ...)</a></td>
+    <td class="summary">Returns the maximal value among all parameters.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#deadzone">deadzone (x, deadzone)</a></td>
+    <td class="summary">If x &lt; deadzone, returns 0; otherwise returns the value.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#clamped">clamped (x, y)</a></td>
+    <td class="summary">Returns a normalized version of the vector (x,y), i.e.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#passive">passive (source)</a></td>
+    <td class="summary">Mark an input source as passive.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#passive">passive (source)</a></td>
+    <td class="summary">Mark an input source as active.</td>
     </tr>
 </table>
 <h2><a href="#Input_objects">Input objects </a></h2>
@@ -86,20 +178,20 @@
     <td class="summary">Input configuration table.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#Input.children">Input.children</a></td>
-    <td class="summary">List and map of children inputs.</td>
+    <td class="name" nowrap><a href="#Input.children">Input.children <sup><em>[read-only]</em></sup></a></td>
+    <td class="summary">List and map of children <a href="../modules/input.html#Input_objects">Input</a>s.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#Input.name">Input.name</a></td>
+    <td class="name" nowrap><a href="#Input.name">Input.name <sup><em>[read-only]</em></sup></a></td>
     <td class="summary">Name of the input.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#Input.grabbed">Input.grabbed</a></td>
-    <td class="summary">False if the input is currently not grabbed, a subinput otherwise.</td>
+    <td class="name" nowrap><a href="#Input.grabbed">Input.grabbed <sup><em>[read-only]</em></sup></a></td>
+    <td class="summary"><code>false</code> if the input is currently not grabbed, a sub<a href="../modules/input.html#Input_objects">Input</a> otherwise.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#Input.grabbing">Input.grabbing</a></td>
-    <td class="summary">False if the input is not a subinput, the input it grabbed otherwise.</td>
+    <td class="name" nowrap><a href="#Input.grabbing">Input.grabbing <sup><em>[read-only]</em></sup></a></td>
+    <td class="summary"><code>false</code> if the input is not a subinput, the <a href="../modules/input.html#Input_objects">Input</a> it was grabbed from otherwise.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input.event">Input.event</a></td>
@@ -115,7 +207,7 @@
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:reload">Input:reload ()</a></td>
-    <td class="summary">Relond the input <a href="../modules/input.html#Input.config">config</a>, and do the same for its children.</td>
+    <td class="summary">Reload the input <a href="../modules/input.html#Input.config">config</a>, and do the same for its children.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:disable">Input:disable ()</a></td>
@@ -123,7 +215,7 @@
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:onNextActiveSource">Input:onNextActiveSource (fn[, filter])</a></td>
-    <td class="summary">Will call fn(source) on the next activated source (including sources not currently used by this input).</td>
+    <td class="summary">Will call <code>fn(source)</code> on the next activated source (including sources not currently used by this input).</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:grab">Input:grab ()</a></td>
@@ -147,15 +239,15 @@
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:down">Input:down ()</a></td>
-    <td class="summary">Returns true if the input is currently down.</td>
+    <td class="summary">Returns <code>true</code> if the input is currently down, <code>false</code> otherwise.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:pressed">Input:pressed ()</a></td>
-    <td class="summary">Returns true if the input has just been pressed.</td>
+    <td class="summary">Returns <code>true</code> if the input has just been pressed, <code>false</code> otherwise.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:released">Input:released ()</a></td>
-    <td class="summary">Returns true if the input has just been released.</td>
+    <td class="summary">Returns <code>true</code> if the input has just been released, <code>false</code> otherwise.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:value">Input:value ()</a></td>
@@ -165,13 +257,64 @@
     <td class="name" nowrap><a href="#Input:delta">Input:delta ()</a></td>
     <td class="summary">Returns the delta value of the input since the last call to <a href="../modules/input.html#Input:update">update</a>.</td>
     </tr>
+</table>
+<h2><a href="#Input_sources">Input sources </a></h2>
+<table class="function_list">
     <tr>
-    <td class="name" nowrap><a href="#Input:pointer">Input:pointer ()</a></td>
-    <td class="summary">If there is a horizontal and vertical children inputs, this returns the horizontal value and the vertical value.</td>
+    <td class="name" nowrap><a href="#key.X">key.X</a></td>
+    <td class="summary">Keyboard input: 1 if the key X is down, 0 otherwise.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#Input:clamped">Input:clamped ()</a></td>
-    <td class="summary">Same as <a href="../modules/input.html#Input:pointer">pointer</a>, but normalize the returned vector, i.e.</td>
+    <td class="name" nowrap><a href="#scancode.X">scancode.X</a></td>
+    <td class="summary">Keyboard input: 1 if the key with scancode X is down, 0 otherwise.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#text.X">text.X</a></td>
+    <td class="summary">Text input: 1 if the text X was entered, 0 otherwise.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#mouse.N">mouse.N</a></td>
+    <td class="summary">Mouse input: 1 if the mouse button is down, 0 otherwise.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#mouse.x">mouse.x</a></td>
+    <td class="summary">Mouse input: X position of the mouse cursor.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#mouse.y">mouse.y</a></td>
+    <td class="summary">Mouse input: Y position of the mouse cursor.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#mouse.dx">mouse.dx</a></td>
+    <td class="summary">Mouse input: latest X movement of the mouse cursor.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#mouse.dy">mouse.dy</a></td>
+    <td class="summary">Mouse input: latest Y movement of the mouse cursor.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#wheel.dx">wheel.dx</a></td>
+    <td class="summary">Mouse input: latest X movement of the mouse wheel.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#wheel.dy">wheel.dy</a></td>
+    <td class="summary">Mouse input: latest Y movement of the mouse wheel.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#button.X">button.X</a></td>
+    <td class="summary">Gamepad input: 1 if the button X is down, 0 otherwise.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#axis.X">axis.X</a></td>
+    <td class="summary">Gamepad input: current value of the gamepad axis (between -1 and 1).</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#dt">dt</a></td>
+    <td class="summary">On new frame: current delta time value since last frame.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#child.X">child.X</a></td>
+    <td class="summary">Children inputs: current value of a child input of the current input.</td>
     </tr>
 </table>
 
@@ -184,18 +327,452 @@
     <dl class="function">
     <dt>
     <a name = "input"></a>
-    <strong>input ()</strong>
+    <strong>input ([config])</strong>
     </dt>
     <dd>
-    Make a new input object.
- t: input configuration table (optional)
+    Make a new input object. </p>
+
+<p> This constructor is returned by the <code>uqt.input</code> module.
 
     </ul>
     </ul>
     </ul>
     </ul>
 
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">config</span>
+              <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+           input configuration table, see <a href="../modules/input.html#Input.config">Input.config</a>
+           (<em>optional</em>)
+          </li>
+    </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../modules/input.html#Input_objects">Input</a></span>
+        Input object
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> player = uqt.input {
+   fire = { <span class="string">"key.a"</span> },
+   jump = { <span class="string">"key.space"</span> }
+}
+player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keyword">function</span>() <span class="global">print</span>(<span class="string">"pew pew"</span>) <span class="keyword">end</span>)</pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Input_expressions"></a>Input expressions </h2>
+
+          <div class="section-description">
+           Each <a href="../modules/input.html#Input_objects">Input</a> is associated with a list of <em>input expressions</em>.</p>
+
+<p> An input expression is a <a href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a> representing a valid Lua expression.
+ These Lua expressions are used to compute the values returned by the input.
+ An input expression should returns as many values as the dimension of its input.</p>
+
+<p> When referring to a variable in an expression, it will be interpreted as an <em>input source</em>.
+ An input source is where the initial input data comes from: for example, an input source could be the current state of
+ the Q key: <code>&quot;key.q&quot;</code> (=1 when the key is down, 0 otherwise).
+ See <a href="#Input_sources">sources</a> for details on how to define sources and built-in sources.</p>
+
+<p> When a source that is present is the expression is updated, the input will be automatically updated in a reactive way, unless
+ the input is <em>passive</em> &ndash; that is, it can not trigger input update.</p>
+
+<p> Additionally, you can also define your own variables to be used in input expression by giving arguments.</p>
+
+<p> In input expression, you have no access to the Lua standard library; some other, more specific functions are available instead
+ and described below.
+          </div>
+            <h3>Usage:</h3>
+            <pre class="example"> <span class="comment">-- Example input configs for various input expression features.
+</span> fire = {
+    <span class="comment">-- Basic input expression: 1 when Q is pressed, 0 otherwise. Will automatically update when Q is pressed.
+</span>    <span class="string">"key.q"</span>,
+    <span class="comment">-- Example using two inputs sources: when either A or Q is pressed, this will update, and returns 1 is at least one of them is pressed.
+</span>    <span class="string">"max(key.q, key.a)"</span>,
+    <span class="comment">-- This input has two input expression: it will be updated when either of them is updated and keep the value of the expression that was updated last.
+</span> }
+ horizontal = {
+    <span class="comment">-- Another example, typically used to define an input for horizontal movement: returns 1 when pressing only right, -1 when pressing only left, and 0 otherwise.
+</span>    <span class="string">"key.right - key.left"</span>,
+ }
+ arguments = {
+    <span class="comment">-- You can give arguments to an expression by wrapping the expression in a table containing the arguments.
+</span>    { <span class="string">"axis.leftx + offset"</span>, offset = <span class="number">1</span> }
+ }
+ passive = {
+   <span class="comment">-- Same as the example above, but this will only update when Q is pressed - pressing A will not update the input on its own.
+</span>   <span class="comment">-- Passive input are typically used for modifiers keys (shift, alt, etc.) that should not trigger an update when pressed on their own.
+</span>   <span class="string">"max(key.q, passive(key.a))"</span>
+ }
+ dimension = {
+   <span class="comment">-- A two-dimensional input should have input expressions that return two values.
+</span>   <span class="comment">-- Here a common example that could be used to move something in 2D.
+</span>   <span class="string">"key.right - key.left, key.down - key.up"</span>,
+   dimension = <span class="number">2</span>
+ }
+ special = {
+   <span class="comment">-- A special case: if the <a href="../modules/input.html#dt">dt</a> source is present in an expression, it will make every other input source passive by default in the expression.
+</span>   <span class="comment">-- This is the case since <a href="../modules/input.html#dt">dt</a> will trigger an update every frame, and is therefore mostly relevant for input that is used once per frame only
+</span>   <span class="comment">-- (while other input sources might cause the input to update several times per frame).
+</span>   <span class="string">"axis.leftx * dt"</span>
+ }
+ child = {
+   <span class="comment">-- Children input can be used as input sources using the <code>child.name</code> syntax.
+</span>   <span class="comment">-- If the children input has more than one dimension, you will need to specify it using a numeric index like <code>child.fire[2]</code> (for the dimension 2 of the child).
+</span>   <span class="string">"child.fire"</span>,
+   fire = { <span class="string">"key.q"</span> }
+}</pre>
+    <dl class="function">
+    <dt>
+    <a name = "floor"></a>
+    <strong>floor (x)</strong>
+    </dt>
+    <dd>
+    Same as Lua&rsquo;s <a href="https://www.lua.org/manual/5.1/manual.html#pdf-math.floor">math.floor</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           number to round
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        floored value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "floor"></a>
+    <strong>floor (x)</strong>
+    </dt>
+    <dd>
+    Same as Lua&rsquo;s <a href="https://www.lua.org/manual/5.1/manual.html#pdf-math.ceil">math.ceil</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           number to round
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        ceiled value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "floor"></a>
+    <strong>floor (x)</strong>
+    </dt>
+    <dd>
+    Same as Lua&rsquo;s <a href="https://www.lua.org/manual/5.1/manual.html#pdf-math.abs">math.abs</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           number to absolute
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        absolute value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "clamp"></a>
+    <strong>clamp (x, xmin, xmax)</strong>
+    </dt>
+    <dd>
+    Clamp x between xmin and xmax.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           number clamp
+          </li>
+          <li><span class="parameter">xmin</span>
+              <span class="types"><span class="type">number</span></span>
+           minimal value
+          </li>
+          <li><span class="parameter">xmax</span>
+              <span class="types"><span class="type">number</span></span>
+           maximal value
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        clamped value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "min"></a>
+    <strong>min (x, y, ...)</strong>
+    </dt>
+    <dd>
+    Returns the minimal value among all parameters.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           first value
+          </li>
+          <li><span class="parameter">y</span>
+              <span class="types"><span class="type">number</span></span>
+           second value
+          </li>
+          <li><span class="parameter">...</span>
+              <span class="types"><span class="type">number</span></span>
+           other values
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        smallest value among the arguments
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "max"></a>
+    <strong>max (x, y, ...)</strong>
+    </dt>
+    <dd>
+    Returns the maximal value among all parameters.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           first value
+          </li>
+          <li><span class="parameter">y</span>
+              <span class="types"><span class="type">number</span></span>
+           second value
+          </li>
+          <li><span class="parameter">...</span>
+              <span class="types"><span class="type">number</span></span>
+           other values
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        biggest value among the arguments
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "deadzone"></a>
+    <strong>deadzone (x, deadzone)</strong>
+    </dt>
+    <dd>
+    If x &lt; deadzone, returns 0; otherwise returns the value.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           value
+          </li>
+          <li><span class="parameter">deadzone</span>
+              <span class="types"><span class="type">number</span></span>
+           deadzone
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number</span></span>
+        0 if x &lt; deadzone; x otherwise
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "clamped"></a>
+    <strong>clamped (x, y)</strong>
+    </dt>
+    <dd>
+    Returns a normalized version of the vector (x,y), i.e.  &ldquo;clamp&rdquo; the returned x,y coordinates into a circle of radius 1.
+ Typically used to avoid faster movement on diagonals, as if both horizontal and vertical values are 1, the (1,1) vector has √2 magnitude, higher than the 1 magnitude of a purely vertical or horizontal movement.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">x</span>
+              <span class="types"><span class="type">number</span></span>
+           value
+          </li>
+          <li><span class="parameter">y</span>
+              <span class="types"><span class="type">number</span></span>
+           value
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        clamped x value</li>
+        <li>
+           <span class="types"><span class="type">number</span></span>
+        clamped y value</li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "passive"></a>
+    <strong>passive (source)</strong>
+    </dt>
+    <dd>
+    Mark an input source as passive.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">source</span>
+              <span class="types"><span class="type">InputSource</span></span>
+           input source to mark as passive
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">InputSource</span></span>
+        the same input source
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "passive"></a>
+    <strong>passive (source)</strong>
+    </dt>
+    <dd>
+    Mark an input source as active.
+ Note that input sources are active by default in most cases.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">source</span>
+              <span class="types"><span class="type">InputSource</span></span>
+           input source to mark as active
+          </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">InputSource</span></span>
+        the same input source
+    </ol>
 
 
 
@@ -205,7 +782,9 @@
     <h2 class="section-header has-description"><a name="Input_objects"></a>Input objects </h2>
 
           <div class="section-description">
-          Input methods.
+          Input methods. </p>
+
+<p> Methods and attributes available on Input objects. See <a href="../modules/input.html#">input</a> to create such an object.
           </div>
     <dl class="function">
     <dt>
@@ -213,11 +792,15 @@
     <strong>Input.config</strong>
     </dt>
     <dd>
-    Input configuration table.
- It can be used to recreate this input object later (by passing the table as an argument for the input constructor).
+    Input configuration table. </p>
+
+<p> It can be used to recreate this input object later (by passing the table as an argument for the input constructor).
  This table does not contain any userdata and should be easily serializable (e.g. to save custom input binding config).
- This doesn&rsquo;t include input state, grab state, the event registry and the selected joystick since they may change often during runtime.
- Can be changed anytime, but you may need to call <a href="../modules/input.html#Input:reload">reload</a> to apply changes.
+ This doesn&rsquo;t include input state, grab state, the event registry and the selected joystick since they may change often during runtime.</p>
+
+<p> Can be changed anytime, but you may need to call <a href="../modules/input.html#Input:reload">reload</a> to apply changes.</p>
+
+<p> See <a href="#Input_expressions">expressions</a> for an explanation on how to write input expressions.
 
     </ul>
     </ul>
@@ -231,21 +814,33 @@
     <h3>Usage:</h3>
     <ul>
         <pre class="example">player.config = {
-  <span class="string">"key.a"</span>, <span class="string">"key.d - key.a"</span>, {<span class="string">"key.left + x"</span>, x=<span class="number">0.5</span>}, <span class="comment">-- list of input sources expressions
-</span>  jump = {...}, <span class="comment">-- children input
-</span>  deadzone = <span class="number">0.05</span>, <span class="comment">-- The deadzone for analog inputs (e.g. joystick axes): if the input absolute value is strictly below this, it will be considered as 0.
-</span>  threshold = <span class="number">0.05</span> <span class="comment">-- The pressed threshold: an input is considered down if above or equal to this value.
-</span>}</pre>
+  <span class="comment">-- list of input sources expressions: either a string, or a table to specify some arguments for the expression
+</span>  <span class="string">"key.a"</span>, <span class="string">"key.d - key.a"</span>, {<span class="string">"key.left + x"</span>, x=<span class="number">0.5</span>},
+  <span class="comment">-- children input: the table take the same fields as this
+</span>  jump = {...},
+  <span class="comment">-- The deadzone for analog inputs (e.g. joystick axes): if the input absolute value is strictly below this, it will be considered as 0. 0.05 by default.
+</span>  <span class="comment">-- This is applied automatically after the evaluation of input expressions.
+</span>  deadzone = <span class="number">0.05</span>,
+  <span class="comment">-- The pressed threshold: an input is considered down if above or equal to this value. 0.05 by default.
+</span>  <span class="comment">-- This is considered when determining if the input is pressed, odwn and released.
+</span>  threshold = <span class="number">0.05</span>,
+  <span class="comment">-- Dimension of the input (i.e. the number of values returned by this input). 1 by default.
+</span>  dimension = <span class="number">1</span>
+}</pre>
     </ul>
 
 </dd>
     <dt>
     <a name = "Input.children"></a>
-    <strong>Input.children</strong>
+    <strong>Input.children <sup><em>[read-only]</em></sup></strong>
     </dt>
     <dd>
-    List and map of children inputs.
- {[child1.name]=child1, [child2.name]=child2, child1, child2&hellip;}
+    List and map of children <a href="../modules/input.html#Input_objects">Input</a>s. </p>
+
+<p> Takes the form <code>{[child1.name]=child1, [child2.name]=child2, child1, child2&hellip;}</code>.
+ Each child input is present both an element of this list and as the value associated with its name in the table.</p>
+
+<p> Note that children are <em>also</em> set directly on the input object for easier access.
 
     </ul>
     </ul>
@@ -256,17 +851,27 @@
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> player = input{ fire = <span class="string">"button.a"</span> }
+<span class="keyword">local</span> fire = player.fire
+<span class="comment">-- Is the same as:
+</span><span class="keyword">local</span> fire = player.children.fire</pre>
+    </ul>
 
 </dd>
     <dt>
     <a name = "Input.name"></a>
-    <strong>Input.name</strong>
+    <strong>Input.name <sup><em>[read-only]</em></sup></strong>
     </dt>
     <dd>
     Name of the input.
  Defined on children inputs only.
 
     </ul>
+    <h3>Type:</h3>
+    <ul>
+         <code>string</code>
     </ul>
     </ul>
     </ul>
@@ -279,10 +884,10 @@
 </dd>
     <dt>
     <a name = "Input.grabbed"></a>
-    <strong>Input.grabbed</strong>
+    <strong>Input.grabbed <sup><em>[read-only]</em></sup></strong>
     </dt>
     <dd>
-    False if the input is currently not grabbed, a subinput otherwise.
+    <code>false</code> if the input is currently not grabbed, a sub<a href="../modules/input.html#Input_objects">Input</a> otherwise.
  This may be different between each subinput.
 
     </ul>
@@ -298,10 +903,10 @@
 </dd>
     <dt>
     <a name = "Input.grabbing"></a>
-    <strong>Input.grabbing</strong>
+    <strong>Input.grabbing <sup><em>[read-only]</em></sup></strong>
     </dt>
     <dd>
-    False if the input is not a subinput, the input it grabbed otherwise.
+    <code>false</code> if the input is not a subinput, the <a href="../modules/input.html#Input_objects">Input</a> it was grabbed from otherwise.
  This may be different between each subinput.
 
     </ul>
@@ -324,16 +929,9 @@
  The following events are available:</p>
 
 <ul>
-<li><code>&quot;moved&quot;</code>: called when the input value change, with arguments (new value, delta since last event)</li>
-<li><code>&quot;pressed&quot;</code>: called when the input is pressed</li>
-<li><code>&quot;released&quot;</code>: called when the input is released</li>
-</ul>
-
-
-<p> For pointer inputs (have a &ldquo;horizontal&rdquo; and &ldquo;vertical&rdquo; children inputs) is also avaible:</p>
-
-<ul>
-<li><code>&quot;pointer moved&quot;</code>: called when the pointer position change, with arguments (new pointer x, new pointer y, delta x since last event, delta y since last event)</li>
+<li><p><code>&quot;moved&quot;</code>: called when the input value change, with arguments <code>(new value, delta since last event)</code>. For inputs with dimension > 1, arguments are <code>(new value[1], new value[2], &hellip;, delta[1], delta[2], &hellip;)</code>.</p></li>
+<li><p><code>&quot;pressed&quot;</code>: called when the input is pressed, with arguments <code>(1, new value, delta since last event)</code>. For inputs with dimension > 1, arguments are <code>(dimensions that was pressed, new value[1], new value[2], &hellip;, delta[1], delta[2], &hellip;)</code>.</p></li>
+<li><p><code>&quot;released&quot;</code>: called when the input is released, with arguments <code>(1, new value, delta since last event)</code>. For inputs with dimension > 1, arguments are <code>(dimensions that was pressed, new value[1], new value[2], &hellip;, delta[1], delta[2], &hellip;)</code>.</p></li>
 </ul>
 
 
@@ -357,8 +955,9 @@
     <dd>
     Update the input and its children.
  Should be called every frame, typically <em>after</em> you've done all your input handling
- (otherwise <a href="../modules/input.html#Input:pressed">pressed</a> and <a href="../modules/input.html#Input:released">released</a> may never return true and <a href="../modules/input.html#Input:delta">delta</a> might be wrong).
- (Note: this should not be called on subinputs)
+ (otherwise <a href="../modules/input.html#Input:pressed">pressed</a> and <a href="../modules/input.html#Input:released">released</a> may never return true and <a href="../modules/input.html#Input:delta">delta</a> might be wrong).</p>
+
+<p> (Note: this should not be called on subinputs)
 
     </ul>
     </ul>
@@ -394,7 +993,7 @@
     <strong>Input:reload ()</strong>
     </dt>
     <dd>
-    Relond the input <a href="../modules/input.html#Input.config">config</a>, and do the same for its children.
+    Reload the input <a href="../modules/input.html#Input.config">config</a>, and do the same for its children.
  This will reenable the input if it was disabled using <a href="../modules/input.html#Input:disable">disable</a>.
 
     </ul>
@@ -432,7 +1031,7 @@
     <strong>Input:onNextActiveSource (fn[, filter])</strong>
     </dt>
     <dd>
-    Will call fn(source) on the next activated source (including sources not currently used by this input).
+    Will call <code>fn(source)</code> on the next activated source (including sources not currently used by this input).
  Typically used to detect an input in your game input binding settings.
 
     </ul>
@@ -466,7 +1065,7 @@
 <p> A grabbed input will no longer update and instead pass all new update to the subinput.
  This is typically used for contextual action or pause menus: by grabbing the player input, all the direct use of
  this input in the game will stop (can&rsquo;t move caracter, &hellip;) and instead you can use the subinput to handle input in the pause menu.
- To stop grabbing an input, you will need to <code>:release</code> the subinput.</p>
+ To stop grabbing an input, you will need to <a href="../modules/input.html#Input:release">release</a> the subinput.</p>
 
 <p> This will also reset the input to a neutral state. The subinput will share everything with this input, except
  <a href="../modules/input.html#Input.grabbed">grabbed</a>, <a href="../modules/input.html#Input.grabbing">grabbing</a>, <a href="../modules/input.html#Input.event">event</a> (a new event registry is created), and of course its current state.
@@ -506,7 +1105,7 @@
     <strong>Input:neutralize ()</strong>
     </dt>
     <dd>
-    Set the state of this input to a neutral position (i.e.  value = 0).
+    Set the state of this input to a neutral position (i.e.  value = 0 for every dimension).
 
     </ul>
     </ul>
@@ -525,7 +1124,7 @@
     </dt>
     <dd>
     Set the joystick associated with this input.
- The input will ignore every other joystick.
+ This input will then ignore every other joystick.
  Set joystick to <code>nil</code> to disable and get input from every connected joystick.
 
     </ul>
@@ -558,6 +1157,12 @@
     </ul>
 
 
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">joystick</span></span>
+        LÖVE jostick object
+    </ol>
 
 
 
@@ -568,7 +1173,7 @@
     <strong>Input:down ()</strong>
     </dt>
     <dd>
-    Returns true if the input is currently down.
+    Returns <code>true</code> if the input is currently down, <code>false</code> otherwise.
 
     </ul>
     </ul>
@@ -576,6 +1181,12 @@
     </ul>
 
 
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        if input is down on at least one dimensions
+    </ol>
 
 
 
@@ -586,7 +1197,7 @@
     <strong>Input:pressed ()</strong>
     </dt>
     <dd>
-    Returns true if the input has just been pressed.
+    Returns <code>true</code> if the input has just been pressed, <code>false</code> otherwise.
 
     </ul>
     </ul>
@@ -594,6 +1205,12 @@
     </ul>
 
 
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        if input has just been pressed on at least one dimensions
+    </ol>
 
 
 
@@ -604,7 +1221,7 @@
     <strong>Input:released ()</strong>
     </dt>
     <dd>
-    Returns true if the input has just been released.
+    Returns <code>true</code> if the input has just been released, <code>false</code> otherwise.
 
     </ul>
     </ul>
@@ -612,6 +1229,12 @@
     </ul>
 
 
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        if input has just been released on at least one dimensions
+    </ol>
 
 
 
@@ -623,6 +1246,7 @@
     </dt>
     <dd>
     Returns the current value of the input.
+ If dimension > 1, this will return several values, one per dimension.
 
     </ul>
     </ul>
@@ -630,6 +1254,12 @@
     </ul>
 
 
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number,...</span></span>
+        current value of the input for every dimension
+    </ol>
 
 
 
@@ -641,6 +1271,46 @@
     </dt>
     <dd>
     Returns the delta value of the input since the last call to <a href="../modules/input.html#Input:update">update</a>.
+ If dimension > 1, this will return several values, one per dimension.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">number,...</span></span>
+        delta of the input for every dimension
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Input_sources"></a>Input sources </h2>
+
+          <div class="section-description">
+           Input sources are the initial source of input data. They are identified by a Lua identifier name.
+ See <a href="#Input_expressions">expressions</a> on how to use them in expressions.</p>
+
+<p> Input sources are provided for common input methods (keyboard, mouse, gamepad) by default; see below for a list of built-in input sources.</p>
+
+<p> Additionally, you can define your own input sources, by emitting events in the SignalRegistry returned by <code>uqt.input.event</code>.
+ See the file <code>input/event.lua</code> to see a description of the events you will need to emit. The file also contains the definition
+ of the built-in input sources that you may use as an example.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "key.X"></a>
+    <strong>key.X</strong>
+    </dt>
+    <dd>
+    Keyboard input: 1 if the key X is down, 0 otherwise.
+ X can be any of LÖVE&rsquo;s <a href="https://love2d.org/wiki/KeyConstant">KeyConstant</a>.
 
     </ul>
     </ul>
@@ -654,12 +1324,12 @@
 
 </dd>
     <dt>
-    <a name = "Input:pointer"></a>
-    <strong>Input:pointer ()</strong>
+    <a name = "scancode.X"></a>
+    <strong>scancode.X</strong>
     </dt>
     <dd>
-    If there is a horizontal and vertical children inputs, this returns the horizontal value and the vertical value.
- Typically used for movement/axes pairs (e.g. to get x,y of a stick or directional pad).
+    Keyboard input: 1 if the key with scancode X is down, 0 otherwise.
+ X can be any of LÖVE&rsquo;s <a href="https://love2d.org/wiki/Scancode">Scancode</a>.
 
     </ul>
     </ul>
@@ -673,13 +1343,236 @@
 
 </dd>
     <dt>
-    <a name = "Input:clamped"></a>
-    <strong>Input:clamped ()</strong>
+    <a name = "text.X"></a>
+    <strong>text.X</strong>
     </dt>
     <dd>
-    Same as <a href="../modules/input.html#Input:pointer">pointer</a>, but normalize the returned vector, i.e.  &ldquo;clamp&rdquo; the returned x,y coordinates into a circle of radius 1.
- Typically used to avoid faster movement on diagonals
- (as if both horizontal and vertical values are 1, the pointer vector has √2 magnitude, higher than the 1 magnitude of a purely vertical or horizontal movement).
+    Text input: 1 if the text X was entered, 0 otherwise.
+ X can be any text.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "mouse.N"></a>
+    <strong>mouse.N</strong>
+    </dt>
+    <dd>
+    Mouse input: 1 if the mouse button is down, 0 otherwise.
+ N is either 1 for the primary mouse button, 2 for secondary or 3 for middle button.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "mouse.x"></a>
+    <strong>mouse.x</strong>
+    </dt>
+    <dd>
+    Mouse input: X position of the mouse cursor.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "mouse.y"></a>
+    <strong>mouse.y</strong>
+    </dt>
+    <dd>
+    Mouse input: Y position of the mouse cursor.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "mouse.dx"></a>
+    <strong>mouse.dx</strong>
+    </dt>
+    <dd>
+    Mouse input: latest X movement of the mouse cursor. </p>
+
+<p> <code>mouse.dx.p</code> and <code>mouse.dx.n</code> will respectively only report movement in the positive or negative direction and return absolute value.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "mouse.dy"></a>
+    <strong>mouse.dy</strong>
+    </dt>
+    <dd>
+    Mouse input: latest Y movement of the mouse cursor. </p>
+
+<p> <code>mouse.dy.p</code> and <code>mouse.dy.n</code> will respectively only report movement in the positive or negative direction and return absolute value.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "wheel.dx"></a>
+    <strong>wheel.dx</strong>
+    </dt>
+    <dd>
+    Mouse input: latest X movement of the mouse wheel. </p>
+
+<p> <code>wheel.dx.p</code> and <code>wheel.dx.n</code> will respectively only report movement in the positive or negative direction and return absolute value.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "wheel.dy"></a>
+    <strong>wheel.dy</strong>
+    </dt>
+    <dd>
+    Mouse input: latest Y movement of the mouse wheel. </p>
+
+<p> <code>wheel.dy.p</code> and <code>wheel.dy.n</code> will respectively only report movement in the positive or negative direction and return absolute value.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "button.X"></a>
+    <strong>button.X</strong>
+    </dt>
+    <dd>
+    Gamepad input: 1 if the button X is down, 0 otherwise.
+ X can be any of LÖVE&rsquo;s <a href="https://love2d.org/wiki/GamepadButton">GamepadButton</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "axis.X"></a>
+    <strong>axis.X</strong>
+    </dt>
+    <dd>
+    Gamepad input: current value of the gamepad axis (between -1 and 1).
+ X can be any of LÖVE&rsquo;s <a href="https://love2d.org/wiki/GamepadAxis">GamepadAxis</a>.</p>
+
+<p> <code>axis.X.p</code> and <code>axis.X.n</code> will respectively only report movement in the positive or negative direction and return absolute value.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "dt"></a>
+    <strong>dt</strong>
+    </dt>
+    <dd>
+    On new frame: current delta time value since last frame.  Updated on each call to <code>love.update</code>.
+ Note that if this input source is present in an expression, the other input sources in the same expression will be set as passive by default.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <ul>
+          <li><span class="parameter">dt</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "child.X"></a>
+    <strong>child.X</strong>
+    </dt>
+    <dd>
+    Children inputs: current value of a child input of the current input.
+ For child input of dimension 1.
+ Replace X with the name of the child input.</p>
+
+<p> If the child input is of dimension at least 2, instead use <code>child.X[N]</code>, which gives the
+ current value of the Nth dimension of a child input of the current input.
+ Replace X with the name of the child input, and N with the index of the dimension you want.
 
     </ul>
     </ul>
@@ -699,7 +1592,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2022-09-16 20:07:07 </i>
+<i style="float:right;">Last updated 2022-09-20 01:08:14 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
