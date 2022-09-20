@@ -33,7 +33,7 @@ local function joystickAxisFilter(input, new, joystick)
 	if input._joystick and joystick:getID() ~= input._joystick:getID() then
 		return nil -- ignore if not from the selected joystick
 	end
-	local deadzone = input:_deadzone()
+	local deadzone = input._deadzone
 	if math.abs(new) < deadzone then
 		return 0 -- apply deadzone on axis value
 	else

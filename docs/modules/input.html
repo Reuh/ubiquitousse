@@ -278,11 +278,11 @@ end
     </tr>
     <tr>
     <td class="name" nowrap><a href="#mouse.x">mouse.x</a></td>
-    <td class="summary">Mouse input: X position of the mouse cursor.</td>
+    <td class="summary">Mouse input: X position of the mouse cursor in the game window.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#mouse.y">mouse.y</a></td>
-    <td class="summary">Mouse input: Y position of the mouse cursor.</td>
+    <td class="summary">Mouse input: Y position of the mouse cursor in the game window.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#mouse.dx">mouse.dx</a></td>
@@ -315,6 +315,10 @@ end
     <tr>
     <td class="name" nowrap><a href="#child.X">child.X</a></td>
     <td class="summary">Children inputs: current value of a child input of the current input.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#value">value</a></td>
+    <td class="summary">Current input: current value of the current input.</td>
     </tr>
 </table>
 
@@ -418,7 +422,14 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 </span>   <span class="string">"key.right - key.left, key.down - key.up"</span>,
    dimension = <span class="number">2</span>
  }
- special = {
+ mouse = {
+   <span class="comment">-- Example input that returns the position of the mouse cursor, that can be controlled both using an actual mouse or
+</span>   <span class="comment">-- through a joystick.
+</span>   dimension = <span class="number">2</span>,
+   <span class="string">"mouse.x, mouse.y"</span>,
+   { <span class="string">"value[1] + axis.leftx * speed * dt, value[2] + axis.lefty * speed * dt"</span>, speed = <span class="number">300</span> } <span class="comment">-- contains dt, so updated only once per frame. Thus speed here is the speed in pixel/second, as expected.
+</span> }
+ mouse = {
    <span class="comment">-- A special case: if the <a href="../modules/input.html#dt">dt</a> source is present in an expression, it will make every other input source passive by default in the expression.
 </span>   <span class="comment">-- This is the case since <a href="../modules/input.html#dt">dt</a> will trigger an update every frame, and is therefore mostly relevant for input that is used once per frame only
 </span>   <span class="comment">-- (while other input sources might cause the input to update several times per frame).
@@ -798,7 +809,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
  This table does not contain any userdata and should be easily serializable (e.g. to save custom input binding config).
  This doesn&rsquo;t include input state, grab state, the event registry and the selected joystick since they may change often during runtime.</p>
 
-<p> Can be changed anytime, but you may need to call <a href="../modules/input.html#Input:reload">reload</a> to apply changes.</p>
+<p> Can be changed anytime, but you will need to call <a href="../modules/input.html#Input:reload">reload</a> to apply changes.</p>
 
 <p> See <a href="#Input_expressions">expressions</a> for an explanation on how to write input expressions.
 
@@ -1294,7 +1305,8 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <h2 class="section-header has-description"><a name="Input_sources"></a>Input sources </h2>
 
           <div class="section-description">
-           Input sources are the initial source of input data. They are identified by a Lua identifier name.
+           Input sources are the initial source of input data; each input source can return a single number value.
+ They are identified by a Lua identifier name.
  See <a href="#Input_expressions">expressions</a> on how to use them in expressions.</p>
 
 <p> Input sources are provided for common input methods (keyboard, mouse, gamepad) by default; see below for a list of built-in input sources.</p>
@@ -1385,7 +1397,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <strong>mouse.x</strong>
     </dt>
     <dd>
-    Mouse input: X position of the mouse cursor.
+    Mouse input: X position of the mouse cursor in the game window.
 
     </ul>
     </ul>
@@ -1403,7 +1415,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <strong>mouse.y</strong>
     </dt>
     <dd>
-    Mouse input: Y position of the mouse cursor.
+    Mouse input: Y position of the mouse cursor in the game window.
 
     </ul>
     </ul>
@@ -1567,7 +1579,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     </dt>
     <dd>
     Children inputs: current value of a child input of the current input.
- For child input of dimension 1.
+ For child inputs of dimension 1.
  Replace X with the name of the child input.</p>
 
 <p> If the child input is of dimension at least 2, instead use <code>child.X[N]</code>, which gives the
@@ -1585,6 +1597,38 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 
 
 </dd>
+    <dt>
+    <a name = "value"></a>
+    <strong>value</strong>
+    </dt>
+    <dd>
+    Current input: current value of the current input.
+ For inputs of dimension 1.</p>
+
+<p> If the input is of dimension at least 2, instead use <code>value[N]</code>, which gives the
+ current value of the Nth dimension of the current input.
+ Replace N with the index of the dimension you want.</p>
+
+<p> Note that is input is passive by default.
+ Think twice before marking it active as this may create a feedback loop (the input being updated will trigger it to be updated again, and so on).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <ul>
+          <li><span class="parameter">value</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
 </dl>
 
 
@@ -1592,7 +1636,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2022-09-20 01:08:14 </i>
+<i style="float:right;">Last updated 2022-09-20 13:52:55 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

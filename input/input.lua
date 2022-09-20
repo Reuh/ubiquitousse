@@ -60,11 +60,14 @@ local signal = require((...):gsub("input%.input$", "signal"))
 local event = require((...):gsub("input$", "event"))
 
 local abs, sqrt, floor, ceil, min, max = math.abs, math.sqrt, math.floor, math.ceil, math.min, math.max
+local unpack = table.unpack or unpack
 
 -- TODO: friendly name for sources
 
 -- TODO: way to handle text input
 -- don't want to change how everything is number based here (it's clean), but would be ok to eg give an additionnal metdatat (text string) along with the "text key pressed" input
+
+-- TODO: might be interesting to allow for some outputs, like rumble for a player's joystick?
 
 -- Table to contain temporary calculations (mainly to compute input deltas without needing to allocate a new table).
 -- Note that this table is never cleared; don't fill it with large data and don't assume its length.
@@ -164,7 +167,14 @@ end
 --   "key.right - key.left, key.down - key.up",
 --   dimension = 2
 -- }
--- special = {
+-- mouse = {
+--   -- Example input that returns the position of the mouse cursor, that can be controlled both using an actual mouse or
+--   -- through a joystick.
+--   dimension = 2,
+--   "mouse.x, mouse.y",
+--   { "value[1] + axis.leftx * speed * dt, value[2] + axis.lefty * speed * dt", speed = 300 } -- contains dt, so updated only once per frame. Thus speed here is the speed in pixel/second, as expected.
+-- }
+-- mouse = {
 --   -- A special case: if the `dt` source is present in an expression, it will make every other input source passive by default in the expression.
 --   -- This is the case since `dt` will trigger an update every frame, and is therefore mostly relevant for input that is used once per frame only
 --   -- (while other input sources might cause the input to update several times per frame).
@@ -283,7 +293,7 @@ input_mt = {
 	-- This table does not contain any userdata and should be easily serializable (e.g. to save custom input binding config).
 	-- This doesn't include input state, grab state, the event registry and the selected joystick since they may change often during runtime.
 	--
-	-- Can be changed anytime, but you may need to call `reload` to apply changes.
+	-- Can be changed anytime, but you will need to call `reload` to apply changes.
 	--
 	-- See [expressions](#Input_expressions) for an explanation on how to write input expressions.
 	-- @usage
@@ -353,6 +363,8 @@ input_mt = {
 	_boundSourceEvents = {}, -- Map of sources events that are binded (and thus will send events to _afterFilterEvent).
 	_joystick = nil, -- Currently selected joystick for this player. Also shared with children inputs.
 	_dimension = 1, -- Dimension of the input.
+	_deadzone = 0.05, -- Deadzone of the input.
+	_threshold = 0.05, -- Threshold of the input.
 
 	--- Update the input and its children.
 	-- Should be called every frame, typically _after_ you've done all your input handling
@@ -377,8 +389,11 @@ input_mt = {
 	--- Reload the input `config`, and do the same for its children.
 	-- This will reenable the input if it was disabled using `disable`.
 	reload = function(self)
-		-- resize dimensions
+		-- get main options
 		self._dimension = self.config.dimension or 1
+		self._deadzone = self.config.deadzone or 0.05
+		self._threshold = self.config.threshold or 0.05
+		-- resize dimensions
 		if #self._value > self._dimension then
 			for i=self._dimension+1, #self._value do
 				self._value[i] = nil
@@ -434,7 +449,6 @@ input_mt = {
 			for k, v in pairs(args) do env[k] = v end
 			setmetatable(env, {
 				__index = function(t, key)
-					if key == "value" then return self:value() end
 					return self._sourceCache[key] or expressionEnv[key]
 				end
 			})
@@ -472,7 +486,7 @@ input_mt = {
 					return setmetatable({ _ = i or #sources }, srcmt)
 				end
 			}
-			local scanEnv = setmetatable({ value = 0 }, { __index = srcmt.__index }) -- value is not a source
+			local scanEnv = setmetatable({}, { __index = srcmt.__index }) -- value is not a source
 			for k, v in pairs(args) do scanEnv[k] = v end -- add args
 			for k in pairs(expressionEnv) do scanEnv[k] = zero end -- add functions
 			for _, mod in ipairs(sourceModifiers) do -- add modifiers functions
@@ -521,21 +535,33 @@ input_mt = {
 						local cname, index = sname:match("^child%.(.*)%[(%d+)%]$")
 						if not cname then cname = sname:match("^child%.(.*)$") end
 						local child = self.children[cname]
-						assert(child, ("input expression refer to %s but this input has no child named %s"):format(sname, cname))
+						assert(child, ("input expression refer to %q but this input has no child named %s"):format(sname, cname))
 						if child._dimension > 1 then
-							assert(index, ("input expression refer to %s but this child only has more than one dimension"):format(sname))
-							self._event:bind(self.children[cname].event, "moved", function(...) -- child event -> self._afterFilterEvent link
-								local new = select(tonumber(index), ...)
-								s.parentCache[s.lastKey] = new
-								self._afterFilterEvent:emit(sname, new)
-							end)
+							assert(index, ("input expression refer to %q without specifing a dimension but this child has more than one dimension"):format(sname))
 						else
-							assert(not index, ("input expression refer to %s but this child only has a single dimension"):format(sname))
-							self._event:bind(self.children[cname].event, "moved", function(new) -- child event -> self._afterFilterEvent link
-								s.parentCache[s.lastKey] = new
-								self._afterFilterEvent:emit(sname, new)
-							end)
+							assert(not index, ("input expression refer to %q but this child only has a single dimension"):format(sname))
 						end
+						local i = index and tonumber(index) or 1
+						self._event:bind(self.children[cname].event, "moved", function(...) -- child event -> self._afterFilterEvent link
+							local new = select(i, ...)
+							s.parentCache[s.lastKey] = new
+							self._afterFilterEvent:emit(sname, new)
+						end)
+					elseif sname:match("^value") then
+						local index = sname:match("^value%[(%d+)%]$")
+						if not index then assert(sname == "value", ("%q is not a valid source; value should be either \"value\" or \"value[number]\""):format(sname)) end
+						s.passive = true
+						if self._dimension > 1 then
+							assert(index, ("input expression refer to %q without specifing a dimension but this input has more than one dimension"):format(sname))
+						else
+							assert(not index, ("input expression refer to %q but this input only has a single dimension"):format(sname))
+						end
+						local i = index and tonumber(index) or 1
+						self._event:bind(self.event, "moved", function(...) -- self event -> self._afterFilterEvent link
+							local new = select(i, ...)
+							s.parentCache[s.lastKey] = new
+							self._afterFilterEvent:emit(sname, new)
+						end)
 					else
 						self._event:bind(event, sname, function(new, filter, ...) -- event source -> self._afterFilterEvent link
 							if filter then
@@ -584,7 +610,7 @@ input_mt = {
 				new = filterfn(self, new, ...)
 				if new == nil then return end
 			end
-			if abs(new) >= self:_threshold() then
+			if abs(new) >= self._threshold then
 				event:unbind("_active", onevent)
 				fn(source)
 			end
@@ -701,7 +727,7 @@ input_mt = {
 		if self.grabbed then
 			self.grabbed:_update(new) -- pass onto grabber
 		else
-			local threshold = self:_threshold()
+			local threshold = self._threshold
 			-- update values
 			new = new or self._value
 			local old = self._value
@@ -736,20 +762,13 @@ input_mt = {
 				end
 			end
 		end
-	end,
-	-- Returns the deadzone of the input.
-	_deadzone = function(self)
-		return self.config.deadzone or 0.05
-	end,
-	-- Returns the threshold of the input.
-	_threshold = function(self)
-		return self.config.threshold or 0.05
-	end,
+	end
 }
 input_mt.__index = input_mt
 
 --- Input sources.
--- Input sources are the initial source of input data. They are identified by a Lua identifier name.
+-- Input sources are the initial source of input data; each input source can return a single number value.
+-- They are identified by a Lua identifier name.
 -- See [expressions](#Input_expressions) on how to use them in expressions.
 --
 -- Input sources are provided for common input methods (keyboard, mouse, gamepad) by default; see below for a list of built-in input sources.
@@ -776,10 +795,10 @@ input_mt.__index = input_mt
 -- N is either 1 for the primary mouse button, 2 for secondary or 3 for middle button.
 -- @field mouse.N
 
---- Mouse input: X position of the mouse cursor.
+--- Mouse input: X position of the mouse cursor in the game window.
 -- @field mouse.x
 
---- Mouse input: Y position of the mouse cursor.
+--- Mouse input: Y position of the mouse cursor in the game window.
 -- @field mouse.y
 
 --- Mouse input: latest X movement of the mouse cursor.
@@ -817,12 +836,23 @@ input_mt.__index = input_mt
 -- @field dt
 
 --- Children inputs: current value of a child input of the current input.
--- For child input of dimension 1.
+-- For child inputs of dimension 1.
 -- Replace X with the name of the child input.
 --
 -- If the child input is of dimension at least 2, instead use `child.X[N]`, which gives the
 -- current value of the Nth dimension of a child input of the current input.
 -- Replace X with the name of the child input, and N with the index of the dimension you want.
 -- @field child.X
+
+--- Current input: current value of the current input.
+-- For inputs of dimension 1.
+--
+-- If the input is of dimension at least 2, instead use `value[N]`, which gives the
+-- current value of the Nth dimension of the current input.
+-- Replace N with the index of the dimension you want.
+--
+-- Note that is input is passive by default.
+-- Think twice before marking it active as this may create a feedback loop (the input being updated will trigger it to be updated again, and so on).
+-- @field value
 
 return make_input
