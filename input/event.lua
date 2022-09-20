@@ -57,10 +57,10 @@ signal.event:bind("textinput", function(text)
 end)
 
 signal.event:bind("mousepressed", function(x, y, button, istouch, presses)
-	update(("mouse.%s"):format(button), 1)
+	update(("mouse[%s]"):format(button), 1)
 end)
 signal.event:bind("mousereleased", function(x, y, button, istouch, presses)
-	update(("mouse.%s"):format(button), 0)
+	update(("mouse[%s]"):format(button), 0)
 end)
 
 signal.event:bind("mousemoved", function(x, y, dx, dy, istouch)

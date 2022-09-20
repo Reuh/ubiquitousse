@@ -791,9 +791,9 @@ input_mt.__index = input_mt
 -- X can be any text.
 -- @field text.X
 
---- Mouse input: 1 if the mouse button is down, 0 otherwise.
+--- Mouse input: `mouse[N]` is 1 if the mouse button is down, 0 otherwise.
 -- N is either 1 for the primary mouse button, 2 for secondary or 3 for middle button.
--- @field mouse.N
+-- @field mouse `mouse[N]`
 
 --- Mouse input: X position of the mouse cursor in the game window.
 -- @field mouse.x
