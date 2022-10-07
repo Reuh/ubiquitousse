@@ -76,6 +76,7 @@ local tmp = {}
 -- Always returns 0.
 local function zero() return 0 end
 
+-- Load a Lua expression string into a function.
 local function loadexp(exp, env)
 	local fn
 	if loadstring then
@@ -331,14 +332,18 @@ input_mt = {
 	-- @ro
 	name = nil,
 
-	--- `false` if the input is currently not grabbed, a sub`Input` otherwise.
-	-- This may be different between each subinput.
+	--- `false` if the input is disabled, `true` otherwise.
+	-- If the input is disabled, its children are also disabled.
+	-- @ro
+	enabled = true,
+
+	--- `false` if the input is currently not grabbed, the grabbing `Input` otherwise.
 	-- @ro
 	grabbed = false,
-	--- `false` if the input is not a subinput, the `Input` it was grabbed from otherwise.
-	-- This may be different between each subinput.
+	--- `false` if the input is not grabbing another input, the `Input` it is grabbing from otherwise.
 	-- @ro
 	grabbing = false,
+
 	--- Input event registry.
 	-- The following events are available:
 	--
@@ -347,21 +352,23 @@ input_mt = {
 	-- * `"pressed"`: called when the input is pressed, with arguments `(1, new value, delta since last event)`. For inputs with dimension > 1, arguments are `(dimensions that was pressed, new value[1], new value[2], ..., delta[1], delta[2], ...)`.
 	--
 	-- * `"released"`: called when the input is released, with arguments `(1, new value, delta since last event)`. For inputs with dimension > 1, arguments are `(dimensions that was pressed, new value[1], new value[2], ..., delta[1], delta[2], ...)`.
-	--
-	-- Each subinput has a different event registry.
 	event = nil,
 
-	-- Input state, independendant between each grab. Reset by :neutralize().
+	-- Input state regarding current value. Reset by :neutralize().
 	_state = "none", -- none, pressed or released
 	_value = { 0 }, -- input value
 	_prevValue = { 0 }, -- value last frame
 
-	-- Input state, shared between grabs.
+	-- Input state, regarding events. Reset by :reload().
 	_event = nil, -- Event group for all event binded by this input.
 	_sourceCache = {}, -- Map of the values currently taken by every source this input use. Sources are expected to return a single number value.
 	_afterFilterEvent = nil, -- Event registry that resend the source events after applying the eventual filter function.
 	_boundSourceEvents = {}, -- Map of sources events that are binded (and thus will send events to _afterFilterEvent).
+
+	-- Other input state.
 	_joystick = nil, -- Currently selected joystick for this player. Also shared with children inputs.
+
+	-- Cache computed directly from the input config. Recomputed by :reload().
 	_dimension = 1, -- Dimension of the input.
 	_deadzone = 0.05, -- Deadzone of the input.
 	_threshold = 0.05, -- Threshold of the input.
@@ -420,6 +427,7 @@ input_mt = {
 		end
 		-- reload children
 		for _, c in ipairs(self.children) do
+			c.config = self.config[c.name]
 			c:reload()
 		end
 		-- add added children
@@ -581,13 +589,28 @@ input_mt = {
 			end
 		end
 	end,
+
 	--- Disable the input and its children, preventing further updates and events.
-	-- The input can be reenabled using `reload`.
+	-- The input can be reenabled using `enable`.
 	disable = function(self)
-		for _, c in ipairs(self.children) do
-			c:disable()
+		if self.enabled then
+			for _, c in ipairs(self.children) do
+				c:disable()
+			end
+			self._event:pause()
+			self.enabled = false
 		end
-		self._event:clear()
+	end,
+	--- Enable the input and its children, allowing further updates and events.
+	-- The should be called after disabling the input using `disable`.
+	enable = function(self)
+		if not self.enabled then
+			self.enabled = true
+			self._event:resume()
+			for _, c in ipairs(self.children) do
+				c:enable()
+			end
+		end
 	end,
 
 	--- Will call `fn(source)` on the next activated source (including sources not currently used by this input).
