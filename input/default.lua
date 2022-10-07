@@ -1,6 +1,6 @@
  return {
 	move = {
-		"clamped(child.right - child.left, child.down - child.up)",
+		"normalize(child.right - child.left, child.down - child.up)",
 		dimension = 2,
 		right = { "scancode.right", "scancode.d", "axis.leftx.p", "button.dpright" },
 		left = { "scancode.left", "scancode.a", "axis.leftx.n", "button.dpleft" },

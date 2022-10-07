@@ -254,7 +254,7 @@ expressionEnv = {
 	-- @tparam number y value
 	-- @treturn number clamped x value
 	-- @treturn number clamped y value
-	clamped = function(x, y)
+	normalize = function(x, y)
 		local mag = x*x + y*y
 		if mag > 1 then
 			local d = sqrt(mag)
