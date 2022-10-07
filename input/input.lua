@@ -711,7 +711,7 @@ input_mt = {
 		end
 	end,
 
-	--- Set the state of this input to a neutral position (i.e. value = 0 for every dimension).
+	--- Set the state of this input and its children to a neutral position (i.e. value = 0 for every dimension).
 	neutralize = function(self)
 		local zeros = { 0 }
 		for i=2, self._dimension do zeros[i] = 0 end
@@ -720,6 +720,9 @@ input_mt = {
 		for i=1, self._dimension do
 			self._value[i] = 0
 			self._prevValue[i] = 0
+		end
+		for _, c in ipairs(self.children) do
+			c:neutralize()
 		end
 	end,
 
