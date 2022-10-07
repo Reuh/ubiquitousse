@@ -377,24 +377,50 @@ input_mt = {
 	-- Should be called every frame, typically _after_ you've done all your input handling
 	-- (otherwise `pressed` and `released` may never return true and `delta` might be wrong).
 	--
-	-- (Note: this should not be called on subinputs)
+	-- If the input is grabbed, will update the input that grabbed it instead.
+	--
+	-- (Note: this do not need to be called on inputs that are grabbing another input as the grabbed input will update it automatically)
 	update = function(self)
-		self:_update()
-		for i=1, self._dimension do
-			self._prevValue[i] = self._value[i]
-		end
-		for _, i in ipairs(self.children) do
-			i:update()
+		if self.grabbed then
+			self.grabbed:update() -- pass onto grabber
+		else
+			self:_update()
+			for i=1, self._dimension do
+				self._prevValue[i] = self._value[i]
+			end
+			for _, i in ipairs(self.children) do
+				i:update()
+			end
 		end
 	end,
 
 	--- Create a new input object based on this input `config` data.
-	clone = function(self)
-		return make_input(self.config)
+	-- Unless `copyState` is set, the clone will only keep the `config` data and the input `name`; other state will be set to the default values.
+	-- @tparam[opt=false] boolean copyState if `true`, will copy the currrent state of the input into the clone. The input states includes the current input value, if it is enabled/disabled, and the current joystick; note that the grabbed state (i.e. the `grabbed` and `grabbing` fields) is not copied.
+	clone = function(self, copyState)
+		local r = make_input(self.config)
+		r.name = self.name
+		if copyState then
+			self:_copyStateInto(r)
+		end
+		return r
+	end,
+	_copyStateInto = function(self, dest)
+		dest._state = self._state
+		for i=1, self._dimension do
+			dest._value[i] = self._value[i]
+			dest._prevValue[i] = self._prevValue[i]
+		end
+		if not dest.enabled and self.enabled then
+			self:disable()
+		end
+		dest._joystick = self._joystick
+		for _, c in ipairs(self.children) do
+			c:_copyStateInto(self.children[c.name])
+		end
 	end,
 
 	--- Reload the input `config`, and do the same for its children.
-	-- This will reenable the input if it was disabled using `disable`.
 	reload = function(self)
 		-- get main options
 		self._dimension = self.config.dimension or 1
@@ -641,48 +667,48 @@ input_mt = {
 		event:bind("_active", onevent)
 	end,
 
-	--- Grab the input and its children input and returns the new subinput.
+	--- Grab the input and its children input and returns the resulting grabbing input.
 	--
-	-- A grabbed input will no longer update and instead pass all new update to the subinput.
+	-- The input will be disabled (will no longer update) and instead pass all new updates to the grabbing input.
+	-- The input will also be set to a neutral position.
+	--
 	-- This is typically used for contextual action or pause menus: by grabbing the player input, all the direct use of
-	-- this input in the game will stop (can't move caracter, ...) and instead you can use the subinput to handle input in the pause menu.
-	-- To stop grabbing an input, you will need to `release` the subinput.
+	-- this input in the game will stop (can't move caracter, ...) and instead you can use the grabbing input to handle input in the pause menu.
+	-- To stop grabbing an input, you will need to call `release` on the grabbing input.
 	--
-	-- This will also reset the input to a neutral state. The subinput will share everything with this input, except
-	-- `grabbed`, `grabbing`, `event` (a new event registry is created), and of course its current state.
+	-- The grabbing input is created by cloning the current input and starts with the same state as the input when it was grabbed.
 	grab = function(self)
-		local g = {
-			grabbed = false,
-			grabbing = self,
-			event = signal.new(),
-			children = {},
-			_value = {},
-			_prevValue = {},
-		}
-		for i=1, self._dimension do
-			g._value[i] = self._value[i]
-			g._prevValue[i] = self._prevValue[i]
-		end
-		for _, c in ipairs(self.children) do
-			local gc = c:grab()
-			table.insert(g.children, gc)
-			g.children[c.name] = gc
-			g[c.name] = gc
-		end
+		local g = self:clone(true)
+		self:disable()
 		self:neutralize()
-		self.grabbed = setmetatable(g, { __index = self })
+		self:_grab(g)
 		return g
 	end,
-	--- Release a subinput and its children.
-	-- The parent grabbed input will be updated again. This subinput will be reset to a neutral position and won't be updated further.
-	release = function(self)
-		assert(self.grabbing, "not a grabbed input")
+	-- Set grabbed and grabbing in the input and its children.
+	_grab = function(self, grabbed)
+		self.grabbed = grabbed
+		grabbed.grabbing = self
 		for _, c in ipairs(self.children) do
-			c:release()
+			c:_grab(grabbed.children[c.name])
 		end
+	end,
+	--- Release an input that is currently grabbing another and its children.
+	-- The parent grabbed input will be re-enabled (will update again). This grabbing input will be reset to a neutral position and disabled.
+	release = function(self)
+		assert(self.grabbing, "can't release an input that is not grabbing another input")
+		self:disable()
 		self:neutralize()
-		self.grabbing.grabbed = false
+		local g = self.grabbing
+		self:_release(g)
+		g:enable()
+	end,
+	-- Unset grabbed and grabbing in the input and its children.
+	_release = function(self, grabbing)
 		self.grabbing = false
+		grabbing.grabbed = false
+		for _, c in ipairs(self.children) do
+			c:_release(grabbing.children[c.name])
+		end
 	end,
 
 	--- Set the state of this input to a neutral position (i.e. value = 0 for every dimension).
@@ -747,41 +773,37 @@ input_mt = {
 	-- Update the state of the input: called at least on every input value change and on :update().
 	-- new: new value of the input if it has changed (list of numbers of size config.dimension, can be anything, but typically in [0-1]) (optional)
 	_update = function(self, new)
-		if self.grabbed then
-			self.grabbed:_update(new) -- pass onto grabber
-		else
-			local threshold = self._threshold
-			-- update values
-			new = new or self._value
-			local old = self._value
-			self._value = new
-			-- compute delta (in tmp)
-			for i=1, self._dimension do
-				tmp[self._dimension + i] = new[i] - old[i]
-				tmp[i] = new[i]
+		local threshold = self._threshold
+		-- update values
+		new = new or self._value
+		local old = self._value
+		self._value = new
+		-- compute delta (in tmp)
+		for i=1, self._dimension do
+			tmp[self._dimension + i] = new[i] - old[i]
+			tmp[i] = new[i]
+		end
+		-- update state and emit events
+		for i=self._dimension, self._dimension * 2 do
+			if tmp[i] ~= 0 then
+				self.event:emit("moved", unpack(tmp, 1, self._dimension * 2))
+				break
 			end
-			-- update state and emit events
-			for i=self._dimension, self._dimension * 2 do
-				if tmp[i] ~= 0 then
-					self.event:emit("moved", unpack(tmp, 1, self._dimension * 2))
-					break
-				end
-			end
-			for i=1, self._dimension do
-				if abs(new[i]) >= threshold then
-					if abs(old[i]) < threshold then
-						self._state = "pressed"
-						self.event:emit("pressed", i, unpack(tmp, 1, self._dimension * 2))
-					else
-						self._state = "down"
-					end
+		end
+		for i=1, self._dimension do
+			if abs(new[i]) >= threshold then
+				if abs(old[i]) < threshold then
+					self._state = "pressed"
+					self.event:emit("pressed", i, unpack(tmp, 1, self._dimension * 2))
 				else
-					if abs(old[i]) >= threshold then
-						self._state = "released"
-						self.event:emit("released", i, unpack(tmp, 1, self._dimension * 2))
-					else
-						self._state = "none"
-					end
+					self._state = "down"
+				end
+			else
+				if abs(old[i]) >= threshold then
+					self._state = "released"
+					self.event:emit("released", i, unpack(tmp, 1, self._dimension * 2))
+				else
+					self._state = "none"
 				end
 			end
 		end
