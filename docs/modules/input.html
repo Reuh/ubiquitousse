@@ -159,7 +159,7 @@ end
     <td class="summary">If x &lt; deadzone, returns 0; otherwise returns the value.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#clamped">clamped (x, y)</a></td>
+    <td class="name" nowrap><a href="#normalize">normalize (x, y)</a></td>
     <td class="summary">Returns a normalized version of the vector (x,y), i.e.</td>
     </tr>
     <tr>
@@ -186,12 +186,16 @@ end
     <td class="summary">Name of the input.</td>
     </tr>
     <tr>
+    <td class="name" nowrap><a href="#Input.enabled">Input.enabled <sup><em>[read-only]</em></sup></a></td>
+    <td class="summary"><code>false</code> if the input is disabled, <code>true</code> otherwise.</td>
+    </tr>
+    <tr>
     <td class="name" nowrap><a href="#Input.grabbed">Input.grabbed <sup><em>[read-only]</em></sup></a></td>
-    <td class="summary"><code>false</code> if the input is currently not grabbed, a sub<a href="../modules/input.html#Input_objects">Input</a> otherwise.</td>
+    <td class="summary"><code>false</code> if the input is currently not grabbed, the grabbing <a href="../modules/input.html#Input_objects">Input</a> otherwise.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input.grabbing">Input.grabbing <sup><em>[read-only]</em></sup></a></td>
-    <td class="summary"><code>false</code> if the input is not a subinput, the <a href="../modules/input.html#Input_objects">Input</a> it was grabbed from otherwise.</td>
+    <td class="summary"><code>false</code> if the input is not grabbing another input, the <a href="../modules/input.html#Input_objects">Input</a> it is grabbing from otherwise.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input.event">Input.event</a></td>
@@ -202,7 +206,7 @@ end
     <td class="summary">Update the input and its children.</td>
     </tr>
     <tr>
-    <td class="name" nowrap><a href="#Input:clone">Input:clone ()</a></td>
+    <td class="name" nowrap><a href="#Input:clone">Input:clone ([copyState=false])</a></td>
     <td class="summary">Create a new input object based on this input <a href="../modules/input.html#Input.config">config</a> data.</td>
     </tr>
     <tr>
@@ -214,20 +218,24 @@ end
     <td class="summary">Disable the input and its children, preventing further updates and events.</td>
     </tr>
     <tr>
+    <td class="name" nowrap><a href="#Input:enable">Input:enable ()</a></td>
+    <td class="summary">Enable the input and its children, allowing further updates and events.</td>
+    </tr>
+    <tr>
     <td class="name" nowrap><a href="#Input:onNextActiveSource">Input:onNextActiveSource (fn[, filter])</a></td>
     <td class="summary">Will call <code>fn(source)</code> on the next activated source (including sources not currently used by this input).</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:grab">Input:grab ()</a></td>
-    <td class="summary">Grab the input and its children input and returns the new subinput.</td>
+    <td class="summary">Grab the input and its children and returns the resulting grabbing input.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:release">Input:release ()</a></td>
-    <td class="summary">Release a subinput and its children.</td>
+    <td class="summary">Release an input that is currently grabbing another and its children.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:neutralize">Input:neutralize ()</a></td>
-    <td class="summary">Set the state of this input to a neutral position (i.e.</td>
+    <td class="summary">Set the state of this input and its children to a neutral position (i.e.</td>
     </tr>
     <tr>
     <td class="name" nowrap><a href="#Input:setJoystick">Input:setJoystick (joystick)</a></td>
@@ -688,8 +696,8 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 
 </dd>
     <dt>
-    <a name = "clamped"></a>
-    <strong>clamped (x, y)</strong>
+    <a name = "normalize"></a>
+    <strong>normalize (x, y)</strong>
     </dt>
     <dd>
     Returns a normalized version of the vector (x,y), i.e.  &ldquo;clamp&rdquo; the returned x,y coordinates into a circle of radius 1.
@@ -894,12 +902,30 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 
 </dd>
     <dt>
+    <a name = "Input.enabled"></a>
+    <strong>Input.enabled <sup><em>[read-only]</em></sup></strong>
+    </dt>
+    <dd>
+    <code>false</code> if the input is disabled, <code>true</code> otherwise.
+ If the input is disabled, its children are also disabled.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "Input.grabbed"></a>
     <strong>Input.grabbed <sup><em>[read-only]</em></sup></strong>
     </dt>
     <dd>
-    <code>false</code> if the input is currently not grabbed, a sub<a href="../modules/input.html#Input_objects">Input</a> otherwise.
- This may be different between each subinput.
+    <code>false</code> if the input is currently not grabbed, the grabbing <a href="../modules/input.html#Input_objects">Input</a> otherwise.
 
     </ul>
     </ul>
@@ -917,8 +943,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <strong>Input.grabbing <sup><em>[read-only]</em></sup></strong>
     </dt>
     <dd>
-    <code>false</code> if the input is not a subinput, the <a href="../modules/input.html#Input_objects">Input</a> it was grabbed from otherwise.
- This may be different between each subinput.
+    <code>false</code> if the input is not grabbing another input, the <a href="../modules/input.html#Input_objects">Input</a> it is grabbing from otherwise.
 
     </ul>
     </ul>
@@ -936,7 +961,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <strong>Input.event</strong>
     </dt>
     <dd>
-    Input event registry.
+    <p>Input event registry.
  The following events are available:</p>
 
 <ul>
@@ -946,7 +971,6 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 </ul>
 
 
-<p> Each subinput has a different event registry.
 
     </ul>
     </ul>
@@ -968,7 +992,9 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
  Should be called every frame, typically <em>after</em> you've done all your input handling
  (otherwise <a href="../modules/input.html#Input:pressed">pressed</a> and <a href="../modules/input.html#Input:released">released</a> may never return true and <a href="../modules/input.html#Input:delta">delta</a> might be wrong).</p>
 
-<p> (Note: this should not be called on subinputs)
+<p> If the input is grabbed, will update the input that grabbed it instead.</p>
+
+<p> (Note: this do not need to be called on inputs that are grabbing another input as the grabbed input will update it automatically)
 
     </ul>
     </ul>
@@ -983,16 +1009,25 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 </dd>
     <dt>
     <a name = "Input:clone"></a>
-    <strong>Input:clone ()</strong>
+    <strong>Input:clone ([copyState=false])</strong>
     </dt>
     <dd>
     Create a new input object based on this input <a href="../modules/input.html#Input.config">config</a> data.
+ Unless <code>copyState</code> is set, the clone will only keep the <a href="../modules/input.html#Input.config">config</a> data and the input <a href="../modules/input.html#Input.name">name</a>; other state will be set to the default values.
 
     </ul>
     </ul>
     </ul>
     </ul>
 
+    <h3>Parameters:</h3>
+    <ul>
+          <li><span class="parameter">copyState</span>
+              <span class="types"><span class="type">boolean</span></span>
+           if <code>true</code>, will copy the currrent state of the input into the clone. The input states includes the current input value, if it is enabled/disabled, and the current joystick; note that the grabbed state (i.e. the <a href="../modules/input.html#Input.grabbed">grabbed</a> and <a href="../modules/input.html#Input.grabbing">grabbing</a> fields) is not copied.
+           (<em>default</em> false)
+          </li>
+    </ul>
 
 
 
@@ -1005,7 +1040,6 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     </dt>
     <dd>
     Reload the input <a href="../modules/input.html#Input.config">config</a>, and do the same for its children.
- This will reenable the input if it was disabled using <a href="../modules/input.html#Input:disable">disable</a>.
 
     </ul>
     </ul>
@@ -1024,7 +1058,26 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     </dt>
     <dd>
     Disable the input and its children, preventing further updates and events.
- The input can be reenabled using <a href="../modules/input.html#Input:reload">reload</a>.
+ The input can be reenabled using <a href="../modules/input.html#Input:enable">enable</a>.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Input:enable"></a>
+    <strong>Input:enable ()</strong>
+    </dt>
+    <dd>
+    Enable the input and its children, allowing further updates and events.
+ The should be called after disabling the input using <a href="../modules/input.html#Input:disable">disable</a>.
 
     </ul>
     </ul>
@@ -1071,15 +1124,15 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <strong>Input:grab ()</strong>
     </dt>
     <dd>
-    Grab the input and its children input and returns the new subinput. </p>
+    Grab the input and its children and returns the resulting grabbing input. </p>
 
-<p> A grabbed input will no longer update and instead pass all new update to the subinput.
- This is typically used for contextual action or pause menus: by grabbing the player input, all the direct use of
- this input in the game will stop (can&rsquo;t move caracter, &hellip;) and instead you can use the subinput to handle input in the pause menu.
- To stop grabbing an input, you will need to <a href="../modules/input.html#Input:release">release</a> the subinput.</p>
+<p> Grabbed inputs are set to a neutral position and disabled (will no longer update) and will instead pass all new updates to the grabbing input.</p>
 
-<p> This will also reset the input to a neutral state. The subinput will share everything with this input, except
- <a href="../modules/input.html#Input.grabbed">grabbed</a>, <a href="../modules/input.html#Input.grabbing">grabbing</a>, <a href="../modules/input.html#Input.event">event</a> (a new event registry is created), and of course its current state.
+<p> This is typically used for contextual action or pause menus: by grabbing the player input, all the direct use of
+ this input in the game will stop (can&rsquo;t move caracter, &hellip;) and instead you can use the grabbing input to handle input in the pause menu.
+ To stop grabbing an input, you will need to call <a href="../modules/input.html#Input:release">release</a> on the grabbing input.</p>
+
+<p> The grabbing input is created by cloning the current input and starts with the same state as the input when it was grabbed.
 
     </ul>
     </ul>
@@ -1097,8 +1150,8 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <strong>Input:release ()</strong>
     </dt>
     <dd>
-    Release a subinput and its children.
- The parent grabbed input will be updated again. This subinput will be reset to a neutral position and won&rsquo;t be updated further.
+    Release an input that is currently grabbing another and its children.
+ The parent grabbed input will be re-enabled (will update again). This grabbing input will be reset to a neutral position and disabled when released.
 
     </ul>
     </ul>
@@ -1116,7 +1169,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
     <strong>Input:neutralize ()</strong>
     </dt>
     <dd>
-    Set the state of this input to a neutral position (i.e.  value = 0 for every dimension).
+    Set the state of this input and its children to a neutral position (i.e.  value = 0 for every dimension).
 
     </ul>
     </ul>
@@ -1641,7 +1694,7 @@ player.fire.event:bind(<span class="string">"pressed"</span>, <span class="keywo
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2022-09-20 14:48:56 </i>
+<i style="float:right;">Last updated 2022-10-07 12:40:59 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

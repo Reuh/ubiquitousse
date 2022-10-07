@@ -667,10 +667,9 @@ input_mt = {
 		event:bind("_active", onevent)
 	end,
 
-	--- Grab the input and its children input and returns the resulting grabbing input.
+	--- Grab the input and its children and returns the resulting grabbing input.
 	--
-	-- The input will be disabled (will no longer update) and instead pass all new updates to the grabbing input.
-	-- The input will also be set to a neutral position.
+	-- Grabbed inputs are set to a neutral position and disabled (will no longer update) and will instead pass all new updates to the grabbing input.
 	--
 	-- This is typically used for contextual action or pause menus: by grabbing the player input, all the direct use of
 	-- this input in the game will stop (can't move caracter, ...) and instead you can use the grabbing input to handle input in the pause menu.
@@ -693,7 +692,7 @@ input_mt = {
 		end
 	end,
 	--- Release an input that is currently grabbing another and its children.
-	-- The parent grabbed input will be re-enabled (will update again). This grabbing input will be reset to a neutral position and disabled.
+	-- The parent grabbed input will be re-enabled (will update again). This grabbing input will be reset to a neutral position and disabled when released.
 	release = function(self)
 		assert(self.grabbing, "can't release an input that is not grabbing another input")
 		self:disable()
