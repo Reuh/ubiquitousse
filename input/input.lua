@@ -724,6 +724,10 @@ input_mt = {
 			c:neutralize()
 		end
 	end,
+	--- Manually set the state of this input.
+	set = function(self, ...)
+		self:_update{...}
+	end,
 
 	--- Set the joystick associated with this input.
 	-- This input will then ignore every other joystick.
