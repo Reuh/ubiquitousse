@@ -98,6 +98,9 @@ local sprite = {
 }
 ]]--
 
+--- Special value used as the first element of each system's linked list of entities.
+let head = {}
+
 --- Recursively remove subsystems from a system.
 let recDestroySystems = (system)
 	for i=#system.systems, 1, -1 do
@@ -383,10 +386,11 @@ let system_mt = {
 	--- Private fields ---
 
 	--- First element of the linked list of entities: { entity, next_element }.
+	-- The default entity `head` is always added as a first element to simplify algorithms; remember to skip it.
 	-- @local
 	_first = nil,
-	--- Associative map of entities in the system and their previous linked list element (or `true` if first element).
-	-- This make the list effectively a doubly linked list, but with easy access to the previous element using this map (and therefore O(1) deletion).
+	--- Hash map of entities in the system and their previous linked list element. Does not contain a key for the `head` entity.
+	-- This make the list effectively a doubly linked list, but with fast access to the previous element using this map (and therefore O(1) deletion).
 	-- @local
 	_previous = nil,
 	--- Amount of time waited since last update (if interval is set).
@@ -419,30 +423,20 @@ let system_mt = {
 				copy({ [@component] = @default }, e)
 			end
 			-- add to linked list
-			if @_first == nil then
-				@_first = { e, nil }
-				@_previous[e] = true
-			elseif @compare(e, @_first[1]) then
-				let nxt = @_first
-				@_first = { e, nxt }
-				@_previous[e] = true
-				@_previous[nxt[1]] = @_first
-			else
-				let entity = @_first
-				while entity[2] ~= nil do
-					if @compare(e, entity[2][1]) then
-						let nxt = entity[2]
-						entity[2] = { e, nxt }
-						@_previous[e] = entity
-						@_previous[nxt[1]] = entity[2]
-						break
-					end
-					entity = entity[2]
-				end
-				if entity[2] == nil then
-					entity[2] = { e, nil }
+			let entity = @_first
+			while entity[2] ~= nil do -- no need to process first entity as it is the special `head` entity
+				if @compare(e, entity[2][1]) then
+					let nxt = entity[2]
+					entity[2] = { e, nxt }
 					@_previous[e] = entity
+					@_previous[nxt[1]] = entity[2]
+					break
 				end
+				entity = entity[2]
+			end
+			if entity[2] == nil then
+				entity[2] = { e, nil }
+				@_previous[e] = entity
 			end
 			-- notify addition
 			@entityCount += 1
@@ -483,16 +477,9 @@ let system_mt = {
 			if @_previous[e] then -- recheck in case it was removed already from a subsystem onRemove callback
 				-- remove from linked list
 				let prev = @_previous[e]
-				if prev == true then
-					@_first = @_first[2]
-					if @_first then
-						@_previous[@_first[1]] = true
-					end
-				else
-					prev[2] = prev[2][2]
-					if prev[2] then
-						@_previous[prev[2][1]] = prev
-					end
+				prev[2] = prev[2][2]
+				if prev[2] then
+					@_previous[prev[2][1]] = prev
 				end
 				-- notify removal
 				@_previous[e] = nil
@@ -545,43 +532,33 @@ let system_mt = {
 	-- @tparam Entity... ... other entities to reorder
 	-- @treturn Entity,... `e,...` the function arguments
 	reorder = :(e, ...)
-		if e ~= nil then
-			if @_previous[e] then
-				let prev = @_previous[e] -- { prev, { e, next } }
-				let next = prev == true and @_first[2] or prev[2][2]
-				-- remove e from linked list
-				if prev == true then
-					@_first = @_first[2]
-				else
-					prev[2] = next
-				end
-				if next then
-					@_previous[next[1]] = prev
-				end
-				-- find position so that prev < e <= next
-				while prev ~= true and @compare(e, prev[1]) do -- ensure prev < e
-					next = prev
-					prev = @_previous[prev[1]]
-				end
-				while next ~= nil and not @compare(e, next[1]) do -- ensure e <= next
-					prev = next
-					next = next[2]
-				end
-				-- reinsert e in linked list
-				let new = { e, next }
-				@_previous[e] = prev
-				if next then
-					@_previous[next[1]] = new
-				end
-				if prev == true then
-					@_first = new
-				else
-					prev[2] = new
-				end
-				-- Reorder in subsystems
-				for _, s in ipairs(@systems) do
-					s:reorder(e)
-				end
+		if e ~= nil and @_previous[e] then
+			let prev = @_previous[e] -- { prev, { e, next } }
+			let next = prev[2][2]
+			-- remove e from linked list
+			prev[2] = next
+			if next then
+				@_previous[next[1]] = prev
+			end
+			-- find position so that prev < e <= next
+			while prev[1] ~= head and @compare(e, prev[1]) do -- ensure prev < e
+				next = prev
+				prev = @_previous[prev[1]]
+			end
+			while next ~= nil and not @compare(e, next[1]) do -- ensure e <= next
+				prev = next
+				next = next[2]
+			end
+			-- reinsert e in linked list
+			let new = { e, next }
+			@_previous[e] = prev
+			if next then
+				@_previous[next[1]] = new
+			end
+			prev[2] = new
+			-- Reorder in subsystems
+			for _, s in ipairs(@systems) do
+				s:reorder(e)
 			end
 		end
 		if ... then
@@ -607,7 +584,7 @@ let system_mt = {
 	--- Returns an iterator that iterate through the entties in this system, in order.
 	-- @treturn iterator iterator over the entities in this system
 	iter = :()
-		return nextEntity, { @_first }
+		return nextEntity, { @_first[2] }
 	end,
 	--- Get the `i`th entity in the system.
 	-- This is a simple wrapper around `iter`; it _will_ iterate over all the entities in the system in order until we reach the desired one.
@@ -759,6 +736,7 @@ let recInstanciateSystems = (world, systems)
 			world = world,
 			w = world,
 			s = world.s,
+			_first = { head },
 			_previous = {},
 		}, {
 			__index = :(k)
@@ -813,6 +791,7 @@ ecs = {
 		let world = setmetatable({
 			filter = ecs.all(),
 			s = {},
+			_first = { head },
 			_previous = {}
 		}, { __index = system_mt })
 		world.world = world
