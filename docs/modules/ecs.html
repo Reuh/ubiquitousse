@@ -70,7 +70,8 @@ Main differences include:</p>
 <li>ability to nest systems (more organisation potential);</li>
 <li>instanciation of systems for each world (no shared state) (several worlds can coexist at the same time easily);</li>
 <li>adding and removing entities is done instantaneously (no going isane over tiny-ecs cache issues);</li>
-<li>ability to add and remove components from entities after they were added to the world (more dynamic entities).</li>
+<li>ability to add and remove components from entities after they were added to the world (more dynamic entities);</li>
+<li>much better performance for ordered systems (entities are stored in a skip list internally).</li>
 </ul>
 
 
@@ -82,6 +83,8 @@ if you don&rsquo;t use them.</p>
 
 <p>The module returns a table that contains several functions, <a href="../modules/ecs.html#world">world</a> or <a href="../modules/scene.html#">scene</a> are starting points
 to create your world.</p>
+
+<p>This library was designed to be reasonably fast; on my machine using LuaJIT, in the duration of a frame (1/60 seconds) about 40000 entities can be added to an unordered system or 8000 to an ordered system. Complexities are documented for each function.</p>
 
 <p>No mandatory dependency.
 Optional dependency: <a href="../modules/ubiquitousse.html#scene">ubiquitousse.scene</a>, to allow quick creation of ECS-based scenes (<a href="../modules/ecs.html#scene">ecs.scene</a>).</p>
@@ -140,6 +143,26 @@ end
     </table>
     <h3 class="doc-title"><a href="#Entity.Component">Components.</a></h3>
     <table class="function_list">
+    <tr>
+    <td class="name" nowrap><a href="#Entity.first">Entity.first</a></td>
+    <td class="summary">First element of the highest layer linked list of entities: { entity, next_element, element_in_lower_layer }.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.firstBase">Entity.firstBase</a></td>
+    <td class="summary">First element of the base layer.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.previous">Entity.previous</a></td>
+    <td class="summary">List of hash map (one per skip listlayer) of entities in the system and their previous linked list element.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.nLayers">Entity.nLayers</a></td>
+    <td class="summary">Number of layers in the skip list.</td>
+    </tr>
+    <tr>
+    <td class="name" nowrap><a href="#Entity.n">Entity.n</a></td>
+    <td class="summary">Number of elements in the skip list.</td>
+    </tr>
 </table>
 <h2><a href="#System_objects">System objects </a></h2>
 <table class="function_list">
@@ -518,6 +541,117 @@ component or if it doesn&rsquo;t exist in the entity.
 	<span class="keyword">end</span>
 }</pre>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "Entity.first"></a>
+    <strong>Entity.first</strong>
+    </dt>
+    <dd>
+    First element of the highest layer linked list of entities: { entity, next_element, element_in_lower_layer }.
+ The default entity <code>head</code> is always added as a first element to simplify algorithms; remember to skip it.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Fields:</h3>
+    <ul>
+          <li><span class="parameter">head</span>
+
+
+          </li>
+          <li><span class="parameter">nil</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.firstBase"></a>
+    <strong>Entity.firstBase</strong>
+    </dt>
+    <dd>
+    First element of the base layer.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.previous"></a>
+    <strong>Entity.previous</strong>
+    </dt>
+    <dd>
+    List of hash map (one per skip listlayer) of entities in the system and their previous linked list element.
+ Does not contain a key for the <code>head</code> entity.
+ This make each linked list layer effectively a doubly linked list, but with fast access to the previous element using this map (and therefore O(1) deletion).
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+    <h3>Fields:</h3>
+    <ul>
+          <li><span class="parameter">{</span>
+
+
+          </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.nLayers"></a>
+    <strong>Entity.nLayers</strong>
+    </dt>
+    <dd>
+    Number of layers in the skip list.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Entity.n"></a>
+    <strong>Entity.n</strong>
+    </dt>
+    <dd>
+    Number of elements in the skip list.
+
+    </ul>
+    </ul>
+    </ul>
+    </ul>
+
+
+
+
+
 
 </dd>
 </dl>
@@ -1306,7 +1440,7 @@ avoid repeating your filters or allow controlling several system from a single p
  If you do that, since <a href="../modules/ecs.html#System:remove">System:remove</a> will not search for entities in systems where they should have been filtered out, the added entities will not be removed
  when calling <a href="../modules/ecs.html#System:remove">System:remove</a> on a parent system or the world. The entity can be removed by calling <a href="../modules/ecs.html#System:remove">System:remove</a> on the system <a href="../modules/ecs.html#System:add">System:add</a> was called on.</p>
 
-<p> Complexity: O(1) per unordered system, O(entityCount) per ordered system.
+<p> Complexity: O(1) per unordered system, O(log2(entityCount)) per ordered system.
 
     </ul>
     </ul>
@@ -1349,7 +1483,7 @@ avoid repeating your filters or allow controlling several system from a single p
 
 <p> If you intend to call this on a subsystem instead of the world, please read the warning in <a href="../modules/ecs.html#System:add">System:add</a>.</p>
 
-<p> Complexity: O(1) per system.
+<p> Complexity: O(1) per unordered system, O(log2(entityCount)) per ordered system.
 
     </ul>
     </ul>
@@ -1429,7 +1563,7 @@ avoid repeating your filters or allow controlling several system from a single p
 <p> Will recalculate the entity position in the entity list for this system and its subsystems.
  Will skip entities that are not in the system.</p>
 
-<p> Complexity: O(entityCount) per system.
+<p> Complexity: O(1) per unordered system, O(log2(entityCount)) per ordered system.
 
     </ul>
     </ul>
@@ -1501,7 +1635,9 @@ avoid repeating your filters or allow controlling several system from a single p
     <strong>System:iter ()</strong>
     </dt>
     <dd>
-    Returns an iterator that iterate through the entties in this system, in order.
+    Returns an iterator that iterate through the entties in this system, in order. </p>
+
+<p> Complexity: O(1) per iteration; O(entityCount) for the full iteration
 
     </ul>
     </ul>
@@ -1525,9 +1661,9 @@ avoid repeating your filters or allow controlling several system from a single p
     <strong>System:get (i)</strong>
     </dt>
     <dd>
-    Get the <code>i</code>th entity in the system.
- This is a simple wrapper around <a href="../modules/ecs.html#System:iter">iter</a>; it <em>will</em> iterate over all the entities in the system in order until we reach the desired one.
- Complexity: O(i)
+    Get the <code>i</code>th entity in the system. </p>
+
+<p> Complexity: O(i)
 
     </ul>
     </ul>
@@ -1558,7 +1694,9 @@ avoid repeating your filters or allow controlling several system from a single p
     <strong>System:clear ()</strong>
     </dt>
     <dd>
-    Remove every entity from the system and its subsystems.
+    Remove every entity from the system and its subsystems. </p>
+
+<p> Complexity: O(entityCount) per system
 
     </ul>
     </ul>
@@ -1578,7 +1716,9 @@ avoid repeating your filters or allow controlling several system from a single p
     <dd>
     Try to update the system and its subsystems.  Should be called on every game update.</p>
 
-<p> Subsystems are updated after their parent system.
+<p> Subsystems are updated after their parent system.</p>
+
+<p> Complexity: O(entityCount) per system if system:process is defined; O(1) per system otherwise.
 
     </ul>
     </ul>
@@ -1605,7 +1745,9 @@ avoid repeating your filters or allow controlling several system from a single p
     <dd>
     Try to draw the system and its subsystems.  Should be called on every game draw.</p>
 
-<p> Subsystems are drawn after their parent system.
+<p> Subsystems are drawn after their parent system.</p>
+
+<p> &mdash; Complexity: O(entityCount) per system if system:render is defined; O(1) per system otherwise.
 
     </ul>
     </ul>
@@ -1629,7 +1771,9 @@ avoid repeating your filters or allow controlling several system from a single p
  if the method exists and the entity is in the system. <code>c</code> is the system <a href="#Entity.Component">component</a>
  associated with the current system, and <code>e</code> is the <a href="../modules/ecs.html#Entity_objects">Entity</a>.</p>
 
-<p> Think of it as a way to perform custom callbacks issued from an entity event, similar to <a href="../modules/ecs.html#System:onAdd">System:onAdd</a>.
+<p> Think of it as a way to perform custom callbacks issued from an entity event, similar to <a href="../modules/ecs.html#System:onAdd">System:onAdd</a>.</p>
+
+<p> Complexity: O(1) per system
 
     </ul>
     </ul>
@@ -1681,7 +1825,9 @@ its sibling systems (i.e. completely stop the propagation of the event).</li>
  disable <a href="../modules/ecs.html#System:onUpdate">System:onUpdate</a> behaviour on the system and its subsystems).</p>
 
 <p> <code>&quot;capture&quot;</code> would be for example used to prevent other systems from handling the event (for example to make sure an
- input event is handled only once by a single system).
+ input event is handled only once by a single system).</p>
+
+<p> Complexity: O(1) per system
 
     </ul>
     </ul>
@@ -1710,6 +1856,7 @@ its sibling systems (i.e. completely stop the propagation of the event).</li>
     </dt>
     <dd>
     Remove all the entities and subsystems in this system.
+ Complexity: O(entityCount) per system
 
     </ul>
     </ul>
@@ -1729,7 +1876,7 @@ its sibling systems (i.e. completely stop the propagation of the event).</li>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2022-10-07 12:40:59 </i>
+<i style="float:right;">Last updated 2022-10-11 19:12:05 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

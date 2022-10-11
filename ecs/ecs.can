@@ -6,7 +6,8 @@ Main differences include:
 * ability to nest systems (more organisation potential);
 * instanciation of systems for each world (no shared state) (several worlds can coexist at the same time easily);
 * adding and removing entities is done instantaneously (no going isane over tiny-ecs cache issues);
-* ability to add and remove components from entities after they were added to the world (more dynamic entities).
+* ability to add and remove components from entities after they were added to the world (more dynamic entities);
+* much better performance for ordered systems (entities are stored in a skip list internally).
 
 And a fair amount of other quality-of-life features.
 
@@ -16,6 +17,8 @@ if you don't use them.
 
 The module returns a table that contains several functions, `world` or `scene` are starting points
 to create your world.
+
+This library was designed to be reasonably fast; on my machine using LuaJIT, in the duration of a frame (1/60 seconds) about 40000 entities can be added to an unordered system or 8000 to an ordered system. Complexities are documented for each function.
 
 No mandatory dependency.
 Optional dependency: `ubiquitousse.scene`, to allow quick creation of ECS-based scenes (`ecs.scene`).
@@ -54,8 +57,7 @@ if not loaded then scene = nil end
 
 let ecs
 
--- TODO: Implement a skip list for faster search.
--- better control over system order: process, draw, methods? (for lag reasons and dependencies)
+-- TODO: better control over system order: process, draw, methods? (for lag reasons and dependencies)
 
 --- Entities are regular tables that get processed by `System`s.
 --
@@ -98,9 +100,6 @@ local sprite = {
 }
 ]]--
 
---- Special value used as the first element of each system's linked list of entities.
-let head = {}
-
 --- Recursively remove subsystems from a system.
 let recDestroySystems = (system)
 	for i=#system.systems, 1, -1 do
@@ -119,17 +118,6 @@ let recCallOnRemoveFromWorld = (world, systems)
 		s:clear()
 		recCallOnRemoveFromWorld(world, s.systems)
 		s:onRemoveFromWorld(world)
-	end
-end
-
---- Iterate through the next entity, based on state s: { previousLinkedListItem }
-let nextEntity = (s)
-	if s[1] then
-		let var = s[1][1]
-		s[1] = s[1][2]
-		return var
-	else
-		return nil
 	end
 end
 
@@ -154,6 +142,149 @@ let copy = (a, b, cache={})
 			b[k] = v
 		end
 	end
+end
+
+--- Skip list implementation ---
+-- Well technically it's a conbination of a skip list (for ordering) and a hash map (for that sweet O(1) search). Takes more memory but oh so efficient.
+
+--- Special value used as the first element of each linked list.
+let head = {}
+
+--- Create a new linked list.
+let skipNew = ()
+	let s = {
+		--- First element of the highest layer linked list of entities: { entity, next_element, element_in_lower_layer }.
+		-- The default entity `head` is always added as a first element to simplify algorithms; remember to skip it.
+		first = { head, nil },
+		--- First element of the base layer.
+		firstBase = nil,
+		--- List of hash map (one per skip listlayer) of entities in the system and their previous linked list element.
+		-- Does not contain a key for the `head` entity.
+		-- This make each linked list layer effectively a doubly linked list, but with fast access to the previous element using this map (and therefore O(1) deletion).
+		previous = { {} },
+		--- Number of layers in the skip list.
+		nLayers = 1,
+		--- Number of elements in the skip list.
+		n = 0
+	}
+	s.firstBase = s.first
+	return s
+end
+
+--- Iterate through the next entity in a linked list, based on state s: { previousLinkedListItem }
+let nextEntity = (s)
+	if s[1] then
+		let var = s[1][1]
+		s[1] = s[1][2]
+		return var
+	else
+		return nil
+	end
+end
+--- Returns an iterator over all the elements of the skip list.
+-- Complexity: O(n) like expected
+let skipIter = :()
+	return nextEntity, { @firstBase[2] }
+end
+
+--- Add new layers (if needed) in order to target O(log2(n)) complexity for skip list operations.
+-- i.e. add layers until we have log2(n) layers
+-- Complexity: O(log2(n)) if you never called it before, but you should call it with every insert for O(1)
+let skipAddLayers = :()
+	while @n > 2^@nLayers do
+		@first = { head, nil, @first }
+		table.insert(@previous, {})
+		@nLayers += 1
+	end
+end
+
+--- 1/2 chance of being true, 1/2 of being false! How exciting!
+let coinFlip = ()
+	return math.random(0,1) == 1
+end
+--- Insert an element into the skip list using system:compare for ordering.
+-- Behavior undefined if e is already in the skip list.
+-- Complexity: if luck is on your side, O(log2(n)); O(n) if the universe hates you; O(1) if compare always returns true and nLayers = 1
+let skipInsert = :(system, e)
+	-- find previous entity in each layer
+	let prevLayer = {}
+	let prev = @first -- no need to process first entity as it is the special `head` entity
+	for i=@nLayers, 1, -1 do
+		while true do
+			-- next is end of layer or greater entity: select this prev entity
+			if prev[2] == nil or system:compare(e, prev[2][1]) then
+				prevLayer[i] = prev
+				-- not on base layer: go down a layer, for loop will continue
+				if prev[3] then
+					prev = prev[3] -- same entity on lower layer
+					break
+				end
+				break
+			-- next entity on current layer
+			else
+				prev = prev[2]
+			end
+		end
+	end
+	-- add to each layer
+	let inLowerLayer
+	for i=1, @nLayers do
+		prev = prevLayer[i]
+		if i == 1 or coinFlip() then -- always present in base layer, otherwise 1/2 chance
+			let nxt = prev[2]
+			prev[2] = { e, nxt, inLowerLayer }
+			@previous[i][e] = prev
+			if nxt then
+				@previous[i][nxt[1]] = prev[2]
+			end
+			inLowerLayer = prev[2]
+		else
+			break
+		end
+	end
+	@n += 1
+end
+
+--- Remove an element from the skip list.
+-- Behavior undefined if e is not in the skip list.
+-- Complexity: O(nLayers) at most, which should be O(log2(n)) if you called skipAddLayers often enough
+let skipDelete = :(e)
+	-- remove from each layer
+	for i=1, @nLayers do
+		let previous = @previous[i]
+		if previous[e] then
+			let prev = previous[e]
+			prev[2] = prev[2][2]
+			previous[e] = nil
+			if prev[2] then
+				previous[prev[2][1]] = prev
+			end
+		else
+			break -- won't appear on higher layers either
+		end
+	end
+	@n -= 1
+end
+
+--- Reorder an element into the skip list.
+-- Behavior undefined if e is not in the skip list.
+-- Complexity: if luck is on your side, O(log2(n)); O(n) if the universe hates you; O(1) if compare always returns true and nLayers = 1
+let skipReorder = :(system, e)
+	skipDelete(@, e)
+	skipInsert(@, system, e)
+end
+
+--- Returns the ith element of the skip list.
+-- Complexity: O(n)
+let skipIndex = :(i)
+	local n = 1
+	for e in skipIter(@) do
+		if n == i then
+			return e
+		end
+		n += 1
+	end
+	return nil
 end
 
 --[[-- Systems and Worlds.
@@ -385,14 +516,12 @@ let system_mt = {
 
 	--- Private fields ---
 
-	--- First element of the linked list of entities: { entity, next_element }.
-	-- The default entity `head` is always added as a first element to simplify algorithms; remember to skip it.
+	--- Hash map of the entities currently in the system.
+	-- Used to quickly check if an entity is present of not in this system.
+	-- This is actually the _skiplist.previous[1] table.
 	-- @local
-	_first = nil,
-	--- Hash map of entities in the system and their previous linked list element. Does not contain a key for the `head` entity.
-	-- This make the list effectively a doubly linked list, but with fast access to the previous element using this map (and therefore O(1) deletion).
-	-- @local
-	_previous = nil,
+	_has = nil,
+
 	--- Amount of time waited since last update (if interval is set).
 	-- @local
 	_waited = 0,
@@ -412,37 +541,27 @@ let system_mt = {
 	-- If you do that, since `System:remove` will not search for entities in systems where they should have been filtered out, the added entities will not be removed
 	-- when calling `System:remove` on a parent system or the world. The entity can be removed by calling `System:remove` on the system `System:add` was called on.
 	--
-	-- Complexity: O(1) per unordered system, O(entityCount) per ordered system.
+	-- Complexity: O(1) per unordered system, O(log2(entityCount)) per ordered system.
 	-- @tparam Entity e entity to add
 	-- @tparam Entity... ... other entities to add
 	-- @treturn Entity,... `e,...` the function arguments
 	add = :(e, ...)
-		if e ~= nil and not @_previous[e] and @filter(e) then
+		if e ~= nil and not @_has[e] and @filter(e) then
 			-- copy default system component
 			if @component and @default then
 				copy({ [@component] = @default }, e)
 			end
-			-- add to linked list
-			let entity = @_first
-			while entity[2] ~= nil do -- no need to process first entity as it is the special `head` entity
-				if @compare(e, entity[2][1]) then
-					let nxt = entity[2]
-					entity[2] = { e, nxt }
-					@_previous[e] = entity
-					@_previous[nxt[1]] = entity[2]
-					break
-				end
-				entity = entity[2]
+			-- ordered system: add new layer if needed
+			if @compare ~= system_mt.compare then
+				skipAddLayers(@_skiplist)
 			end
-			if entity[2] == nil then
-				entity[2] = { e, nil }
-				@_previous[e] = entity
-			end
+			-- add to skip list
+			skipInsert(@_skiplist, @, e)
 			-- notify addition
 			@entityCount += 1
 			@onAdd(e, e[@component])
 			-- add to subsystems (if it wasn't immediately removed in onAdd)
-			if @_previous[e] then
+			if @_has[e] then
 				for _, s in ipairs(@systems) do
 					s:add(e)
 				end
@@ -462,27 +581,21 @@ let system_mt = {
 	--
 	-- If you intend to call this on a subsystem instead of the world, please read the warning in `System:add`.
 	--
-	-- Complexity: O(1) per system.
+	-- Complexity: O(1) per unordered system, O(log2(entityCount)) per ordered system.
 	-- @tparam Entity e entity to remove
 	-- @tparam Entity... ... other entities to remove
 	-- @treturn Entity,... `e,...` the function arguments
 	remove = :(e, ...)
 		if e ~= nil then
-			if @_previous[e] then
+			if @_has[e] then
 				-- remove from subsystems
 				for _, s in ipairs(@systems) do
 					s:remove(e)
 				end
 			end
-			if @_previous[e] then -- recheck in case it was removed already from a subsystem onRemove callback
-				-- remove from linked list
-				let prev = @_previous[e]
-				prev[2] = prev[2][2]
-				if prev[2] then
-					@_previous[prev[2][1]] = prev
-				end
+			if @_has[e] then -- recheck in case it was removed already from a subsystem onRemove callback
+				skipDelete(@_skiplist, e)
 				-- notify removal
-				@_previous[e] = nil
 				@entityCount -= 1
 				@onRemove(e, e[@component])
 			end
@@ -504,9 +617,9 @@ let system_mt = {
 	-- @treturn Entity,... `e,...` the function arguments
 	refresh = :(e, ...)
 		if e ~= nil then
-			if not @_previous[e] then
+			if not @_has[e] then
 				@add(e)
-			elseif @_previous[e] then
+			else
 				if not @filter(e) then
 					@remove(e)
 				else
@@ -527,35 +640,13 @@ let system_mt = {
 	-- Will recalculate the entity position in the entity list for this system and its subsystems.
 	-- Will skip entities that are not in the system.
 	--
-	-- Complexity: O(entityCount) per system.
+	-- Complexity: O(1) per unordered system, O(log2(entityCount)) per ordered system.
 	-- @tparam Entity e entity to reorder
 	-- @tparam Entity... ... other entities to reorder
 	-- @treturn Entity,... `e,...` the function arguments
 	reorder = :(e, ...)
-		if e ~= nil and @_previous[e] then
-			let prev = @_previous[e] -- { prev, { e, next } }
-			let next = prev[2][2]
-			-- remove e from linked list
-			prev[2] = next
-			if next then
-				@_previous[next[1]] = prev
-			end
-			-- find position so that prev < e <= next
-			while prev[1] ~= head and @compare(e, prev[1]) do -- ensure prev < e
-				next = prev
-				prev = @_previous[prev[1]]
-			end
-			while next ~= nil and not @compare(e, next[1]) do -- ensure e <= next
-				prev = next
-				next = next[2]
-			end
-			-- reinsert e in linked list
-			let new = { e, next }
-			@_previous[e] = prev
-			if next then
-				@_previous[next[1]] = new
-			end
-			prev[2] = new
+		if e ~= nil and @_has[e] then
+			skipReorder(@_skiplist, @, e)
 			-- Reorder in subsystems
 			for _, s in ipairs(@systems) do
 				s:reorder(e)
@@ -574,7 +665,7 @@ let system_mt = {
 	-- @tparam Entity... ... other entities that may be in the system
 	-- @treturn boolean `true` if every entity is in the system
 	has = :(e, ...)
-		let has = e == nil or not not @_previous[e]
+		let has = e == nil or not not @_has[e]
 		if ... then
 			return has and @has(...)
 		else
@@ -582,28 +673,25 @@ let system_mt = {
 		end
 	end,
 	--- Returns an iterator that iterate through the entties in this system, in order.
+	--
+	-- Complexity: O(1) per iteration; O(entityCount) for the full iteration
 	-- @treturn iterator iterator over the entities in this system
 	iter = :()
-		return nextEntity, { @_first[2] }
+		return skipIter(@_skiplist)
 	end,
 	--- Get the `i`th entity in the system.
-	-- This is a simple wrapper around `iter`; it _will_ iterate over all the entities in the system in order until we reach the desired one.
+	--
 	-- Complexity: O(i)
 	-- @tparam number i the index of the entity
 	-- @treturn Entity the entity; `nil` if there is no such entity in the system
 	get = :(i)
-		local n = 1
-		for e in @iter() do
-			if n == i then
-				return e
-			end
-			n += 1
-		end
-		return nil
+		return skipIndex(@_skiplist, i)
 	end,
 	--- Remove every entity from the system and its subsystems.
+	--
+	-- Complexity: O(entityCount) per system
 	clear = :()
-		for e in @iter() do
+		for e in skipIter(@_skiplist) do
 			@remove(e)
 		end
 		for _, s in ipairs(@systems) do
@@ -613,6 +701,8 @@ let system_mt = {
 	--- Try to update the system and its subsystems. Should be called on every game update.
 	--
 	-- Subsystems are updated after their parent system.
+	--
+	-- Complexity: O(entityCount) per system if system:process is defined; O(1) per system otherwise.
 	-- @number dt delta-time since last update
 	update = :(dt)
 		if @active then
@@ -624,7 +714,7 @@ let system_mt = {
 			end
 			@onUpdate(dt)
 			if @process ~= system_mt.process then
-				for e in @iter() do
+				for e in skipIter(@_skiplist) do
 					@process(e, e[@component], dt)
 				end
 			end
@@ -640,11 +730,13 @@ let system_mt = {
 	--- Try to draw the system and its subsystems. Should be called on every game draw.
 	--
 	-- Subsystems are drawn after their parent system.
+	--
+	-- -- Complexity: O(entityCount) per system if system:render is defined; O(1) per system otherwise.
 	draw = :()
 		if @visible then
 			@onDraw()
 			if @render ~= system_mt.render then
-				for e in @iter() do
+				for e in skipIter(@_skiplist) do
 					@render(e, e[@component])
 				end
 			end
@@ -661,16 +753,18 @@ let system_mt = {
 	-- associated with the current system, and `e` is the `Entity`.
 	--
 	-- Think of it as a way to perform custom callbacks issued from an entity event, similar to `System:onAdd`.
+	--
+	-- Complexity: O(1) per system
 	-- @tparam string name name of the callback
 	-- @tparam Entity e the entity to perform the callback on
 	-- @param ... other arguments to pass to the callback
 	callback = :(name, e, ...)
 		-- call callback
-		if @_previous[e] and @[name] then
+		if @_has[e] and @[name] then
 			@[name](@, e, e[@component], ...)
 		end
 		-- callback on subsystems (if it wasn't removed during the callback)
-		if @_previous[e] then
+		if @_has[e] then
 			for _, ss in ipairs(@systems) do
 				ss:callback(name, e, ...)
 			end
@@ -695,6 +789,7 @@ let system_mt = {
 	-- `"capture"` would be for example used to prevent other systems from handling the event (for example to make sure an
 	-- input event is handled only once by a single system).
 	--
+	-- Complexity: O(1) per system
 	-- @tparam string name name of the callback
 	-- @param ... other arguments to pass to the callback
 	emit = :(name, ...)
@@ -713,6 +808,7 @@ let system_mt = {
 		return status
 	end,
 	--- Remove all the entities and subsystems in this system.
+	-- Complexity: O(entityCount) per system
 	destroy = :()
 		recCallOnRemoveFromWorld(@world, { @ })
 		recDestroySystems({ systems = { @ } })
@@ -736,8 +832,7 @@ let recInstanciateSystems = (world, systems)
 			world = world,
 			w = world,
 			s = world.s,
-			_first = { head },
-			_previous = {},
+			_skiplist = skipNew()
 		}, {
 			__index = :(k)
 				if s[k] ~= nil then
@@ -747,6 +842,7 @@ let recInstanciateSystems = (world, systems)
 				end
 			end
 		})
+		system._has = system._skiplist.previous[1]
 		-- create filter
 		if type(s.filter) == "string" then
 			system.filter = (_, e) return e[s.filter] ~= nil end
@@ -791,9 +887,9 @@ ecs = {
 		let world = setmetatable({
 			filter = ecs.all(),
 			s = {},
-			_first = { head },
-			_previous = {}
+			_skiplist = skipNew(),
 		}, { __index = system_mt })
+		world._has = world._skiplist.previous[1]
 		world.world = world
 		world.w = world
 		world.systems = recInstanciateSystems(world, {...})
